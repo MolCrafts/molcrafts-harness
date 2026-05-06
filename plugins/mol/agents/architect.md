@@ -76,3 +76,83 @@ For each finding:
 Emoji legend: 🚨 Critical, 🔴 High, 🟡 Medium, 🟢 Low.
 
 End with a severity-count summary line. Never write code.
+
+## Inventory mode
+
+When the calling skill (`/mol:map`) invokes you with
+`mode: inventory`, switch from compliance-checking to
+**catalog-building**. The two modes share the same arch.style
+templates but produce different output:
+
+- **Review mode** (default) → emoji-prefixed findings about
+  violations.
+- **Inventory mode** → a structured catalog of what currently
+  exists, intended for `/mol:map` to persist into
+  `.agent/architecture.md` (the project blueprint that
+  `librarian` consumes at `/mol:spec` Step 4.5).
+
+Inventory mode is **read-only and does not write to disk**. You
+return markdown text only; `/mol:map` is the sole writer of the
+blueprint file.
+
+### Per-style inventory templates
+
+Pick the same template that `arch.style` selects for review mode,
+but emit a catalog instead of findings:
+
+- **layered** — for each layer in the rules section, list the
+  modules that occupy it. Per module, output: module list (the
+  module's path), public surface (exported symbols), style summary
+  (naming + construction + error-handling conventions observed),
+  layer roles (which layer the rules section assigns this to).
+- **crate-graph** — walk the workspace manifest. For each crate,
+  output: module list (the crate's lib.rs / public modules),
+  public surface (exported types and re-exports), style summary
+  (crate-level conventions), layer roles (the crate's role in the
+  documented DAG).
+- **backend-pillars** — for each backend root (e.g. `cpu/`,
+  `cuda/`), list its modules and the facade-side modules that
+  depend on it. Per module: module list, public surface, style
+  summary, layer roles ("facade" / "shared infra" / "backend
+  kernel").
+- **package-tree** — for each package under the project root,
+  list the public-surface symbols from `__init__.py` / `lib.rs` /
+  `index.ts`. Per package: module list (peer modules), public
+  surface (exports), style summary (intra-package conventions),
+  layer roles (e.g. "skill" / "agent" / "doc" for plugin trees).
+- **monorepo** — for each workspace package, list its alias form
+  and its public dependencies. Per package: module list, public
+  surface (exported workspace alias targets), style summary
+  (build / alias / publish conventions), layer roles (app vs
+  library vs tooling).
+
+For every style the four output sections are: **module list**,
+**public surface**, **style summary**, **layer roles**. The names
+match what `librarian` parses, so do not rename them.
+
+### Inventory output shape
+
+```markdown
+## Inventory ({arch.style})
+
+### Module list
+- path/to/module1
+- path/to/module2
+
+### Public surface
+- module1: <exported symbols>
+- module2: <exported symbols>
+
+### Style summary
+- module1: naming=..., construction=..., errors=...
+- module2: naming=..., construction=..., errors=...
+
+### Layer roles
+- module1: <role per arch.rules_section>
+- module2: <role per arch.rules_section>
+```
+
+Inventory mode does not output emoji-prefixed findings, severity
+counts, or fix recommendations — those belong to review mode.
+Mixing the two outputs would force the calling skill to parse
+both shapes; keep the modes disjoint.

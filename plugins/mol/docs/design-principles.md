@@ -161,6 +161,24 @@ See Section 1.
 - **O1.** Each agent owns exactly one expertise axis. If two agents
   would both answer the same question, merge or split until each has a
   unique axis.
+
+  *Worked example — `architect` vs `librarian` boundary.* Both
+  agents read the same shared artifact (`.agent/architecture.md`,
+  the project blueprint maintained by `/mol:map`), but they answer
+  different questions and are wired into different scheduling
+  points:
+
+  - `architect` answers *"is the code currently in **compliance**
+    with the layering rules?"* — this is the review/refactor-time
+    validator. Output: emoji-prefixed findings.
+  - `librarian` answers *"given a planned new capability, where
+    does it go (**placement**) and is it already there (reuse)?"* —
+    this is the spec-time consultant. Output: a fixed
+    four-section advisory report.
+
+  Sharing the artifact does not violate O1 because the verbs are
+  disjoint (validate vs. consult); the unique-axis rule is about
+  *the question answered*, not *the data read*.
 - **O2.** Agents do not call other agents. The skill is the only
   orchestrator. *Exception:* a write-capable agent may produce code
   that a read-only agent later validates — but the validation call is
@@ -204,8 +222,14 @@ See Section 1.
   to write failing tests before any implementation is attempted.
 - **W3.** Reviews fan out in parallel. `/mol:review` issues all
   delegate calls in one message.
-- **W4.** Architecture validation happens at three points: scope
-  assessment (planning), after implementation, after refactor.
+- **W4.** Architecture validation happens at four points: scope
+  assessment (planning), **spec-time librarian consult**
+  (`/mol:spec` Step 4.5 — placement and reuse advice against the
+  project blueprint at `.agent/architecture.md`), after
+  implementation, and after refactor. The spec-time consult is the
+  fourth scheduling point and was added to plug the planning-phase
+  visibility gap that produced duplicate modules and wrong-layer
+  placement in large projects.
 - **W5.** Bug fixing is a separate, minimal loop (`/mol:debug` →
   `/mol:fix`) not a degenerate case of `/mol:impl`.
 

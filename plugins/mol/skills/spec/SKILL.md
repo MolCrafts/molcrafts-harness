@@ -88,6 +88,47 @@ Identify the closest existing pattern. Flag any new public API,
 data-model change, or cross-layer dependency. Capture as
 structured input for `spec-writer`.
 
+### 4.5. Consult `librarian` (planning-time placement & reuse)
+
+Before handing the request to `spec-writer`, ask the `librarian`
+agent to look at what's already in the codebase (via the project
+blueprint at `.agent/architecture.md`) and answer two questions:
+*"is this already there?"* and *"where does it canonically belong?"*
+
+Invoke `librarian` with a structured prompt:
+
+- `request` — the user's requirement (preserve language).
+- `scope_layer` — from Step 1.
+
+`librarian` returns one of two shapes:
+
+- **Shape A — fresh blueprint, full report** with four fixed
+  sections: `Reuse candidates`, `Recommended placement`,
+  `Closest pattern`, `Confidence`.
+- **Shape B — `stale: true`** with a one-line reason.
+
+#### Stale-handling branch (skill orchestrates; O2 preserved)
+
+If `librarian` returned `stale: true`, **the skill** — not the
+agent — owns the recovery routing. `librarian` MUST NOT invoke
+`architect`, and `architect` MUST NOT invoke `librarian`. The
+chain is:
+
+1. this skill invokes `architect` in `mode: inventory` (the
+   architect inventory mode) to draft a fresh catalog;
+2. this skill invokes `/mol:map` (which gates on the user-confirm
+   step) to write the refreshed `.agent/architecture.md`;
+3. this skill re-consults `librarian` (the librarian re-consult)
+   and now expects Shape A.
+
+If at any point the user defers the `/mol:map` write gate, fall
+back to drafting `spec-writer` input without a librarian report
+(noting "librarian consult skipped — blueprint refresh deferred"
+in the Step 6 surfacing).
+
+Capture the final librarian report verbatim — it becomes a new
+input field `librarian_report` to `spec-writer` in Step 5.
+
 ### 5. Delegate drafting to `spec-writer`
 
 Invoke the `spec-writer` agent with a structured prompt
@@ -129,6 +170,10 @@ approving.
 Show the user **both** files (spec body + acceptance) in the
 same turn, exactly as `spec-writer` returned them. Call out:
 
+- **librarian's reuse candidates and recommended placement** from
+  Step 4.5 (surface this *first*, before any other callout — the
+  user must see and acknowledge what was already in the codebase
+  before approving a draft that may have ignored it),
 - the criteria derived from Testing strategy (easy to miss),
 - spec items deliberately not turned into criteria, with a
   one-line reason,

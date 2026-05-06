@@ -99,8 +99,11 @@ harness. Do not impose a fixed structure. Reasonable defaults:
 - `.claude/specs/` (empty directory) — the destination `/mol:spec`
   will write into. No need to populate it; it just needs to exist
   so the convention is visible
-- a project map note that records the layer/module structure you
-  observed during inspection
+- a project blueprint stub at `.agent/architecture.md` (one line:
+  `> 跑 /mol:map 填充本蓝图` / *"run /mol:map to populate this
+  blueprint"*) — the canonical home for the structured catalog
+  that `librarian` consumes during `/mol:spec` Step 4.5; do NOT
+  pre-populate the catalog here, that is `/mol:map`'s job
 
 Add more **only when justified by the repo**:
 
@@ -288,9 +291,13 @@ references in the body to the project's chosen `notes_path` and
 .agent/
   README.md             # what this directory is for, how to navigate
   notes.md              # evolving decisions, captured by /mol:note
-  project-map.md        # observed structure: top-level layout,
-                          modules, layer rules (only what you
-                          actually saw — leave gaps as TODOs)
+  architecture.md       # project blueprint — structured catalog of
+                          modules, public surface, style summary, and
+                          layer roles. Stub created here as a single
+                          line pointing the user at /mol:map; populated
+                          by /mol:map (never by bootstrap directly).
+                          Consumed by `librarian` during /mol:spec
+                          Step 4.5.
   open-questions.md     # things you weren't sure about during
                           bootstrap; the user fills these in over time
 ```
