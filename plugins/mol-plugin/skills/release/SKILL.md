@@ -1,5 +1,5 @@
 ---
-description: Cut a unified release of the molcrafts marketplace. All plugins share one version. Bumps every plugin's plugin.json + the matching marketplace.json entries together, runs /mol-plugin:check, gates the commit through /mol:ship commit, and prepares one local commit + one local tag named v<X.Y.Z>. Does not push — pair with /mol:tag to push the tag to upstream and trigger GitHub Actions release. Writes plugin.json files and marketplace.json only — never a CHANGELOG.
+description: Cut a unified release of the molcrafts marketplace. All plugins share one version. Bumps every plugin's plugin.json + the matching marketplace.json entries together, runs /mol-plugin:check, gates the commit through /mol:ship commit, and prepares one local commit + one local tag named v<X.Y.Z>. Does not push — pair with /mol:push + /mol:pr to publish the marketplace.json bump through upstream's default branch, then /mol:tag to push the tag and trigger the GitHub Actions release workflow. Writes plugin.json files and marketplace.json only — never a CHANGELOG.
 argument-hint: "<patch | minor | major>"
 ---
 
@@ -112,17 +112,38 @@ git tag v<new>
 One commit, one tag, regardless of how many plugins are in the
 marketplace.
 
-Do **not** push. `/mol:tag` is the dedicated push step — it
-verifies the tag is on a `release: v…` commit, refuses to push to
-`origin`, and pushes to `upstream` only.
+Do **not** push. The release commit and the tag stay local; the
+publish phase is the user's next step (see § 8).
 
 ### 8. Report
 
 One-line summary:
 `released v0.1.1 → v0.1.2 (tag v0.1.2, N plugins advanced)`
 
-Plus a one-line next-step hint: `/mol:tag` to push the tag to
-upstream and trigger the GitHub Actions release workflow.
+Then print the **publish sequence**, in this order — both halves
+matter, and the order is load-bearing:
+
+```
+Next steps to publish v<new>:
+
+  1. /mol:push                 # push master to origin (your fork)
+  2. /mol:pr                   # open PR origin → upstream/master
+  3. (wait for PR to merge into upstream/master)
+  4. /mol:tag                  # push the tag — refuses if step 3
+                               # hasn't happened (orphan-tag guard)
+
+Why both halves: the marketplace.json version bump lives in the
+release *commit*. If you only push the tag, the release tarball
+is correct, but marketplace.json on upstream's default branch
+still shows the old version, so users browsing the registry see
+the previous release. The branch-merge half is what makes the new
+version visible; the tag-push half is what triggers the GitHub
+Actions release workflow.
+```
+
+Single-remote layouts (no `upstream`) collapse steps 1–3 to a
+single `git push` to the canonical repo's default branch, but the
+two phases (branch then tag) still apply.
 
 ## Guardrails
 
