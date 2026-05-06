@@ -1,5 +1,5 @@
 ---
-description: Scaffold a new skill inside one of the molcrafts plugins (mol, mol-agent, mol-plugin). Creates the skill directory and a complete, runnable SKILL.md authored end-to-end from the user's description — no TODO placeholders for the user to fill in afterwards. Writes only inside plugins/<plugin>/skills/<name>/.
+description: Scaffold a new skill inside one of the molcrafts plugins (mol, mol-agent, mol-plugin). Creates the skill directory and a complete, runnable SKILL.md authored end-to-end from the user's description — no TODO placeholders for the user to fill in afterwards. Writes are confined to (a) the new `plugins/<plugin>/skills/<name>/SKILL.md` and (b) appending one row to that plugin's `README.md` skills table; runs `/mol-plugin:check` at the end so the new skill is verified before the procedure exits.
 argument-hint: "<plugin:skill-name> [<one-line description>]"
 ---
 
@@ -9,9 +9,10 @@ Scaffold a new skill in this marketplace. Use when adding a verb
 that doesn't yet exist — e.g. `mol:bench`, `mol-agent:foo`,
 `mol-plugin:audit-templates`.
 
-This skill writes only inside
-`plugins/<plugin>/skills/<skill-name>/`. It never touches existing
-skills, READMEs, or plugin metadata.
+This skill writes inside
+`plugins/<plugin>/skills/<skill-name>/` and appends exactly one
+row to `plugins/<plugin>/README.md`'s skills table. It never
+touches existing skills, `plugin.json`, or any other metadata.
 
 ## Authorship contract
 
@@ -145,15 +146,33 @@ that a stub is acceptable. Do not write before approval.
 Write the file. Report
 `created plugins/<plugin>/skills/<skill-name>/SKILL.md`.
 
-### 7. Suggest next steps
+### 7. Register in the plugin README
 
-Tell the user:
+Append one row to `plugins/<plugin>/README.md`'s skills table.
+Read the table first — copy its column shape exactly:
 
-- run `/mol-plugin:check` to confirm structural compliance
-- update `plugins/<plugin>/README.md`'s skills table (manually —
-  this skill does not edit READMEs)
-- if this skill should ship in the next release, run
-  `/mol-plugin:release patch` and `/mol:tag`
+```
+| `/<plugin>:<skill-name>` | <one-sentence purpose, mirroring the frontmatter description's first sentence and matching the voice of neighboring rows> |
+```
+
+Insert the new row at the bottom of the table, before the next
+non-table line. Do not edit any other part of the README — not
+the headline, not the workflow block, not the install section.
+
+### 8. Run `/mol-plugin:check`
+
+Invoke `/mol-plugin:check <plugin>` to confirm the new skill
+passes structural validation (frontmatter, argument-hint shape,
+H1 match, cross-references, README consistency). If it reports
+errors, fix them before the procedure exits — the scaffolder is
+not done until check is green.
+
+### 9. Suggest release follow-up
+
+If this skill should ship in the next marketplace release, tell
+the user to run `/mol-plugin:release patch` and `/mol:tag` when
+they're ready. Do not run those — release timing is the user's
+call.
 
 End with a one-line summary (F2).
 
@@ -168,9 +187,10 @@ End with a one-line summary (F2).
 - **Do not** copy another skill's procedure body. Frontmatter
   shape and headings are fine to mirror; specific steps must
   be authored.
-- **Do not** edit the plugin's README, plugin.json, or any
-  other file. This skill's surface is exactly one new
-  SKILL.md.
+- **Do not** edit `plugin.json`, `marketplace.json`, or any
+  README section other than the skills table. The scaffolder's
+  write surface is exactly: the new SKILL.md and one appended
+  row in the plugin README's skills table — nothing else.
 
 ## Output format
 
@@ -179,6 +199,9 @@ End with a one-line summary (F2).
   outputs / boundaries) — proves the skill captured intent
   before writing.
 - Plan: path + complete body preview.
-- Application: `created <path>`.
-- Next-step prompt: one line.
+- Application: `created <path>` plus the one-line README row
+  diff.
+- `/mol-plugin:check` verdict for the new skill (pass / errors
+  fixed / errors remaining).
+- Release follow-up prompt: one line, only if applicable.
 - Final summary (F2): one line.
