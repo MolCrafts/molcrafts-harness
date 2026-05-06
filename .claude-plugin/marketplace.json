@@ -19,7 +19,7 @@
     {
       "name": "mol-plugin",
       "source": "./plugins/mol-plugin",
-      "description": "Maintenance toolkit for the molcrafts marketplace itself. /mol-plugin:new-skill scaffolds new skills, /mol-plugin:check is the marketplace's structural self-audit (parallel to /mol-agent:check for project harnesses), /mol-plugin:release bumps all plugins to a single shared version and creates a local v<X.Y.Z> commit + tag (gated through /mol:ship commit; push the tag with /mol:tag).",
+      "description": "Maintenance toolkit for the molcrafts marketplace itself. /mol-plugin:new-skill scaffolds a complete SKILL.md and registers it in the plugin README, /mol-plugin:check is the structural self-audit (parallel to /mol-agent:check for project harnesses), /mol-plugin:janitor is the content self-audit (clarity, orthogonality, brevity across every SKILL.md and agent), /mol-plugin:release bumps all plugins to a single shared version and creates a local v<X.Y.Z> commit + tag (gated through /mol:ship commit; push the tag with /mol:tag).",
       "version": "0.2.2",
       "keywords": ["plugin-development", "molcrafts", "scaffolding", "release"]
     }
