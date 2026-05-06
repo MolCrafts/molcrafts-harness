@@ -6,21 +6,21 @@
       "name": "mol",
       "source": "./plugins/mol",
       "description": "Project workflow skills for molcrafts repos, organized around the planner→generator→evaluator harness pattern. 19 skills (incl. map) + 17 single-axis agents (incl. librarian) (producer-write / producer-return / reviewer kinds per docs/agent-design.md). /mol:review is the unified static reviewer — takes --axis=<name> (arch/perf/docs/ux/api/science/numerics/visual/security/hygiene); /mol:simplify is the write-mode applier for janitor hygiene findings. Heavy drafting delegated to subagents (spec-writer for /mol:spec; debugger for /mol:debug + /mol:fix Step 2) to keep parent context small. Git chain /mol:pr → /mol:push → /mol:commit → /mol:ship; follows GitHub fork convention (origin = fork, upstream = canonical) with no config — /mol:tag pushes release tags only to upstream. Adapts per project via mol_project frontmatter. Pair with mol-agent (harness lifecycle).",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "keywords": ["molecular", "workflow", "scientific-computing", "molcrafts", "harness-engineering"]
     },
     {
       "name": "mol-agent",
       "source": "./plugins/mol-agent",
       "description": "Per-project agent-harness lifecycle. /mol-agent:bootstrap installs CLAUDE.md + .agent/ + .claude/specs/ on first run. /mol-agent:update is the idempotent re-bootstrap (template refresh, frontmatter rescan, layout migration). /mol-agent:check audits presence + design-principles compliance.",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "keywords": ["agent-harness", "molcrafts", "scaffolding", "harness-engineering"]
     },
     {
       "name": "mol-plugin",
       "source": "./plugins/mol-plugin",
       "description": "Maintenance toolkit for the molcrafts marketplace itself. /mol-plugin:new-skill scaffolds a complete SKILL.md and registers it in the plugin README, /mol-plugin:check is the structural self-audit (parallel to /mol-agent:check for project harnesses), /mol-plugin:janitor is the content self-audit (clarity, orthogonality, brevity across every SKILL.md and agent), /mol-plugin:release bumps all plugins to a single shared version and creates a local v<X.Y.Z> commit + tag (gated through /mol:ship commit; push the tag with /mol:tag).",
-      "version": "0.2.3",
+      "version": "0.3.0",
       "keywords": ["plugin-development", "molcrafts", "scaffolding", "release"]
     }
   ]

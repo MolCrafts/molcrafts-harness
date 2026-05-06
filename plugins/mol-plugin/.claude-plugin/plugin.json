@@ -1,6 +1,6 @@
 {
   "name": "mol-plugin",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Maintenance toolkit for the molcrafts marketplace itself. Four skills: /mol-plugin:new-skill (scaffold a complete SKILL.md and register it in the plugin README), /mol-plugin:check (structural self-audit, parallel to /mol-agent:check for projects), /mol-plugin:janitor (content self-audit — clarity, orthogonality, brevity across every SKILL.md and agent), /mol-plugin:release (unified version bump + local commit + local tag; gates through /mol:ship commit; pair with /mol:tag to push the tag to upstream).",
   "author": { "name": "MolCrafts" },
   "homepage": "https://github.com/MolCrafts/claude-plugin",
