@@ -39,7 +39,7 @@ Extract these surfaces from every file:
 
 ### 3. Audit per file
 
-Check each file against the four janitor rules:
+Check each file against the five janitor rules:
 
 - **Single responsibility.** The frontmatter `description` must
   name one job. Flag for split when the description lists more
@@ -55,6 +55,25 @@ Check each file against the four janitor rules:
   Flag motivational tone, marketing language, vague advice ("be
   thoughtful", "carefully consider"), and abstract terms with no
   behavioral consequence ("ensure quality", "promote excellence").
+  Also flag prose paragraphs whose content is *purely
+  enumerable* — three or more parallel facts welded together
+  with "and" / "as well as" / "plus" — and propose converting
+  them to a bulleted list. Do **not** flag prose that carries
+  causal or conditional logic ("X because Y", "unless Z") —
+  that reasoning would fragment under bullets.
+- **Length discipline.** Skills should sit in the 200–500 word
+  range. A skill is allowed to exceed that *only* when the extra
+  prose carries rules that change execution — ordering
+  constraints, branch decisions, recovery paths, refusal
+  conditions. Flag a skill that is **both** over 500 words **and**
+  contains content matching the actionable-language exclusions
+  (motivational tone, repeated principles, background that does
+  not gate behavior, examples that don't change the procedure).
+  Length alone is not a finding. When the trim required is more
+  than language-level — i.e. the skill is genuinely two skills
+  welded together — surface as AMBIGUITY with rule
+  `single-responsibility` or `correct-placement`; splitting
+  belongs to the author.
 - **No duplicate responsibility.** Compare every file's job
   against every other file in the marketplace. Flag the pair when
   two files claim the same responsibility.
@@ -102,8 +121,9 @@ Severity-sorted findings:
 ```
 <emoji> <path> — <message>
   Rule: <single-responsibility | correct-placement |
-         actionable-language | no-duplicate-responsibility |
-         shared-rules-in-docs | local-rules-stay-local>
+         actionable-language | length-discipline |
+         no-duplicate-responsibility | shared-rules-in-docs |
+         local-rules-stay-local>
   Action: applied | ambiguity
   Diff: <one-line summary if applied>
 ```
