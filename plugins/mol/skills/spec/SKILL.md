@@ -147,9 +147,25 @@ Branch on the agent's `Status:`:
   the question: *"I cannot satisfy <items>; do you want to
   relax X, or refine the request?"* Stop until the user
   responds; on response, re-invoke `spec-writer` from Step 5.
-- `Status: split-needed` — show the proposed cut to the user
-  and ask if they want to spec the parts separately. If yes,
-  re-invoke once per part.
+- `Status: split-needed` — **do not prompt the user.** The
+  large-spec split rule (`plugins/mol/rules/large-spec-split.md`)
+  has already decided. Read the proposed-cut chain from the
+  agent's output, then **re-invoke `spec-writer` once per
+  sub-slug in chain order** with:
+
+    - `slug` = the sub-slug (`<base>-NN-<phase>`),
+    - `request` = the sub-slug's scope line from the cut,
+    - `scope_layer` = the single layer that sub-spec touches,
+    - `interaction_points` = inherited from the parent invocation
+      plus an explicit "depends on: <earlier sub-slugs in chain>"
+      line so the agent draws the dependency forward,
+    - `conflict_decision` = `independent` (sub-specs are siblings,
+      not supersedes; the original parent slug is not written).
+
+  Each sub-invocation must itself return `Status: ok` (or
+  `Status: blocked` — surface and stop). Collect all sub-spec
+  bodies + acceptance blocks; jump to Step 6 with the **full
+  chain**, not the original parent.
 
 For supersede flows the agent additionally returns a `Diff vs.
 previous spec` block; you will surface that diff in Step 6 so
@@ -158,8 +174,19 @@ approving.
 
 ### 6. Show, confirm, persist
 
-Show the user **both** files (spec body + acceptance) in the
-same turn, exactly as `spec-writer` returned them. Call out:
+For a single-spec result, show the user **both** files (spec
+body + acceptance) in the same turn, exactly as `spec-writer`
+returned them.
+
+For a chained result from the auto-split branch (multiple
+spec/acceptance pairs), show the user the **chain summary
+first** — a numbered list of `<sub-slug>` + one-line scope, in
+chain order — followed by each pair in sequence. Call out
+that the chain was produced by the large-spec split rule (no
+user prompt was issued); the user can still amend or delete
+sub-specs after persistence.
+
+Call out:
 
 - **librarian's reuse candidates and recommended placement** from
   Step 4.5 (surface this *first*, before any other callout — the
@@ -186,10 +213,14 @@ After approval:
 1. Write `{$META.specs_path}{slug}.md` with the spec body the
    agent returned. For supersede, this overwrites the old
    file; bump `revised: YYYY-MM-DD` in the frontmatter (do
-   not change `created`).
+   not change `created`). For a chained result, write **one
+   `<sub-slug>.md` per sub-spec** in chain order; the parent
+   slug is not written as its own file.
 
 2. Write `{$META.specs_path}{slug}.acceptance.md` per the
-   schema in `plugins/mol/rules/evaluator-protocol.md`.
+   schema in `plugins/mol/rules/evaluator-protocol.md`. For a
+   chained result, write one acceptance file per sub-spec
+   alongside its body.
 
 3. Update `{$META.specs_path}INDEX.md`:
 
@@ -200,7 +231,9 @@ After approval:
    ```
 
    On supersede/refine, update the entry in place. When
-   `/mol:impl` finishes a spec, it removes the entry.
+   `/mol:impl` finishes a spec, it removes the entry. For a
+   chained result, add **one entry per sub-spec** in chain
+   order (no parent entry).
 
 If the user defers approval (*"let me think about it"*),
 write the spec with `status: draft` and skip writing
@@ -211,15 +244,19 @@ resumes from Step 5 (which will re-invoke `spec-writer`).
 
 Print:
 
-- spec path + acceptance path
-- task count (e.g. *"7 tasks; 0 completed"*)
-- criteria count, broken down by `type`
+- spec path + acceptance path (per sub-spec for a chain)
+- task count (e.g. *"7 tasks; 0 completed"*) per spec
+- criteria count, broken down by `type`, per spec
 - one-line note flagging which criteria need a runtime
   evaluator (any `type` other than `code` / `docs`). Example:
   *"3 ui_runtime criteria — invoke `/mol:web <slug>` after
   `/mol:impl` finishes."*
 - for supersede flows: a short diff (what changed, what was
   unchecked, what was removed, what was added)
+- for chain flows: the next-step pointer
+  *"start with `/mol:impl <base>-01-<phase>`; `/mol:impl`
+  will auto-create `feat/<base>` and stage-commit each
+  sub-spec on completion."*
 
 End with a one-line user-facing summary.
 

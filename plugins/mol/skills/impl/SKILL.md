@@ -18,10 +18,33 @@ Classify the task against `$META.arch.style`:
 - **MEDIUM** — 3–8 files, introduces a new pattern, fits existing
   layers. Start at Step 2.
 - **LARGE** — new top-level concept (new driver / new package / new
-  layer / new frame field). Full pipeline from Step 2.
+  layer / new frame field). LARGE scope is also a trigger for the
+  large-spec split rule (`plugins/mol/rules/large-spec-split.md`);
+  if the spec on hand is monolithic LARGE, stop and re-invoke
+  `/mol:spec` so the rule fires and produces a chain. Otherwise,
+  continue full pipeline from Step 2 on the current sub-spec.
 
 State the scope classification and confirm with the user before
 proceeding.
+
+## Step 1.5 — Auto-branch (chained / LARGE features)
+
+Per `plugins/mol/rules/large-spec-split.md`, when the slug being
+implemented matches the chain pattern `<base>-<NN>-<phase>` **or**
+the scope is LARGE, ensure work happens on a feature branch
+without prompting.
+
+1. Resolve the project default branch as `upstream`'s default if
+   `upstream` exists, else `main` if it exists, else `master`.
+2. If the current branch equals the default branch, create and
+   check out `feat/<base>` (or check it out if it already exists
+   and is reachable from the default). Do not prompt; print one
+   line: `/mol:impl: switched to branch feat/<base>`.
+3. If the current branch is anything other than the default, stay
+   on it — the user has positioned themselves deliberately.
+
+This step is silent for SMALL and MEDIUM scope on a single,
+non-chained spec.
 
 ## Step 2 — Domain & spec (MEDIUM / LARGE only)
 
@@ -225,7 +248,28 @@ conditions:
 If all three conditions hold:
 
 1. Mark spec `status: done` in the frontmatter.
-2. **Surface deferred runtime criteria** before deletion. List every
+2. **Auto-commit on close-out (every spec, every scope).** Invoke
+   `/mol:commit` (which gates on `/mol:ship commit`) before
+   deleting any spec artifacts. Use a conventional-commit message:
+
+   ```
+   feat(<scope>): <one-line summary> (<slug>)
+   ```
+
+   `<scope>` derives from the spec's primary layer; the summary
+   is the first sentence of the spec's Summary section, trimmed
+   to fit. For chained sub-specs (`<base>-<NN>-<phase>`), this
+   is exactly the per-stage checkpoint required by the
+   large-spec split rule (`plugins/mol/rules/large-spec-split.md`)
+   — one commit per sub-spec, no bundling.
+
+   If `/mol:commit` reports BLOCK, **do not delete** the
+   spec/acceptance/INDEX entry — leave the spec `in-progress`,
+   surface the failure, and stop. The user fixes it and re-runs
+   `/mol:impl`; Step 2c resume sync recovers.
+
+   Never push, never PR — that is `/mol:push` / `/mol:pr`.
+3. **Surface deferred runtime criteria** before deletion. List every
    acceptance criterion whose `type` ∈ {`ui_runtime`, `scientific`,
    `performance`, `docs`}, grouped by the suggested
    `evaluator_hint`. Example:
@@ -242,18 +286,23 @@ If all three conditions hold:
    Do **not** auto-invoke. Orchestration is the user's call (or
    their external orchestrator's call); see
    `plugins/mol/rules/evaluator-protocol.md`.
-3. Tell the user concisely: *"<slug> code is complete. Deleting
+4. Tell the user concisely: *"<slug> code is complete. Deleting
    spec + acceptance + INDEX entry. Runtime evaluators above are
    yours to invoke."*
-4. Delete `{$META.specs_path}{slug}.md`.
-5. Delete `{$META.specs_path}{slug}.acceptance.md` if present.
-6. Remove the entry for `{slug}` from
+5. Delete `{$META.specs_path}{slug}.md`.
+6. Delete `{$META.specs_path}{slug}.acceptance.md` if present.
+7. Remove the entry for `{slug}` from
    `{$META.specs_path}INDEX.md`.
-7. If anything from the spec is non-obvious context worth keeping
+8. If anything from the spec is non-obvious context worth keeping
    (an unusual design choice, a workaround for a hidden constraint,
    a tolerance the user picked deliberately), suggest the user run
    `/mol:note` to capture it. Don't capture it automatically — the
    user decides what's worth keeping.
+
+For chained features, after a successful close-out, **do not auto-
+advance to the next sub-spec**. Exit cleanly so the user can
+inspect the stage commit before invoking `/mol:impl <base>-NN+1-
+<phase>`.
 
 If a task is unchecked OR the verify suite is failing OR a
 code/runtime criterion has no green test path:

@@ -94,9 +94,13 @@ Rules:
 
 - Each item is **concrete, atomic, and checkable** (one
   observable change).
-- Aim for 4–10 tasks. If a spec needs more than ~12, split
-  into two specs (return `Status: split-needed` with the
-  proposed cut and let the caller re-invoke).
+- Aim for 4–10 tasks. Per `plugins/mol/rules/large-spec-split.md`,
+  return `Status: split-needed` if **any** of: the Tasks list
+  exceeds **10** items, the Files list crosses more than one
+  architectural layer / package / crate per `$META.arch.style`,
+  or the spec introduces a new top-level concept (LARGE per the
+  `/mol:impl` Step 1 ladder). The caller will not prompt the
+  user — it auto-splits — so the proposed cut must be sound.
 - Verbs first ("Write…", "Implement…", "Verify…").
 - **RED-before-GREEN** — every "Write failing tests for X"
   task precedes its corresponding "Implement X" task.
@@ -186,7 +190,27 @@ Status: ok | blocked | split-needed
 ```
 
 (`ok` = drafted and self-validated; `blocked` = quality bar
-not met after 3 revisions; `split-needed` = scope too large.)
+not met after 3 revisions; `split-needed` = scope too large
+per `plugins/mol/rules/large-spec-split.md`.)
+
+For `Status: split-needed`, append a proposed cut as an
+**ordered chain of sub-slugs**, each itself a valid spec under
+the rule. Use the naming convention from the rule:
+
+```
+=== Proposed split ===
+- <base>-01-<phase>: <one-line scope>
+- <base>-02-<phase>: <one-line scope>
+- <base>-03-<phase>: <one-line scope>
+```
+
+`<base>` is the slug the caller passed in. `<phase>` is a
+one-or-two-word verb-shaped tag (`types`, `parser`, `wire`,
+`tests`, `docs`). Each sub-spec must be implementable,
+testable, and mergeable on its own assuming earlier sub-specs
+in the chain have landed; no sub-spec depends on a later one.
+If you cannot produce such a chain, return `Status: blocked`
+instead — the caller will not auto-split an unsound proposal.
 
 If `Status: ok`:
 
