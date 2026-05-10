@@ -1,6 +1,6 @@
 {
   "name": "mol-agent",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Per-project agent-harness lifecycle. Three skills: /mol-agent:bootstrap (first-time install), /mol-agent:update (idempotent re-bootstrap with frontmatter refresh + layout migration), /mol-agent:check (presence/health + design-principles audit). Writes only inside CLAUDE.md, .agent/, .claude/.",
   "author": { "name": "MolCrafts" },
   "homepage": "https://github.com/MolCrafts/claude-plugin",
