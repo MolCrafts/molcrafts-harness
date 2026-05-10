@@ -13,24 +13,26 @@ without re-deriving the rules.
 claude-plugin/
 ├── .claude-plugin/marketplace.json   # marketplace registry
 ├── plugins/
-│   ├── mol/                          # 17 workflow skills + 16 single-axis agents
+│   ├── mol/                          # 19 workflow skills + 17 single-axis agents
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── README.md
 │   │   ├── rules/
 │   │   │   ├── claude-md-metadata.md # mol_project frontmatter contract
 │   │   │   ├── design-principles.md  # harness layering + design rules
 │   │   │   ├── agent-design.md       # producer/reviewer split rationale
-│   │   │   └── evaluator-protocol.md # planner/generator/evaluator contract
-│   │   ├── skills/                   # 17 SKILL.md (incl. web, simplify)
-│   │   └── agents/                   # 16 agent .md (incl. debugger, spec-writer, playwright-evaluator)
+│   │   │   ├── evaluator-protocol.md # planner/generator/evaluator contract
+│   │   │   ├── large-spec-split.md   # auto-split rule for oversized specs
+│   │   │   └── stage-policy.md       # mol_project.stage behavior matrix
+│   │   ├── skills/                   # 19 SKILL.md (incl. map, simplify, web)
+│   │   └── agents/                   # 17 agent .md (incl. librarian, spec-writer, playwright-evaluator)
 │   ├── mol-agent/                    # 3 harness-lifecycle skills
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── README.md
 │   │   └── skills/                   # bootstrap, update, check
-│   └── mol-plugin/                   # 3 marketplace-maintenance skills
+│   └── mol-plugin/                   # 4 marketplace-maintenance skills
 │       ├── .claude-plugin/plugin.json
 │       ├── README.md
-│       └── skills/                   # new-skill, check, release
+│       └── skills/                   # new-skill, check, janitor, release
 ├── LICENSE
 └── README.md
 ```

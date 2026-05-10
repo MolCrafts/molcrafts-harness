@@ -59,7 +59,17 @@ fail fast with an adoption hint when it is missing. To create
 CLAUDE.md and the surrounding harness, run `/mol-agent:bootstrap`
 first.
 
-The 17 skills group by intent. Each row shows what it does, when to
+One frontmatter field worth knowing about up front:
+`mol_project.stage` — `experimental` (default) / `beta` / `stable` /
+`maintenance` — governs how aggressive the writing skills and
+reviewers may be when touching existing code. `experimental` lets
+`/mol:impl` rewrite legacy on sight; `stable` requires deprecation
+shims for public-signature changes; `maintenance` makes
+`/mol:refactor` and new-feature `/mol:impl` refuse outright (only
+`/mol:fix` proceeds). Full matrix in
+[`rules/stage-policy.md`](rules/stage-policy.md).
+
+The 19 skills group by intent. Each row shows what it does, when to
 reach for it, and a one-line example.
 
 ### 1 — Plan & specify
