@@ -1,5 +1,5 @@
 ---
-description: Implementation workflow — scope, optional litrev, spec, **acceptance gate** (refuse to start unless `<slug>.md` is `status: approved` AND `<slug>.acceptance.md` exists), **resume sync** (detect tasks already done out-of-band and reconcile checkboxes before doing new work), architecture check, TDD, implement, verify. Reads the spec's Tasks checklist and the acceptance contract; ticks each box as work completes; on full completion, marks status done and deletes the spec file, the acceptance file, and the INDEX entry. Writes code, tests, docs; edits the spec file (checkboxes + status). Reads mol_project frontmatter from CLAUDE.md.
+description: Implementation workflow — scope, optional litrev, spec, **acceptance gate** (refuse to start unless `<slug>.md` is `status: approved` AND `<slug>.acceptance.md` exists), **resume sync** (detect tasks already done out-of-band and reconcile checkboxes before doing new work), architecture check, TDD, implement, verify. Reads the spec's Tasks checklist and the acceptance contract; ticks each box as work completes; flips every `code` / `runtime` acceptance criterion to `status: verified` at close-out; parks the spec at `status: code-complete` if runtime-typed criteria are still `pending` (waiting on `/mol:web` etc.) and only deletes the spec + acceptance + INDEX entry once every criterion is `verified`. Writes code, tests, docs; edits the spec file (checkboxes + status) and `acceptance.md` (status fields only). Reads mol_project frontmatter from CLAUDE.md.
 argument-hint: "<feature description or path to spec file>"
 ---
 
@@ -11,19 +11,22 @@ refer to the parsed frontmatter throughout.
 
 Read `$META.stage` (default: `experimental` if absent — emit the
 warning from `plugins/mol/rules/stage-policy.md`). Print one line:
-`[mol] stage: <value>`. The stage governs breaking-change posture
-for the rest of this run per `plugins/mol/rules/stage-policy.md`:
+`[mol] stage: <value>`. This skill exposes only two stage hooks
+itself; every other stage decision (legacy deletion, deprecation-
+shim proposal, dead-code cleanup) is delegated to `/mol:simplify`
+at Step 6.5, which is the **single backward-compat gatekeeper**
+per `plugins/mol/rules/stage-policy.md`:
 
-- `maintenance` — refuse unless the spec frontmatter has
-  `kind: bugfix`. Print the refusal message from the rule doc and
-  stop.
-- `stable` — Step 5 changes that modify an existing public
-  signature must propose a deprecation shim and pause for user
-  approval before applying.
-- `beta` — public-API changes proceed, but commit-message bodies
-  authored at Step 7 must include a one-paragraph migration note.
-- `experimental` — no extra constraints; legacy code may be
-  rewritten or deleted in the same diff as the new feature.
+- **Pre-work gate**: `maintenance` refuses unless the spec
+  frontmatter has `kind: bugfix`. Print the refusal message from
+  the rule doc and stop.
+- **Commit-message decoration** (`beta` only): the Step 7 auto-
+  commit body must include a one-paragraph migration note when
+  the diff modifies a public signature.
+
+This skill never decides "delete legacy / preserve as shim /
+leave alone" directly — those are all `/mol:simplify`'s call,
+made on the diff produced by Steps 4–6.
 
 ## Step 1 — Assess scope
 
@@ -84,6 +87,18 @@ Read the spec frontmatter's `status:` field and branch:
 - `status: approved` — first run; continue to 2a-bis.
 - `status: in-progress` — a previous run was interrupted, **or work
   was done out-of-band**. Continue to 2a-bis; sync (2c) will reconcile.
+- `status: code-complete` — code is already done; the spec is
+  parked waiting for runtime evaluators to flip the remaining
+  criteria. **Skip Steps 1–6 entirely** and jump to Step 7's
+  finalize check: re-read every criterion's `status`. If all
+  are `verified`, advance to `done` and run the close-out
+  deletion path. If any non-`code`/`runtime` criterion is still
+  `pending`, list them with their `evaluator_hint` and exit
+  cleanly (the user runs the named evaluator; this skill is not
+  an orchestrator). If a `code`/`runtime` criterion has somehow
+  reverted to `pending` (impl was modified out-of-band), drop
+  back to `in-progress` and continue from Step 2c so resume sync
+  reconciles.
 - `status: done` — Step 7 should have already deleted this spec.
   Warn the user and stop; let them either delete the spec by hand
   or open a new one with `/mol:spec`.
@@ -96,8 +111,11 @@ tell the user the spec was approved without an acceptance file
 tampering or a partial supersede). Either restore the file from
 git or re-run `/mol:spec <slug>` to regenerate it.
 
-Parse the `criteria:` list from the frontmatter. This is the
-binding "done" contract for the rest of this run:
+Parse the `criteria:` list from the frontmatter. Each criterion
+carries a `status:` field per
+`plugins/mol/rules/evaluator-protocol.md` (`pending` / `verified`
+/ `failed`; default `pending`). This is the binding "done"
+contract for the rest of this run:
 
 - Every Step 4 RED test MUST trace back to at least one criterion
   whose `type` is `code` or `runtime` (and is verifiable by the
@@ -110,6 +128,23 @@ binding "done" contract for the rest of this run:
 - If a criterion has no plausible mapping to any planned task,
   stop and tell the user the spec/acceptance pair has a gap; they
   must re-run `/mol:spec` to refine the design.
+
+Display the current ledger before doing any new work so the
+user (and you) know where this spec stands:
+
+```
+acceptance ledger:
+  ac-001 (code)        verified   ← skip during Step 5–7 trace
+  ac-002 (code)        pending
+  ac-003 (runtime)     pending
+  ac-004 (ui_runtime)  pending    → /mol:web <slug> ac-004 after close-out
+  ac-005 (performance) failed     → /mol:fix or /mol:spec to refine
+```
+
+`code` / `runtime` criteria already at `verified` are not re-
+traced; trust the prior verdict unless Step 2c resume sync
+finds the underlying test path missing or red, in which case
+drop the criterion back to `pending` and re-trace.
 
 ### 2b. Read the Tasks section
 
@@ -249,19 +284,94 @@ Tick the docs task in the spec when complete.
 Tick the **Run full check + test suite** task (or equivalent) once
 both commands are green.
 
+## Step 6.5 — Hygiene & backward-compat (mandatory)
+
+Invoke `/mol:simplify` on the file list touched in Steps 4–6
+(pass it explicitly as `$ARGUMENTS` so `simplify` doesn't re-derive
+scope from `git diff`). This step is **mandatory for every spec,
+every scope, every stage** — `/mol:simplify` is the single
+gatekeeper for backward-compat per
+`plugins/mol/rules/stage-policy.md`, and decides:
+
+- whether legacy code newly orphaned by this diff is deleted
+  (`experimental`), preserved as a deprecation shim (`stable`),
+  flagged for migration-note (`beta`), or left untouched
+  (`maintenance`);
+- whether dead imports / debug residue / commented-out code
+  introduced or revealed by this diff are removed.
+
+`simplify` runs its own build/test gate and reverts the batch on
+regression. If revert happens:
+
+1. Leave the spec `status: in-progress`.
+2. Do **not** advance to Step 7.
+3. Surface the suspected trigger to the user and stop.
+
+The user resolves and re-runs `/mol:impl`; Step 2c resume sync
+recovers.
+
+If `simplify` reports manual handoffs (`/mol:refactor`) or rule-
+capture suggestions (`/mol:note`), carry them into Step 7 close-
+out as advisories — they do not block close-out.
+
+If a "Hygiene cleanup" or equivalent task exists in the spec, tick
+it. If not, add one line to the spec's Tasks section recording
+that simplify ran clean (so the spec is self-documenting that
+backward-compat was reviewed).
+
 ## Step 7 — Close out the spec
 
-Re-read the spec **and** `{$META.specs_path}{slug}.acceptance.md`. Check three
-conditions:
+Re-read the spec **and** `{$META.specs_path}{slug}.acceptance.md`.
+
+### 7a. Update the acceptance ledger
+
+For every criterion with `type ∈ {code, runtime}`, write back its
+verdict to `acceptance.md` (the one carved-out exception in
+`plugins/mol/rules/evaluator-protocol.md` § *Field semantics*):
+
+- `status: verified` if the criterion's traced test path was
+  green in the Step 6 run (or in Step 2a-bis if it was already
+  marked `verified` and resume-sync confirmed the path is still
+  green).
+- `status: failed` if the traced path is red.
+- Set `last_checked: <today's ISO date>` alongside.
+
+Do **not** touch criteria with `type ∈ {ui_runtime, scientific,
+performance, docs}` — those flip status only when their runtime
+evaluator runs. Their existing `status` (almost always `pending`
+on first close-out) is left as-is.
+
+### 7b. Decide the next status
+
+Check three conditions:
 
 1. Every task in the Tasks section is `[x]`.
 2. The latest `$META.build.check` and `$META.build.test` runs were
    both green.
-3. Every acceptance criterion with `type ∈ {code, runtime}` has a
-   green test path traced in Step 2a-bis. (Other types are handed
-   off to runtime evaluators below; they do not block close-out.)
+3. Every acceptance criterion with `type ∈ {code, runtime}` is now
+   `status: verified` (no `failed`, no `pending`).
 
-If all three conditions hold:
+If any of the three fails, leave spec `status: in-progress` and
+go to the failure branch at the bottom of this step.
+
+If all three hold, branch on the runtime-typed criteria:
+
+- **No runtime-typed criteria, OR all of them already
+  `verified`** → advance directly to `status: done`. Run the
+  close-out path below (commit + delete artifacts).
+- **At least one runtime-typed criterion is still `pending` or
+  `failed`** → set spec `status: code-complete`. **Do not commit
+  via `/mol:commit` and do not delete spec / acceptance / INDEX
+  artifacts** — the spec is parked waiting for runtime
+  evaluators. Surface the deferred list (see *Surface deferred
+  runtime criteria* below) and exit cleanly. The user's next
+  step is to invoke each named evaluator; on the next
+  `/mol:impl <slug>` (or via a future `/mol:close <slug>`),
+  Step 2a's `code-complete` branch re-runs this 7b check and
+  advances to `done` if the evaluators flipped everything to
+  `verified`.
+
+### 7c. Done path (only when status flips to `done`)
 
 1. Mark spec `status: done` in the frontmatter.
 2. **Auto-commit on close-out (every spec, every scope).** Invoke
@@ -285,50 +395,78 @@ If all three conditions hold:
    `/mol:impl`; Step 2c resume sync recovers.
 
    Never push, never PR — that is `/mol:push` / `/mol:pr`.
-3. **Surface deferred runtime criteria** before deletion. List every
-   acceptance criterion whose `type` ∈ {`ui_runtime`, `scientific`,
-   `performance`, `docs`}, grouped by the suggested
-   `evaluator_hint`. Example:
-
-   ```
-   3 criteria deferred to runtime evaluators:
-     ui_runtime  → run `/mol:web <slug>`
-       - ac-004 — first paint of project tree under 200ms
-       - ac-005 — error toast appears on save failure
-     performance → no evaluator skill registered; verify by hand
-       - ac-007 — list endpoint p95 < 50ms
-   ```
-
-   Do **not** auto-invoke. Orchestration is the user's call (or
-   their external orchestrator's call); see
-   `plugins/mol/rules/evaluator-protocol.md`.
-4. Tell the user concisely: *"<slug> code is complete. Deleting
-   spec + acceptance + INDEX entry. Runtime evaluators above are
-   yours to invoke."*
-5. Delete `{$META.specs_path}{slug}.md`.
-6. Delete `{$META.specs_path}{slug}.acceptance.md` if present.
-7. Remove the entry for `{slug}` from
+3. Tell the user concisely: *"<slug> done — every criterion
+   verified. Deleting spec + acceptance + INDEX entry."*
+4. Delete `{$META.specs_path}{slug}.md`.
+5. Delete `{$META.specs_path}{slug}.acceptance.md` if present.
+6. Remove the entry for `{slug}` from
    `{$META.specs_path}INDEX.md`.
-8. If anything from the spec is non-obvious context worth keeping
+7. If anything from the spec is non-obvious context worth keeping
    (an unusual design choice, a workaround for a hidden constraint,
    a tolerance the user picked deliberately), suggest the user run
    `/mol:note` to capture it. Don't capture it automatically — the
    user decides what's worth keeping.
 
-For chained features, after a successful close-out, **do not auto-
-advance to the next sub-spec**. Exit cleanly so the user can
-inspect the stage commit before invoking `/mol:impl <base>-NN+1-
-<phase>`.
+### 7d. Code-complete path (runtime evaluators still pending)
 
-If a task is unchecked OR the verify suite is failing OR a
-code/runtime criterion has no green test path:
+When 7b decided `status: code-complete`:
+
+1. Mark spec `status: code-complete` in the frontmatter (keep
+   acceptance.md as-is — runtime evaluators will mutate the
+   `status:` fields they handle).
+2. **Auto-commit the code work.** Invoke `/mol:commit` for the
+   code change exactly as in the done path above (same
+   conventional-commit message). The commit's existence is what
+   makes runtime verification meaningful — evaluators run
+   against the committed state, not a dirty tree. If
+   `/mol:commit` reports BLOCK, drop back to
+   `status: in-progress` and stop (matches the done-path BLOCK
+   handling).
+3. **Surface the still-pending runtime criteria**, grouped by
+   `evaluator_hint`:
+
+   ```
+   <slug>: code-complete. 3 criteria still pending verification:
+     ui_runtime  → run `/mol:web <slug>`
+       - ac-004 — first paint of project tree under 200ms
+       - ac-005 — error toast appears on save failure
+     performance → no evaluator skill registered; verify by hand
+       - ac-007 — list endpoint p95 < 50ms
+
+   Re-run `/mol:impl <slug>` after the evaluators have flipped
+   each criterion to `status: verified` to advance the spec to
+   `done`.
+   ```
+
+   Do **not** auto-invoke. Orchestration is the user's call —
+   see `plugins/mol/rules/evaluator-protocol.md`.
+4. Do **not** delete spec / acceptance / INDEX entry. The
+   acceptance file MUST stay alive for the evaluators to read
+   and update.
+
+For chained features, after either close-out path lands its
+commit, **do not auto-advance to the next sub-spec**. Exit
+cleanly so the user can inspect the stage commit before invoking
+`/mol:impl <base>-NN+1-<phase>`.
+
+### 7e. Failure branch
+
+If 7b's three conditions did not all hold (a Tasks item is
+unchecked, the verify suite is failing, OR a `code`/`runtime`
+criterion is `failed` / `pending` after 7a):
 
 1. Leave `status: in-progress`.
 2. Do **not** delete the spec or the acceptance file.
 3. Report the unchecked tasks, the failing checks, and the unmet
-   criteria to the user as the next handoff.
+   (`pending` / `failed`) criteria to the user as the next
+   handoff. The acceptance ledger from Step 2a-bis (now updated
+   by 7a) is the canonical "where this spec stands" view; print
+   it again here.
 
 ## Step 8 — Summary
 
-One line summarizing: scope, files changed, tests passing, spec
-status (deleted on completion / N tasks remaining).
+One line summarizing: scope, files changed, tests passing, the
+spec's resulting `status:` (`done` → deleted; `code-complete` →
+parked with N runtime criteria pending; `in-progress` → N tasks
+remaining), and the acceptance-ledger tally (e.g. *"3 verified,
+1 failed, 2 pending"*).

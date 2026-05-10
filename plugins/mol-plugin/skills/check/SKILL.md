@@ -1,6 +1,6 @@
 ---
 description: Self-check the marketplace itself. Validates marketplace.json, each plugin.json, every SKILL.md and agent .md for required frontmatter, well-formed argument-hints, valid cross-references, and naming consistency. This is the marketplace's own audit (claude-plugin/ has no .claude/ harness, so /mol-agent:check does not apply here). Read-only.
-argument-hint: "[plugin name, defaults to all]"
+argument-hint: "[<plugin>]"
 ---
 
 # /mol-plugin:check — Marketplace Self-Check

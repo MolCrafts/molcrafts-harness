@@ -163,6 +163,7 @@ by `plugins/mol/rules/evaluator-protocol.md`:
   pass_when: |
     <single observable condition; names a fixture, file,
     threshold, or visible state>
+  status: pending
 ```
 
 Rules:
@@ -175,6 +176,15 @@ Rules:
   spans categories.
 - `pass_when` is the binding bar — a third party should be
   able to verify yes/no without rereading the spec.
+- `status: pending` on every freshly-drafted criterion. **Never
+  emit `verified` or `failed`** — those values are only written
+  by `/mol:impl` (for `code` / `runtime` criteria) and runtime
+  evaluator skills (for the type they handle), per
+  `plugins/mol/rules/evaluator-protocol.md` § *Field semantics*.
+  On a supersede / refine the criteria block is regenerated, so
+  every `id` resets to `pending` even if the old spec had
+  `verified` items — the contract was rewritten and prior
+  verdicts are not portable.
 
 A single Task may spawn 2–3 criteria. Some Testing-strategy
 items may not be criteria (e.g. "smoke-test build runs" is

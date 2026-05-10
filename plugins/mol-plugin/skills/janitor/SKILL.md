@@ -1,6 +1,6 @@
 ---
 description: Review every SKILL.md and agent .md in the marketplace for clarity, orthogonality, and brevity. Normalizes language to plain imperative rules ("do X when Y"), enforces one responsibility per file, separates capability-oriented skills from role-oriented agents, and removes duplicate responsibilities. Applies safe rewrites in place; surfaces judgement calls (splits, moves, merges, promotion of shared rules to docs) as AMBIGUITY without editing. Pairs with /mol-plugin:check — that skill audits structure, this skill audits content. Writes inside plugins/<plugin>/skills/ and plugins/<plugin>/agents/ only.
-argument-hint: "[plugin name, defaults to all]"
+argument-hint: "[<plugin>]"
 ---
 
 # /mol-plugin:janitor — Skill & Agent Content Janitor

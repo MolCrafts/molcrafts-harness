@@ -1,6 +1,6 @@
 ---
 description: Build or refresh the project blueprint at `.claude/notes/architecture.md` — a passive map of modules, public surfaces, style conventions, and layer roles. Delegates the actual inventory work to the `architect` agent (inventory mode); diffs the proposal against the existing blueprint; surfaces the diff to the user; writes only after explicit user approval. Idempotent — a re-run with no drift reports "blueprint already current" and exits without writing. Pairs with `librarian` (which consumes this blueprint) and `/mol:spec` (which consults `librarian` at planning time).
-argument-hint: "[scope path, optional]"
+argument-hint: "[<scope-path>]"
 ---
 
 # /mol:map — Project Blueprint Builder

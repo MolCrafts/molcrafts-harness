@@ -23,7 +23,7 @@ mol_project:
   language: python
   build:
     install: "pip install -e '.[dev]'"
-    check: "black --check src tests"
+    check: "ruff check src tests && ruff format --check src tests && ty check src"
     test: "pytest tests/ -v -m 'not external'"
     test_single: "pytest {path} -v"
     coverage: "pytest --cov=src/molpy tests/"
@@ -86,10 +86,22 @@ Missing keys cause the skill to fall back to a project-type default
 | Key            | Purpose                                              |
 |----------------|------------------------------------------------------|
 | `install`      | Install deps for a fresh checkout                    |
-| `check`        | Format/lint check (CI-gating, non-mutating)          |
+| `check`        | Format + lint + type-check (CI-gating, non-mutating). Should run the **language-canonical toolchain trio**; `janitor` will surface a rule-capture suggestion if any of the three is absent |
 | `test`         | Run the full test suite                              |
 | `test_single`  | Template with `{path}` placeholder for one test      |
 | `coverage`     | Full suite with coverage report                      |
+
+**Recommended `check` value per language** (see
+`plugins/mol/agents/janitor.md` § *Language-canonical toolchains*
+for the authoritative table):
+
+| `language`    | Suggested `check`                                                                     |
+|---------------|---------------------------------------------------------------------------------------|
+| `python`      | `ruff check . && ruff format --check . && ty check .` (or `mypy` while migrating)     |
+| `typescript`  | `biome check . && tsc --noEmit`                                                       |
+| `rust`        | `cargo fmt --check && cargo clippy -- -D warnings && cargo check`                     |
+| `cpp`         | `clang-format --dry-run --Werror $(git ls-files '*.cpp' '*.h') && clang-tidy …`       |
+| `mixed`       | concatenate the per-language commands with `&&`, scoped by directory                  |
 
 ### `arch` (required, object)
 

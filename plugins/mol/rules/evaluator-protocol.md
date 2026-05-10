@@ -43,6 +43,8 @@ criteria:
     type: code | runtime | ui_runtime | scientific | performance | docs
     evaluator_hint: <optional, e.g. "mol:web">
     pass_when: "<single observable condition in plain prose>"
+    status: pending | verified | failed     # default pending; updated by impl + evaluators
+    last_checked: YYYY-MM-DD                # optional; written when status flips
 out_of_scope:
   - "<bullet>"
 ---
@@ -87,6 +89,37 @@ out_of_scope:
   artifact. *"Code is well-designed"* is **not** observable;
   *"Reading `Workspace` from a JSON dir produced by v0.4 succeeds
   without errors"* **is**.
+- **`status`** — the verification ledger for this criterion. Three
+  values:
+  - `pending` — never verified, or verified once and the impl has
+    since changed in a way that invalidated the verdict (the
+    invalidator is responsible for resetting `pending`).
+  - `verified` — most-recent verification passed. The criterion
+    is "done"; nothing else has to happen for this criterion.
+  - `failed` — most-recent verification ran and did not pass.
+    The user (or `/mol:fix`) acts on this.
+
+  Defaults to `pending` at spec creation. **Who writes it:**
+  - `/mol:spec` writes initial `pending` for every criterion when
+    it generates `acceptance.md` (and at supersede / refine).
+  - `/mol:impl` writes `verified` / `failed` for `code` and
+    `runtime` criteria during Step 7 close-out, based on whether
+    the traced test path is green.
+  - Runtime evaluator skills (`/mol:web`, future `/mol:bench` /
+    `/mol:numeric` / …) write `verified` / `failed` for the
+    criterion `type` they handle, after each verification run.
+
+  This is the one **explicit exception** to the "evaluator MUST
+  NOT mutate `acceptance.md`" rule below: a runtime evaluator
+  MAY update only the `status` and `last_checked` fields on the
+  criteria it just verified. Every other field — `id`,
+  `summary`, `type`, `evaluator_hint`, `pass_when` — stays
+  immutable; only `/mol:spec` rewrites those.
+
+- **`last_checked`** — optional ISO date. Written alongside
+  `status` whenever the value flips, so a stale `verified` (e.g.
+  the impl changed three weeks ago and nothing re-ran the
+  evaluator) is visible at a glance.
 
 ### Acceptance lifecycle
 
@@ -99,10 +132,29 @@ If a supersede / refine flow rewrites the spec body, `/mol:spec`
 also regenerates `acceptance.md` from scratch — criteria
 negotiated against the old design are not portable.
 
-When `/mol:impl` finishes a spec, it deletes `<slug>.md`,
-`<slug>.acceptance.md`, and the INDEX entry together. The
-`artifacts/` directory is left for the user to clean (since impl
-does not own it).
+The spec moves through these statuses:
+
+| spec `status:`  | What it means                                                                    |
+|-----------------|----------------------------------------------------------------------------------|
+| `draft`         | written but the user deferred approval; `acceptance.md` not yet on disk          |
+| `approved`      | user signed off both files; ready for `/mol:impl`                                |
+| `in-progress`   | `/mol:impl` is mid-run; tasks ticking off                                        |
+| `code-complete` | every `code` / `runtime` criterion is `status: verified`; runtime-evaluator types (`ui_runtime` / `scientific` / `performance` / `docs`) still `pending` — code work is done, runtime verification owed |
+| `done`          | every criterion is `status: verified`. **Only this status triggers deletion** of `<slug>.md`, `<slug>.acceptance.md`, and the INDEX entry |
+
+A spec with no runtime-evaluator-typed criteria skips
+`code-complete` — `/mol:impl` advances it directly from
+`in-progress` to `done` and deletes the artifacts immediately. A
+spec that *does* have such criteria parks at `code-complete`;
+running `/mol:web` (etc.) flips the relevant criteria to
+`verified`; the next `/mol:impl <slug>` (or a future
+`/mol:close <slug>` skill) re-checks and advances to `done` only
+when all criteria are verified. This is the lifecycle hook that
+keeps `acceptance.md` alive long enough for runtime evaluators
+to consume it.
+
+The `artifacts/` directory is left for the user to clean (since
+impl does not own it).
 
 ## Evaluator skill contract
 
@@ -150,8 +202,13 @@ A markdown block with this shape:
 ```
 
 Verdicts MUST be exactly one of `✅ pass`, `❌ fail`, `⏭ skip`. The
-evaluator MUST NOT mutate `spec.md` or `acceptance.md`; only
-`/mol:spec` writes those files.
+evaluator MUST NOT mutate `spec.md`, and MUST NOT mutate any
+field of `acceptance.md` **except** the `status` and
+`last_checked` fields of the criteria it just verified (per the
+`status` field semantics above) — this is the one carved-out
+exception so the verification ledger stays current. `id`,
+`summary`, `type`, `evaluator_hint`, `pass_when`, and the spec
+body are owned by `/mol:spec`.
 
 ### Naming convention
 

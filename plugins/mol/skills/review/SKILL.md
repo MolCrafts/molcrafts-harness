@@ -96,8 +96,10 @@ This skill is **static-only**. If an `acceptance.md` is in scope
 referenced in the diff), inspect its `criteria:` list:
 
 - For every criterion with `type ∈ {ui_runtime, scientific,
-  performance, runtime}`, emit a *suggestion line* — never an
-  invocation.
+  performance, runtime}` **whose `status` is `pending` or
+  `failed`**, emit a *suggestion line* — never an invocation.
+  Skip criteria that are already `status: verified`; their
+  evaluator has already run and the verdict is on file.
 - Use the `evaluator_hint` field if set; otherwise look up the type
   in the **Known evaluator plugins** table in
   `plugins/mol/rules/evaluator-protocol.md`.

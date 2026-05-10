@@ -248,9 +248,11 @@ Print:
 - task count (e.g. *"7 tasks; 0 completed"*) per spec
 - criteria count, broken down by `type`, per spec
 - one-line note flagging which criteria need a runtime
-  evaluator (any `type` other than `code` / `docs`). Example:
+  evaluator (any `type` other than `code` / `runtime`). Example:
   *"3 ui_runtime criteria — invoke `/mol:web <slug>` after
-  `/mol:impl` finishes."*
+  `/mol:impl` finishes; `/mol:impl` will park the spec at
+  `status: code-complete` until those criteria flip to
+  `verified`."*
 - for supersede flows: a short diff (what changed, what was
   unchecked, what was removed, what was added)
 - for chain flows: the next-step pointer
@@ -265,11 +267,24 @@ End with a one-line user-facing summary.
 - `draft` — written but the user deferred approval; acceptance.md
   not yet written. Re-run `/mol:spec <slug>` to resume.
 - `approved` — user signed off both spec body and `<slug>.acceptance.md`.
-  This is the ready-to-impl state.
-- `in-progress` — `/mol:impl` started; tasks being ticked off.
-- `done` — every task is `[x]`; tests green. `/mol:impl` deletes
-  the spec file, the INDEX entry, and `<slug>.acceptance.md` on
-  its way out.
+  This is the ready-to-impl state. Every criterion in
+  acceptance.md starts at `status: pending`.
+- `in-progress` — `/mol:impl` started; spec Tasks being ticked
+  off and acceptance criteria being flipped to `verified` /
+  `failed` as their tests run.
+- `code-complete` — `/mol:impl` Step 7 completed code work and
+  every `code` / `runtime` criterion is `verified`, but at least
+  one runtime-evaluator-typed criterion (`ui_runtime` /
+  `scientific` / `performance` / `docs`) is still `pending`. The
+  spec and acceptance file stay on disk so `/mol:web` (etc.)
+  can still read them. The user runs the relevant evaluator;
+  each evaluator updates the criterion's `status` per
+  `plugins/mol/rules/evaluator-protocol.md`. Re-run
+  `/mol:impl <slug>` to advance the spec to `done` once all
+  criteria are `verified`.
+- `done` — every criterion is `verified` and tests are green.
+  `/mol:impl` deletes the spec file, the INDEX entry, and
+  `<slug>.acceptance.md` on its way out.
 
 ## Why drafting is delegated
 

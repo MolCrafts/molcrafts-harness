@@ -1,5 +1,5 @@
 ---
-description: Apply hygiene cleanup to the current diff — opportunistic post-impl simplification. Delegates to the `janitor` agent for findings (read-only), then applies the minimal patch for each accepted finding under a build/test gate. Behavior-preserving by contract; reverts any change that regresses the test suite. Pairs with `/mol:review`'s hygiene axis as the write-mode counterpart.
+description: Backward-compat gatekeeper + hygiene cleanup for the current diff. **Mandatorily invoked by `/mol:impl` (Step 6.5)** before close-out — this is the single point where per-stage backward-compat is enforced (delete legacy at `experimental`, deprecation-shim at `stable`, migration-note flag at `beta`, untouched at `maintenance`). Also runnable standalone after `/mol:review`. Delegates findings to the `janitor` agent (read-only), then applies the minimal patch under a build/test gate. Behavior-preserving by contract; reverts any change that regresses the test suite. Pairs with `/mol:review`'s hygiene axis as the write-mode counterpart.
 argument-hint: "[path or list of files]"
 ---
 
@@ -43,6 +43,15 @@ behavior-preserving**:
   to one file and grep confirms no external caller
 - whitespace / import-order fixes the formatter should have
   caught
+- run the **language-canonical formatter in fix mode** on the
+  touched files (`ruff format` for Python, `biome format` /
+  `biome check --write` for TypeScript, `cargo fmt` for Rust;
+  see `plugins/mol/agents/janitor.md` § *Language-canonical
+  toolchains* for the full table). Auto-fixable lint rules from
+  the same toolchain (`ruff check --fix`, `biome lint --apply`,
+  `cargo clippy --fix --allow-dirty`) are in scope only when
+  the rule's fix is mechanical and behavior-preserving — the
+  Step 5 test gate is the safety net
 - delete a stale `TODO` / `FIXME` whose reference is dead code
 
 `/mol:simplify` **refuses** to apply, and surfaces as
@@ -137,7 +146,21 @@ For each approved row:
    (re-applying findings one-by-one to bisect is the user's
    call, not automatic).
 4. If everything stays green, run `$META.build.check` to confirm
-   format / lint also pass.
+   format / lint also pass, **then run the language-canonical
+   toolchain trio explicitly** even when `build.check` does not
+   include all three (per `plugins/mol/agents/janitor.md`
+   § *Language-canonical toolchains*):
+
+   - `python` — `ruff check`, `ruff format --check`, `ty`
+     (or `mypy` if the project hasn't migrated yet)
+   - `typescript` — `biome check`, `tsc --noEmit`
+   - `rust` — `cargo fmt --check`, `cargo clippy -- -D warnings`,
+     `cargo check`
+
+   A non-zero exit from any of these is treated like a test
+   regression — revert the entire batch and surface the failing
+   tool. Stage gate still applies: at `maintenance` the trio is
+   verify-only (no fix-mode formatter run, no `--fix` lint).
 
 Never partial-apply. The contract is "this batch was
 behavior-preserving" — a green-after-revert state is the only
@@ -185,7 +208,14 @@ manual / rule-capture handoffs that the first run also flagged.
 
 ## When to invoke
 
-Explicit only — the user-side rule "a bug fix doesn't need
-surrounding cleanup" makes cleanup a separate operation.
-Reasonable triggers: after `/mol:impl` finishes (before
-`/mol:commit`), or after `/mol:review` flagged hygiene findings.
+- **Mandatory from `/mol:impl`** — `/mol:impl` Step 6.5 always
+  invokes this skill on the impl diff before its close-out
+  commit. This is the single point where per-stage backward-
+  compat is enforced (legacy delete vs shim vs leave alone).
+  The user does not opt out; they may, however, de-select
+  individual `[apply]` rows in the Step 4 triage table.
+- **Standalone (explicit)** — after `/mol:review` flagged
+  hygiene findings, or as a periodic cleanup pass on the
+  current uncommitted diff. The user-side rule "a bug fix
+  doesn't need surrounding cleanup" makes cleanup outside the
+  impl pipeline a separate, user-driven operation.

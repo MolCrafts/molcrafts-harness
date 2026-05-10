@@ -1,6 +1,6 @@
 ---
 description: Upgrade an existing harness to the current mol-agent plugin version's spec — install or repair the mol_project frontmatter to the current contract, refresh managed sections to the current template body, migrate legacy layouts (e.g. .agent/specs/ → .claude/specs/) per the current convention, rebuild drifted spec INDEX, repair orphan stable markers. Surfaces content-level drift (judgement-required) as a manual TODO list. Re-runs /mol-agent:check at the end to confirm convergence. Writes only managed sections, mol_project frontmatter, and approved file moves; never touches user-authored prose.
-argument-hint: "[path to project root, defaults to cwd]"
+argument-hint: "[<project-root>]"
 ---
 
 # /mol-agent:update — Upgrade Harness to Current Version

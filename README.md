@@ -41,7 +41,7 @@ claude-plugin/
 
 | Plugin | Purpose |
 |---|---|
-| [`mol`](plugins/mol/README.md) | Day-to-day project work, organized around the planner→generator→evaluator harness pattern: `/mol:spec` (planner — self-validates spec quality and negotiates the binding `<slug>.acceptance.md` contract) → `/mol:impl` (generator — refuses without both files) → `/mol:review [--axis=<name>]` (unified static evaluator; aggregates 10 single-axis reviewers via the `reviewer` agent) → `/mol:web` (runtime UI evaluator; uses whatever browser-automation MCP you installed). Plus `/mol:fix`, `/mol:refactor`, `/mol:simplify` (apply janitor hygiene), `/mol:ship`, git workflow chain, …. Adapts to each project via `mol_project:` frontmatter. |
+| [`mol`](plugins/mol/README.md) | Day-to-day project work, organized around the planner→generator→evaluator harness pattern: `/mol:spec` (planner — self-validates spec quality and negotiates the binding `<slug>.acceptance.md` contract, with each `ac-*` carrying a `status: pending → verified / failed` ledger) → `/mol:impl` (generator — refuses without both files; parks at `status: code-complete` until runtime evaluators verify their criteria) → `/mol:review [--axis=<name>]` (unified static evaluator; aggregates 10 single-axis reviewers via the `reviewer` agent) → `/mol:web` (runtime UI evaluator; uses whatever browser-automation MCP you installed). Plus `/mol:fix`, `/mol:refactor`, `/mol:simplify` (apply janitor hygiene + enforce the language-canonical toolchain trio: ruff + ty / biome + tsc / cargo fmt + clippy + cargo check), `/mol:ship`, git workflow chain, …. Adapts to each project via `mol_project:` frontmatter. |
 | [`mol-agent`](plugins/mol-agent/README.md) | Harness lifecycle: `/mol-agent:bootstrap` (install), `/mol-agent:update` (idempotent re-bootstrap), `/mol-agent:check` (presence + design audit). |
 | [`mol-plugin`](plugins/mol-plugin/README.md) | Maintaining this marketplace: `/mol-plugin:new-skill`, `/mol-plugin:check` (marketplace self-audit), `/mol-plugin:release`. |
 
@@ -65,9 +65,9 @@ skills.
 1. Install `mol` and `mol-agent` (above).
 2. From the project root, run `/mol-agent:bootstrap`. It inspects the
    repo, asks what to add, and installs only what's justified
-   (CLAUDE.md + `.agent/` for passive context + `.claude/specs/` for
-   active work, plus the `mol_project:` frontmatter when you opt into
-   the mol contract).
+   (CLAUDE.md + `.claude/notes/` for passive context + `.claude/specs/`
+   for active work, plus the `mol_project:` frontmatter when you opt
+   into the mol contract).
 3. Smoke-test with `/mol-agent:check` (harness compliance) and
    `/mol:review --axis=arch` (architecture).
 

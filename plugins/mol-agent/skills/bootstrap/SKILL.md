@@ -1,6 +1,6 @@
 ---
 description: Repository-specific agent-harness initializer. Inspects the repo, discovers local conventions, and installs only the minimum guardrails needed for future agents to work safely. Idempotent — safe to re-run. Writes CLAUDE.md and the agent-harness scaffolding (.claude/notes/ and/or .claude/) only; never writes project source.
-argument-hint: "[one-sentence purpose, optional]"
+argument-hint: "[<purpose>]"
 ---
 
 # /mol-agent:bootstrap — Agent Harness Bootstrap

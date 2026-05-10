@@ -67,8 +67,10 @@ contract is "no breaking changes within a major version."
   existing public signature requires either (a) the user explicitly
   acknowledged a major bump, or (b) a deprecation shim that
   forwards the old call to the new one and emits a deprecation
-  warning. `/mol:impl` proposes the shim and pauses for user
-  approval before applying.
+  warning. `/mol:simplify` (mandatorily invoked at `/mol:impl`
+  Step 6.5) proposes the shim and pauses for user approval before
+  applying — `/mol:impl` itself never decides backward-compat;
+  it delegates to `/mol:simplify` as the single gatekeeper.
 - `/mol:refactor` may not change public symbol names without first
   passing `pm` review. Internal renames are unaffected.
 - `pm` raises any unannounced public removal / rename / re-type to

@@ -1,6 +1,6 @@
 ---
 description: Inspect a repository's agent harness and report what's installed, what's missing, what's misaligned. Combines a quick presence/health check with the full harness-engineering design audit (layering + two-layer model + orthogonality + knowledge + capability + workflow + output + idempotency). Read-only.
-argument-hint: "[path to project root, defaults to cwd]"
+argument-hint: "[<project-root>]"
 ---
 
 # /mol-agent:check — Harness Inspection

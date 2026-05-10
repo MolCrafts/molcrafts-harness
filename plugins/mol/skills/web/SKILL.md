@@ -144,7 +144,7 @@ Run the per-criterion delegations **sequentially** (not in
 parallel) — Playwright sessions interfere when run concurrently
 against the same target.
 
-### 5. Aggregate and emit
+### 5. Aggregate, emit, and update the acceptance ledger
 
 Print the verdict in the evaluator-protocol shape:
 
@@ -164,9 +164,27 @@ Print the verdict in the evaluator-protocol shape:
 - `.claude/specs/<slug>.artifacts/ac-005/console.log`
 ```
 
+Then **update `acceptance.md`** for each criterion this run
+verified (the carved-out exception in
+`plugins/mol/rules/evaluator-protocol.md` § *Field semantics*):
+
+- `✅ pass` → set `status: verified`
+- `❌ fail` → set `status: failed`
+- `⏭ skip` → leave `status` unchanged (this skill did not
+  produce a verdict for that criterion)
+
+Set `last_checked: <today's ISO date>` alongside any flipped
+status. **Touch only `status` and `last_checked`** on the
+criteria handled in this run — every other field (`id`,
+`summary`, `type`, `evaluator_hint`, `pass_when`) and every
+criterion this skill did not handle are immutable. Do not
+rewrite the spec body, do not reorder criteria, do not add or
+remove ids.
+
 End with a one-line user-facing summary: *"<slug>: 4 ui_runtime
-criteria, 3 pass, 1 fail. See artifacts under
-.claude/specs/<slug>.artifacts/."*
+criteria, 3 pass, 1 fail. acceptance.md updated. Re-run
+`/mol:impl <slug>` to advance to `done` (or fix the failure
+first). See artifacts under .claude/specs/<slug>.artifacts/."*
 
 ### 6. Cleanup
 
@@ -188,6 +206,11 @@ to worry about.
   verdict is `fail`, it is the user's (or orchestrator's) job to
   decide whether to feed the failure back into `/mol:fix` or
   `/mol:spec` (refine the criterion).
+- **Write-narrow on `acceptance.md`.** This skill MAY only
+  update `status` and `last_checked` on the criteria it just
+  evaluated, per the evaluator-protocol exception. Never edit
+  the spec body, never touch other fields. Never delete the
+  acceptance file — that is `/mol:impl`'s job at `done`.
 - **Artifacts under specs/, not docs/.** Artifacts are scratch —
   delete them when the spec is closed (`/mol:impl` Step 7 deletes
   the spec; deleting `.artifacts/` is a manual cleanup the user

@@ -84,10 +84,10 @@ reach for it, and a one-line example.
 
 | Skill | What | When | Example |
 |---|---|---|---|
-| `/mol:impl` | Full TDD workflow gated on an approved spec + acceptance contract. Resume-syncs already-done tasks before writing new code. Ticks the spec's checkboxes as it progresses; deletes the spec + acceptance + INDEX entry on completion. | After `/mol:spec` is `status: approved`. | `/mol:impl morse-bond` |
+| `/mol:impl` | Full TDD workflow gated on an approved spec + acceptance contract. Resume-syncs already-done tasks before writing new code. Ticks the spec's checkboxes as it progresses; flips each `code` / `runtime` acceptance criterion to `status: verified` at close-out. Parks at `status: code-complete` if runtime-evaluator-typed criteria (`ui_runtime` / `scientific` / `performance` / `docs`) are still `pending`; only deletes spec + acceptance + INDEX once every criterion is `verified`. | After `/mol:spec` is `status: approved`. | `/mol:impl morse-bond` |
 | `/mol:fix` | Minimal-diff bug fix — reproduce, delegate diagnosis to `debugger` subagent (Step 2), patch the smallest surface, verify. Calls `tester` for a regression test when the root cause suggests a missing one. | When a test fails or a bug is reported. | `/mol:fix energy NaN at zero distance` |
 | `/mol:refactor` | Restructure code while preserving all architectural invariants. Snapshot → incremental change → re-verify. Calls `architect` pre and post. | When the structure needs to change but behavior must not. | `/mol:refactor split forces module by backend` |
-| `/mol:simplify` | Apply `janitor`'s hygiene findings as the write-mode counterpart — dead code, debug residue, magic-literal substitution, captured-rule naming drift. Behavior-preserving by contract; reverts the whole batch if any test regresses. | After `/mol:impl` finishes, before `/mol:commit`, to strip cruft accumulated during exploration. | `/mol:simplify` |
+| `/mol:simplify` | Apply `janitor`'s hygiene findings as the write-mode counterpart — dead code, debug residue, magic-literal substitution, captured-rule naming drift — **and** enforce the language-canonical toolchain trio on the verify gate (Python: `ruff` + `ty`; TypeScript: `biome` + `tsc`; Rust: `cargo fmt` + `clippy` + `cargo check`); a regression in any of them reverts the entire batch. Behavior-preserving by contract. Mandatorily invoked by `/mol:impl` Step 6.5 as the single backward-compat gatekeeper (delete legacy at `experimental`, deprecation-shim at `stable`, migration-note flag at `beta`, leave alone at `maintenance`). | After `/mol:impl` finishes, before `/mol:commit`, to strip cruft accumulated during exploration; or anywhere `/mol:review`'s hygiene axis flagged drift. | `/mol:simplify` |
 
 ### 3 — Review (read-only)
 
@@ -102,7 +102,7 @@ reach for it, and a one-line example.
 
 | Skill | What | When | Example |
 |---|---|---|---|
-| `/mol:web <slug>` | Frontend runtime evaluator. Reads `<slug>.acceptance.md`, picks `type: ui_runtime` criteria, starts the dev server via `mol_project.dev.command` and parses the URL from its ready banner, drives whatever Playwright MCP / browser-automation plugin you installed, returns per-criterion verdicts + screenshots / console / network artifacts. Self-skips when no Playwright MCP is reachable. | After `/mol:impl` finishes a UI feature with `ui_runtime` criteria. | `/mol:web spec-tree-view` |
+| `/mol:web <slug>` | Frontend runtime evaluator. Reads `<slug>.acceptance.md`, picks `type: ui_runtime` criteria, starts the dev server via `mol_project.dev.command` and parses the URL from its ready banner, drives whatever Playwright MCP / browser-automation plugin you installed, returns per-criterion verdicts + screenshots / console / network artifacts, and writes each verdict back into the criterion's `status` field so `/mol:impl` can advance the spec from `code-complete` to `done`. Self-skips when no Playwright MCP is reachable. | After `/mol:impl` parks a spec at `status: code-complete` with `ui_runtime` criteria still `pending`. | `/mol:web spec-tree-view` |
 
 ### 5 — Documentation & knowledge
 
@@ -185,7 +185,7 @@ Each owns one expertise axis. They split into two kinds —
 | `ci-guard` | reviewer | CI-parity: detects CI config, runs tiered local equivalent |
 | `web-design` | reviewer | Visual / UX on frontend code — tokens, info density, empty/error/loading states, a11y, responsive. Self-skips non-frontend files. |
 | `security-reviewer` | reviewer | Adversarial-input — shell / SQL / path / SSRF / prompt injection, deserialization, secret leakage, missing authorization. Self-skips files outside the attack-surface signal set. |
-| `janitor` | reviewer | Continuous tech-debt servicing — applies the project's captured `.claude/notes/` aesthetic rules to every diff. Pays down debt a little every review. |
+| `janitor` | reviewer | Continuous tech-debt servicing — applies the project's captured `.claude/notes/` aesthetic rules to every diff, plus a language-canonical toolchain pass (formatter + linter + type checker — `ruff` / `ty` for Python, `biome` / `tsc` for TypeScript, `cargo fmt` / `clippy` / `cargo check` for Rust). Pays down debt a little every review. |
 | `reviewer` | reviewer | Multi-axis aggregator — collects findings from the other reviewers into a severity table, resolves conflicts, renders the verdict. |
 | `playwright-evaluator` | producer-write (artifacts) | Verifies one `ui_runtime` acceptance criterion against a running app via whatever browser-automation MCP is installed. |
 
