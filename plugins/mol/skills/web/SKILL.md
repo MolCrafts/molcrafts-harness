@@ -137,4 +137,4 @@ Always run cleanup, even on skip/fail, so half-finished evaluation doesn't leave
 
 ## Why this lives in `mol`
 
-`/mol:web` doesn't bundle Playwright (consumes whatever browser-automation MCP user installed); only asset is this procedure plus `playwright-evaluator` agent — fits inside `mol` as sibling to `/mol:review`, behind self-detect gate. Other runtime evaluators planned under same shape (future `mol:bench`, `mol:numeric`, …) follow `plugins/mol/rules/evaluator-protocol.md`.
+`/mol:web` doesn't bundle Playwright (consumes whatever browser-automation MCP user installed); only asset is this procedure plus `playwright-evaluator` agent — fits inside `mol` as sibling to `/mol:review`, behind self-detect gate. Other runtime evaluators under same shape (`/mol:bench`, future `mol:numeric`, …) follow `plugins/mol/rules/evaluator-protocol.md`.
