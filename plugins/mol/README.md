@@ -67,7 +67,7 @@ shims for public-signature changes; `maintenance` makes
 `/mol:fix` proceeds). Full matrix in
 [`rules/stage-policy.md`](rules/stage-policy.md).
 
-The 21 skills group by intent. Each row shows what it does, when to
+The 22 skills group by intent. Each row shows what it does, when to
 reach for it, and a one-line example.
 
 ### 0 — Harness lifecycle
@@ -75,6 +75,7 @@ reach for it, and a one-line example.
 | Skill | What | When | Example |
 |---|---|---|---|
 | `/mol:bootstrap` | Initialize or maintain the agent harness (CLAUDE.md + `.claude/notes/` + `.claude/specs/`). Three paths: no harness → create fresh; harness exists → audit + repair; healthy harness → single-line no-op. Never writes project source. | First time in a project; after upgrading mol; when harness has drifted. | `/mol:bootstrap` |
+| `/mol:adopt-workspace` | Adopt an arbitrary existing data directory as a molexp-compatible workspace (`Workspace → Project → Experiment → Run` folder family). Inspects the source, proposes a mapping for operator review, materializes via molexp's Python API, then copy-verifies (default) or move-verifies each file with SHA-256. Resumable via an on-disk ledger; copy-mode optionally deletes the source after a typed-path gate. | Lifting legacy experimental data into a fresh molexp workspace; consolidating ad-hoc result folders. | `/mol:adopt-workspace ./old-results ./new-workspace` |
 
 ### 1 — Plan & specify
 
@@ -89,7 +90,8 @@ reach for it, and a one-line example.
 | Skill | What | When | Example |
 |---|---|---|---|
 | `/mol:impl` | Full TDD workflow gated on an approved spec + acceptance contract. Resume-syncs already-done tasks before writing new code. Ticks the spec's checkboxes as it progresses; flips each `code` / `runtime` acceptance criterion to `status: verified` at close-out. Parks at `status: code-complete` if runtime-evaluator-typed criteria (`ui_runtime` / `scientific` / `performance` / `docs`) are still `pending`; only deletes spec + acceptance + INDEX once every criterion is `verified`. | After `/mol:spec` is `status: approved`. | `/mol:impl morse-bond` |
-| `/mol:impl-all <prefix>` | Batch-implement a spec chain (`<prefix>-01-*`, `<prefix>-02-*`, …) end-to-end. Discovers matching specs, sorts by numeric suffix, runs `/mol:impl` on each non-interactively, auto-commits and simplifies between specs. Never stops to ask questions. Stops on first failure. | When a feature is split into a spec chain and you want hands-off execution. | `/mol:impl-all morse-bond` |
+| `/mol:impl-all <prefix>` | Batch-implement a spec chain (`<prefix>-01-*`, `<prefix>-02-*`, …) end-to-end. Discovers matching specs, sorts by numeric suffix, then hands the chain to Claude Code's `/goal` built-in for cross-turn persistence; each spec runs `/mol:impl` + `/mol:commit`. Never stops to ask questions. Stops on first failure. | When a feature is split into a spec chain and you want hands-off execution. | `/mol:impl-all morse-bond` |
+| `/mol:close <slug> [--manual]` | The closing counterpart to `/mol:impl`. Advances a `code-complete` spec to `done` by re-checking the acceptance ledger and deleting the spec + acceptance + INDEX entry. Default mode assumes a runtime evaluator (`/mol:bench`, `/mol:web`) already flipped the remaining criteria. `--manual` lets the operator assert observably-met criteria without an evaluator (last-resort path for projects without `mol_project.bench.repo` configured); flips `pending` → `verified` with a `verified_by: human` audit note. | After `/mol:impl` parks a spec at `code-complete` and the owed evaluator has run (or there is no evaluator available). | `/mol:close morse-bond` &nbsp;·&nbsp; `/mol:close morse-bond --manual` |
 | `/mol:fix` | Minimal-diff bug fix — reproduce, delegate diagnosis to `debugger` subagent (Step 2), patch the smallest surface, verify. Calls `tester` for a regression test when the root cause suggests a missing one. | When a test fails or a bug is reported. | `/mol:fix energy NaN at zero distance` |
 | `/mol:refactor` | Restructure code while preserving all architectural invariants. Snapshot → incremental change → re-verify. Calls `architect` pre and post. | When the structure needs to change but behavior must not. | `/mol:refactor split forces module by backend` |
 | `/mol:simplify` | Apply `janitor`'s hygiene findings as the write-mode counterpart — dead code, debug residue, magic-literal substitution, captured-rule naming drift — **and** enforce the language-canonical toolchain trio on the verify gate (Python: `ruff` + `ty`; TypeScript: `biome` + `tsc`; Rust: `cargo fmt` + `clippy` + `cargo check`); a regression in any of them reverts the entire batch. Behavior-preserving by contract. Mandatorily invoked by `/mol:impl` Step 6.5 as the single backward-compat gatekeeper (delete legacy at `experimental`, deprecation-shim at `stable`, migration-note flag at `beta`, leave alone at `maintenance`). | After `/mol:impl` finishes, before `/mol:commit`, to strip cruft accumulated during exploration; or anywhere `/mol:review`'s hygiene axis flagged drift. | `/mol:simplify` |
@@ -108,6 +110,7 @@ reach for it, and a one-line example.
 | Skill | What | When | Example |
 |---|---|---|---|
 | `/mol:web <slug>` | Frontend runtime evaluator. Reads `<slug>.acceptance.md`, picks `type: ui_runtime` criteria, starts the dev server via `mol_project.dev.command` and parses the URL from its ready banner, drives whatever Playwright MCP / browser-automation plugin you installed, returns per-criterion verdicts + screenshots / console / network artifacts, and writes each verdict back into the criterion's `status` field so `/mol:impl` can advance the spec from `code-complete` to `done`. Self-skips when no Playwright MCP is reachable. | After `/mol:impl` parks a spec at `status: code-complete` with `ui_runtime` criteria still `pending`. | `/mol:web spec-tree-view` |
+| `/mol:bench <slug>` | External benchmark evaluator. Reads `<slug>.acceptance.md`, picks `type: scientific` + `type: performance` criteria, runs the project's separate `bm_*` pytest-benchmark repo (configured via `mol_project.bench.repo`) — which pairs each kernel with an equality check against a user-named reference (freud, scipy, …) — and flips each handled criterion's `status` back into `acceptance.md`. Self-skips when no bench repo is configured or no usable `evaluator_hint` selector is on the criterion. | After `/mol:impl` parks a spec at `status: code-complete` with `scientific` or `performance` criteria still `pending`. | `/mol:bench morse-bond` |
 
 ### 5 — Documentation & knowledge
 

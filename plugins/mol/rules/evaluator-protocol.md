@@ -2,7 +2,7 @@
 
 Specifies the artifact and verdict shapes that connect the planner
 (`/mol:spec`), the generator (`/mol:impl`), and the runtime
-evaluators (`/mol:web`, future `mol:bench` / `mol:numeric` / …).
+evaluators (`/mol:web`, `/mol:bench`, future `mol:numeric` / …).
 The protocol exists so the **driving flow** stays domain-neutral
 while runtime evaluators can be added per-domain without re-shaping
 the rest of the harness.
@@ -105,8 +105,8 @@ out_of_scope:
   - `/mol:impl` writes `verified` / `failed` for `code` and
     `runtime` criteria during Step 7 close-out, based on whether
     the traced test path is green.
-  - Runtime evaluator skills (`/mol:web`, future `mol:bench` /
-    `mol:numeric` / …) write `verified` / `failed` for the
+  - Runtime evaluator skills (`/mol:web`, `/mol:bench`,
+    future `mol:numeric` / …) write `verified` / `failed` for the
     criterion `type` they handle, after each verification run.
 
   This is the one **explicit exception** to the "evaluator MUST
@@ -146,12 +146,17 @@ A spec with no runtime-evaluator-typed criteria skips
 `code-complete` — `/mol:impl` advances it directly from
 `in-progress` to `done` and deletes the artifacts immediately. A
 spec that *does* have such criteria parks at `code-complete`;
-running `/mol:web` (etc.) flips the relevant criteria to
-`verified`; the next `/mol:impl <slug>` (or a future
-`mol:close <slug>` skill) re-checks and advances to `done` only
-when all criteria are verified. This is the lifecycle hook that
-keeps `acceptance.md` alive long enough for runtime evaluators
-to consume it.
+running `/mol:web` / `/mol:bench` flips the relevant criteria to
+`verified`; `/mol:close <slug>` then re-checks the ledger and
+advances to `done` only when all criteria are verified.
+`/mol:close <slug> --manual` exists for the last-resort case
+where no evaluator skill is available for the project (e.g.
+`mol_project.bench.repo` is not configured): the operator
+asserts the `pass_when` conditions are met externally, the
+skill flips `pending → verified` with a `verified_by: human`
+audit field, and proceeds to `done` + delete. This is the
+lifecycle hook that keeps `acceptance.md` alive long enough for
+runtime evaluators (or human attestation) to consume it.
 
 The `artifacts/` directory is left for the user to clean (since
 impl does not own it).
@@ -178,7 +183,7 @@ The skill reads:
 
 If the skill's prerequisites are missing (e.g. no
 browser-automation MCP for `/mol:web`, no benchmark harness
-configured for a future `mol:bench`), the skill MUST exit cleanly
+configured for `/mol:bench`), the skill MUST exit cleanly
 with a message naming what is missing — not crash and not pretend
 to verify. Detection happens up front, before any acceptance file
 is read.
@@ -213,15 +218,16 @@ body are owned by `/mol:spec`.
 ### Naming convention
 
 The skill SHOULD be `mol:<axis>` so orchestrators can find it by
-convention: `/mol:web` for `ui_runtime`, future `mol:bench` for
-`performance`, future `mol:numeric` for `scientific`. Each
-self-skips when its target type is not present in `acceptance.md`.
+convention: `/mol:web` for `ui_runtime`, `/mol:bench` for
+`performance` and `scientific`. Each self-skips when its target
+type is not present in `acceptance.md`.
 
 ## Known evaluator skills
 
-| Skill      | Handles `type`     | Prerequisite                                              |
-|------------|--------------------|-----------------------------------------------------------|
-| `mol:web`  | `ui_runtime`       | A browser-automation MCP (Playwright MCP, claude-in-chrome, …) installed by the user |
+| Skill       | Handles `type`               | Prerequisite                                                                          |
+|-------------|------------------------------|---------------------------------------------------------------------------------------|
+| `mol:web`   | `ui_runtime`                 | A browser-automation MCP (Playwright MCP, claude-in-chrome, …) installed by the user  |
+| `mol:bench` | `scientific`, `performance`  | `mol_project.bench.repo` points at an installable pytest-benchmark `bm_*` repo (e.g. `bm-molrs-molpy/`); each criterion carries an `evaluator_hint` selector (`marker:` / `k:` / `path:`); reference libraries are deps of the bench repo, not of this skill |
 
 Add to this table when a new evaluator skill lands inside `mol`.
 

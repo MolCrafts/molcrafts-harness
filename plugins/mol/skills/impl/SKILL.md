@@ -31,7 +31,7 @@ Read `{$META.specs_path}{slug}.md` + `{$META.specs_path}{slug}.acceptance.md`. R
 - `draft` → refuse (re-run `/mol:spec`).
 - `approved` → first run.
 - `in-progress` → resume (run 1c).
-- `code-complete` → skip to § 4 (runtime evaluator re-check).
+- `code-complete` → skip to § 4.
 - `done` → warn (should be deleted).
 
 **Stage gate:** `maintenance` refuses unless spec has `kind: bugfix`.
@@ -99,17 +99,15 @@ Re-read spec + acceptance.
 
 ### 4a. Update acceptance ledger
 
-For each `type: code | runtime` criterion, write back verdict (`verified` / `failed`) with `last_checked` date. Never touch `ui_runtime` / `scientific` / `performance` / `docs` — those flip only via runtime evaluators.
+For each `type: code | runtime` criterion, write back verdict (`verified` / `failed`) with `last_checked` date. Leave criteria of other types untouched.
 
 ### 4b. Decide status
 
-Three conditions must hold: all Tasks `[x]`, build green, every `code`/`runtime` criterion `verified`.
-
-Any failing → leave `in-progress`, print remaining tasks + unmet criteria. Stop.
+All Tasks `[x]`, build green, every `code` / `runtime` criterion `verified` — any failing → leave `in-progress`, print remaining tasks + unmet criteria, stop.
 
 All hold:
-- No runtime-typed criteria, or all already `verified` → **done** (§ 4c).
-- ≥1 runtime-typed still `pending`/`failed` → **code-complete** (§ 4d).
+- Acceptance has only `code` / `runtime` criteria → **done** (§ 4c).
+- Any other-typed criterion exists → **code-complete** (§ 4d).
 
 ### 4c. Done path
 
@@ -122,14 +120,33 @@ All hold:
 
 1. Mark `status: code-complete`.
 2. Invoke `/mol:commit` (same as done path). BLOCK → drop to `in-progress`, stop.
-3. Surface pending runtime criteria grouped by `evaluator_hint`:
+3. List the criteria left at `pending`, **grouped by evaluator owed** (per `evaluator-protocol.md`):
+   - `type: performance | scientific` → owed to `/mol:bench` (or `/mol:close --manual` if `mol_project.bench.repo` is not configured)
+   - `type: ui_runtime` → owed to `/mol:web`
+   - `type: docs` → owed to a human reviewer (or `/mol:close --manual`)
+   - any criterion with `evaluator_hint:` set → owed to that specific evaluator
+4. Print the **closing recipe** verbatim, so the operator knows exactly how to advance the spec from `code-complete` → `done`:
+
    ```
-   <slug>: code-complete. N criteria pending:
-     ui_runtime  → run `/mol:web <slug>`
-       - ac-004 — first paint under 200ms
-   Re-run `/mol:impl <slug>` after evaluators flip each to verified.
+   PARKED at code-complete. To advance to `done` and delete the spec:
+
+     1. Run the owed evaluator(s) listed above; each flips its criteria
+        to status: verified.
+     2. Re-run `/mol:impl <slug>` — when every criterion is verified,
+        §4 advances to done and deletes the spec, acceptance, and INDEX entry.
+
+   Manual close (no evaluator available, operator has observed conditions
+   met externally):
+
+     /mol:close <slug> --manual
+
+     — flips every pending criterion to verified with a manual-promote
+     audit note, then advances to done. Use only when you have actually
+     observed the pass_when condition; the audit trail lands in the
+     commit message.
    ```
-4. Do not delete spec/acceptance/INDEX.
+
+5. Do not delete spec/acceptance/INDEX.
 
 For chained specs, exit cleanly after commit — don't auto-advance.
 
