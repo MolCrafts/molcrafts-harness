@@ -1,5 +1,5 @@
 ---
-description: Convert a natural-language requirement into a structured spec under `.claude/specs/` plus a binding `<slug>.acceptance.md` contract that defines "done". Use to start any non-trivial feature; detects conflicts with existing specs and supports Chinese and English.
+description: Convert a natural-language requirement into a structured spec under `.claude/specs/` plus a binding `<slug>.acceptance.md` contract that defines "done". Persists both files directly — no approval prompt. Use to start any non-trivial feature; detects conflicts with existing specs and supports Chinese and English.
 argument-hint: "<feature description>"
 ---
 
@@ -36,14 +36,10 @@ Branch on `Status:`:
 - `blocked` → surface failed items. User relaxes or refines; re-invoke from Step 2.
 - `split-needed` → large-spec split rule fired (`plugins/mol/rules/large-spec-split.md`). **Don't prompt.** Re-invoke `spec-writer` once per sub-slug in chain order with `slug: <base>-NN-<phase>`, `request: sub-scope`, `conflict_decision: independent`. Collect full chain; proceed to Step 3.
 
-### 3. Show, confirm, persist
+### 3. Persist & show
 
-Show spec body + acceptance, exactly as returned. Call out: librarian reuse candidates (first), criteria from Testing strategy, items deliberately not turned into criteria, supersede diff if any.
-
-Wait for explicit approval. Surface tweaks → apply inline. Material design changes → re-invoke `spec-writer`.
-
-After approval:
-1. Write `{$META.specs_path}{slug}.md` (overwrite for supersede; bump `revised`). Chain → one per sub-spec; no parent file.
+Persist immediately — **no approval prompt, no waiting**:
+1. Write `{$META.specs_path}{slug}.md` with `status: approved` (overwrite for supersede; bump `revised`). Chain → one per sub-spec; no parent file.
 2. Write `{$META.specs_path}{slug}.acceptance.md`. Chain → one per sub-spec.
 3. Update `{$META.specs_path}INDEX.md`:
    ```
@@ -51,7 +47,9 @@ After approval:
    ```
    Chain → one entry per sub-spec. Supersede → update in place.
 
-If user defers, write spec with `status: draft`, skip acceptance. Re-run resumes from Step 2.
+Then show spec body + acceptance exactly as written. Call out: librarian reuse candidates (first), criteria from Testing strategy, UI checks recorded in the spec body's **UI verification** section (never acceptance criteria), items deliberately not turned into criteria, supersede diff if any.
+
+Post-persist tweaks from the user → apply in place. Material design changes → re-invoke `spec-writer` (supersede) and overwrite.
 
 ### 4. Report
 
@@ -60,5 +58,6 @@ Spec path(s), task count, criteria count by `type`, runtime-evaluator flag (any 
 ## Guardrails
 
 - **Chinese input** → `spec-writer` produces body in Chinese; frontmatter keys, INDEX entry, and Tasks verb-prefixes stay English for downstream tooling.
-- **Drafting is delegated** to `spec-writer` to keep parent context free for conversation. User-interaction (triage, approval, persist, INDEX) stays here. See `plugins/mol/rules/agent-design.md`.
+- **Drafting is delegated** to `spec-writer` to keep parent context free for conversation. Triage, persistence, and INDEX upkeep stay here; persistence is automatic — never wait for approval. See `plugins/mol/rules/agent-design.md`.
+- **UI-runtime checks never become acceptance criteria.** They live in the spec body's **UI verification** section (non-binding); `/mol:web` verifies them ad hoc and they never park a spec at `code-complete`.
 - **Spec lifecycle** (`draft` → `approved` → `in-progress` → `code-complete` → `done`) is defined in `plugins/mol/rules/evaluator-protocol.md`.

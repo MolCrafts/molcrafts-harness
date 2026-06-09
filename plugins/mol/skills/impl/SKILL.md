@@ -1,5 +1,5 @@
 ---
-description: Implementation workflow — scope → spec → acceptance gate → TDD → implement → verify. Use after `/mol:spec` has produced an approved spec + acceptance file; writes code, tests, and docs while ticking the spec's Tasks/acceptance checkboxes.
+description: Implementation workflow — scope → spec → acceptance gate → TDD → implement → verify → auto simplify + close. Use after `/mol:spec` has produced an approved spec + acceptance file; writes code, tests, and docs while ticking the spec's Tasks/acceptance checkboxes, then auto-invokes `/mol:simplify` and `/mol:close` without prompting.
 argument-hint: "<feature description or path to spec file>"
 ---
 
@@ -7,7 +7,7 @@ argument-hint: "<feature description or path to spec file>"
 
 Read CLAUDE.md → parse `mol_project:` (`$META`); else emit adoption hint and stop. Print `[mol] stage: <value>`.
 
-`/mol:impl` orchestrates a spec's Tasks checklist: pre-flight → iterate each task (RED → GREEN → tick) → verify → simplify → finalize (acceptance ledger + commit + status decision). All stage-policy decisions delegate to `/mol:simplify` (the single backward-compat gatekeeper, `plugins/mol/rules/stage-policy.md`).
+`/mol:impl` orchestrates a spec's Tasks checklist: pre-flight → iterate each task (RED → GREEN → tick) → verify → simplify → finalize (acceptance ledger + commit + auto-close). `/mol:simplify` and `/mol:close` run automatically every pass — never prompt the operator for either. All stage-policy decisions delegate to `/mol:simplify` (the single backward-compat gatekeeper, `plugins/mol/rules/stage-policy.md`).
 
 ---
 
@@ -122,33 +122,14 @@ All hold:
 2. Invoke `/mol:commit` (same as done path). BLOCK → drop to `in-progress`, stop.
 3. List the criteria left at `pending`, **grouped by evaluator owed** (per `evaluator-protocol.md`):
    - `type: performance | scientific` → owed to `/mol:bench` (or `/mol:close --manual` if `mol_project.bench.repo` is not configured)
-   - `type: ui_runtime` → owed to `/mol:web`
    - `type: docs` → owed to a human reviewer (or `/mol:close --manual`)
+   - legacy `type: ui_runtime` (pre-2026-06 specs) → `/mol:web` or `/mol:close --manual`
    - any criterion with `evaluator_hint:` set → owed to that specific evaluator
-4. Print the **closing recipe** verbatim, so the operator knows exactly how to advance the spec from `code-complete` → `done`:
+4. **Auto-close.** Invoke `/mol:close <slug>` (default mode) — no prompt. It re-checks the ledger and either advances to `done` + deletes spec/acceptance/INDEX, or leaves the spec parked and names what each pending criterion still owes.
+5. If still parked after auto-close, end with one line — `parked at code-complete; owes <evaluator(s)> for <criterion ids>` — and stop. No recipe block, no questions.
+6. Never delete spec/acceptance/INDEX directly on this path — deletion is `/mol:close`'s job.
 
-   ```
-   PARKED at code-complete. To advance to `done` and delete the spec:
-
-     1. Run the owed evaluator(s) listed above; each flips its criteria
-        to status: verified.
-     2. Re-run `/mol:impl <slug>` — when every criterion is verified,
-        §4 advances to done and deletes the spec, acceptance, and INDEX entry.
-
-   Manual close (no evaluator available, operator has observed conditions
-   met externally):
-
-     /mol:close <slug> --manual
-
-     — flips every pending criterion to verified with a manual-promote
-     audit note, then advances to done. Use only when you have actually
-     observed the pass_when condition; the audit trail lands in the
-     commit message.
-   ```
-
-5. Do not delete spec/acceptance/INDEX.
-
-For chained specs, exit cleanly after commit — don't auto-advance.
+For chained specs, exit cleanly after commit + auto-close — don't start the next spec (that's `/mol:impl-all`'s job).
 
 ---
 

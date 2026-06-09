@@ -1,22 +1,22 @@
 ---
-description: "Frontend runtime evaluator — starts the project's dev server and verifies `type: ui_runtime` criteria from `<slug>.acceptance.md` by driving the running app through whatever Playwright MCP is installed. Use after `/mol:impl` parks a spec at `code-complete` with pending UI criteria; skips cleanly when no Playwright tools are available."
+description: "Frontend runtime evaluator — starts the project's dev server and verifies the spec body's non-binding `## UI verification` checks (plus legacy `type: ui_runtime` acceptance criteria from older specs) by driving the running app through whatever Playwright MCP is installed. Ad-hoc and advisory — UI checks no longer gate spec close; skips cleanly when no Playwright tools are available."
 argument-hint: "<spec-slug> [<criterion-id>]"
 ---
 
 # /mol:web — Frontend Runtime Evaluator
 
-Verify `ui_runtime` acceptance criteria against a running app. Runtime half of the harness (`/mol:review` covers static).
+Verify UI checks against a running app. Runtime half of the harness (`/mol:review` covers static). Since 2026-06, UI checks live in the spec body's **`## UI verification`** section and are **non-binding** — they never appear in `acceptance.md` and never park a spec at `code-complete`; this skill is run ad hoc. Legacy specs (pre-2026-06) may still carry `type: ui_runtime` acceptance criteria; those are handled too, with the old ledger semantics.
 
 ## Detect (run only when applicable)
 
 Both must hold:
 
-- spec has ≥1 `ui_runtime` criterion in `<slug>.acceptance.md`
+- spec has ≥1 UI check — a `## UI verification` section in `<slug>.md`, or legacy `type: ui_runtime` criteria in `<slug>.acceptance.md`
 - a Playwright-capable MCP server is reachable. Tool prefixes: `mcp__plugin_playwright_*`, `mcp__claude-in-chrome__*`, or any other browser-automation MCP. **`mol` does not bundle one.**
 
-No `ui_runtime` criteria → *"no `ui_runtime` criteria for `<slug>` — nothing to do"* and stop.
+No UI checks anywhere → *"no UI verification checks for `<slug>` — nothing to do"* and stop.
 
-`ui_runtime` criteria exist but no Playwright MCP → *"no browser-automation MCP installed; install one (e.g. official Playwright MCP) and re-run, or verify these criteria manually"* — list criteria — and stop. Don't shell out to `npx playwright`; this skill operates strictly through MCP.
+UI checks exist but no Playwright MCP → *"no browser-automation MCP installed; install one (e.g. official Playwright MCP) and re-run, or verify these checks manually"* — list checks — and stop. Don't shell out to `npx playwright`; this skill operates strictly through MCP.
 
 ## Procedure
 
@@ -31,12 +31,14 @@ Read:
 
 Either missing → stop. Tell user spec is not approved; run `/mol:spec <slug>`.
 
-### 2. Filter criteria
+### 2. Build the working set
 
-Parse `criteria:` from acceptance frontmatter. Working set:
+Two sources, merged:
 
-- `<criterion-id>` given: only that one (refuse if `type` not `ui_runtime`)
-- otherwise: every `type: ui_runtime`
+- **Spec-body checks (current convention)** — bullets under `## UI verification` in `<slug>.md`. Assign synthetic ids `ui-001`, `ui-002`, … in document order; each bullet's text is its `pass_when`. Non-binding — results are reported, never written anywhere.
+- **Legacy acceptance criteria** — every `type: ui_runtime` entry in the acceptance frontmatter, keeping its `ac-NNN` id. Binding for that old spec; ledger update applies (§ 5).
+
+`<criterion-id>` given: only that one (refuse if it is neither a `ui-NNN` body check nor a `ui_runtime` acceptance criterion).
 
 Empty working set → see § Detect.
 
@@ -107,7 +109,7 @@ Print verdict in evaluator-protocol shape:
 - `.claude/specs/<slug>.artifacts/ac-005/console.log`
 ```
 
-Then **update `acceptance.md`** for each criterion verified (carved-out exception in `plugins/mol/rules/evaluator-protocol.md` § *Field semantics*):
+Then, **for legacy `ac-NNN` criteria only**, update `acceptance.md` (carved-out exception in `plugins/mol/rules/evaluator-protocol.md` § *Field semantics*):
 
 - `✅ pass` → `status: verified`
 - `❌ fail` → `status: failed`
@@ -115,7 +117,9 @@ Then **update `acceptance.md`** for each criterion verified (carved-out exceptio
 
 Set `last_checked: <today's ISO date>` alongside any flipped status. **Touch only `status` and `last_checked`** on criteria handled in this run — every other field (`id`, `summary`, `type`, `evaluator_hint`, `pass_when`) and unhandled criteria are immutable. Don't rewrite spec body, reorder, or add/remove ids.
 
-End with one-line summary: *"<slug>: 4 ui_runtime criteria, 3 pass, 1 fail. acceptance.md updated. Re-run `/mol:impl <slug>` to advance to `done` (or fix the failure first). See artifacts under .claude/specs/<slug>.artifacts/."*
+Spec-body `ui-NNN` checks are advisory: report the verdicts, write **nothing** back to spec or acceptance — they never gate close.
+
+End with one-line summary: *"<slug>: 4 UI checks, 3 pass, 1 fail (advisory). See artifacts under .claude/specs/<slug>.artifacts/."* — append *"acceptance.md updated; re-run `/mol:impl <slug>` to advance"* only when legacy criteria were flipped.
 
 ### 6. Cleanup
 
@@ -130,7 +134,7 @@ Always run cleanup, even on skip/fail, so half-finished evaluation doesn't leave
 ## Guardrails
 
 - **Read-only on source.** Never edits code. On `fail`, user (or orchestrator) decides whether to feed back into `/mol:fix` or `/mol:spec`.
-- **Write-narrow on `acceptance.md`.** May only update `status` and `last_checked` on just-evaluated criteria, per evaluator-protocol exception. Never edit spec body or other fields. Never delete acceptance file — that's `/mol:impl` at `done`.
+- **Write-narrow on `acceptance.md`, legacy criteria only.** May only update `status` and `last_checked` on just-evaluated legacy `ui_runtime` criteria, per evaluator-protocol exception. Spec-body `ui-NNN` checks write nothing. Never edit spec body or other fields. Never delete acceptance file — that's `/mol:close` at `done`.
 - **Artifacts under specs/, not docs/.** Artifacts are scratch — delete when spec is closed (`/mol:impl` Step 7 deletes spec; deleting `.artifacts/` is manual cleanup, since impl doesn't know about runtime artifacts by design).
 - **No auto-loop.** On fail, do not re-run after a code change. Loop-back decision belongs to orchestrator.
 - **Browser dialog hazard.** Avoid clicking elements that trigger native `alert/confirm/prompt` without first acknowledging the user — they block the session and break the next criterion.
