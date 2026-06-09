@@ -7,9 +7,13 @@ argument-hint: "<spec-slug> [--manual]"
 
 The closing counterpart to `/mol:impl`. `/mol:impl` parks specs at
 `code-complete` when runtime-evaluator-typed criteria
-(`ui_runtime` / `scientific` / `performance` / `docs`) are still
-`pending`. `/mol:close` finishes the job: re-checks the ledger,
-advances to `done`, deletes the spec artifacts.
+(`scientific` / `performance` / `docs`, plus legacy `ui_runtime`)
+are still `pending`. `/mol:close` finishes the job: re-checks the
+ledger, advances to `done`, deletes the spec artifacts.
+
+Auto-invoked (default mode) by `/mol:impl` § 4d and `/mol:impl-all`
+§ 2c after every finished spec; also runnable standalone. `--manual`
+is operator-only — never reached automatically.
 
 Two modes:
 

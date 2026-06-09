@@ -32,6 +32,7 @@ Sections (in order, all mandatory):
 - **Files to create or modify** — bulleted concrete file paths (no globs). Mark new files: `(new)` after path.
 - **Tasks** — see § 2; mandatory; every file in Files-to-create-or-modify must appear in ≥1 Tasks item.
 - **Testing strategy** — happy path, edge cases, and (if `$META.science.required`) domain validation enumerated.
+- **UI verification** — *optional; only when the spec touches a frontend.* Bulleted, observable browser checks for ad-hoc `/mol:web` runs. **Non-binding**: these never become acceptance criteria and never gate `done`.
 - **Out of scope** — present even if "none". Empty section is a smell — if "none", confirm alternatives were considered.
 
 ### 2. Tasks (the implementation tracker)
@@ -94,8 +95,8 @@ For every Task and every "done"-bearing Testing-strategy behavior, propose crite
 ```yaml
 - id: ac-001
   summary: <≤80 chars, imperative or stative>
-  type: code | runtime | ui_runtime | scientific | performance | docs
-  evaluator_hint: <optional, e.g. mol:web for ui_runtime>
+  type: code | runtime | scientific | performance | docs
+  evaluator_hint: <optional, e.g. "marker: morse" selector for mol:bench>
   pass_when: |
     <single observable condition; names a fixture, file,
     threshold, or visible state>
@@ -105,7 +106,8 @@ For every Task and every "done"-bearing Testing-strategy behavior, propose crite
 Rules:
 
 - `id` starts at `ac-001` and increments. Supersede → restart at `ac-001` (spec body rewritten → fresh contract).
-- Pick **narrowest type that suffices** per `/mol:spec` Step 8 table. Split into multiple if it spans categories.
+- Pick **narrowest type that suffices**. Split into multiple if it spans categories.
+- **Never emit `type: ui_runtime`.** Browser-verifiable behaviors go into the spec body's **UI verification** section instead — non-binding, verified ad hoc by `/mol:web`, never gating `done`.
 - `pass_when` is the binding bar — third party verifies yes/no without rereading spec.
 - `status: pending` on every fresh criterion. **Never emit `verified` or `failed`** — only `/mol:impl` (for `code`/`runtime`) and runtime evaluator skills (for their type) write those, per `evaluator-protocol.md` § *Field semantics*. Supersede/refine regenerates the block — every `id` resets to `pending` even if old spec had `verified`.
 
@@ -162,6 +164,9 @@ created: <today's ISO date>
 ## Testing strategy
 - …
 
+## UI verification   <!-- optional; only when a frontend is touched; non-binding -->
+- …
+
 ## Out of scope
 - …
 
@@ -196,4 +201,4 @@ Chinese requests: spec body in Chinese, but frontmatter keys, Tasks verb-prefix,
 - **Never invoke `scientist`.** Caller delegated before invoking; passes its output as input.
 - **Never invent file paths.** Use `Read`/`Glob` to check every path in **Files to create or modify** against current repo. Genuinely new → mark `(new)`.
 - **Never skip self-validation.** Returned spec failing cross-reference check is the worst drift; better to return `Status: blocked` than ship incoherent spec.
-- **Do not negotiate with user.** That's `/mol:spec` Step 9 (interactive approval). Return single best draft.
+- **Do not negotiate with user.** Caller persists the draft directly (no approval round-trip). Return single best draft.

@@ -6,14 +6,14 @@
       "name": "mol",
       "source": "./plugins/mol",
       "description": "Project workflow toolkit — 23 skills + 17 single-axis agents organized around the planner→generator→evaluator harness pattern. Adapts per project via mol_project frontmatter.",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "keywords": ["molecular", "workflow", "scientific-computing", "molcrafts", "harness-engineering"]
     },
     {
       "name": "mol-plugin",
       "source": "./plugins/mol-plugin",
       "description": "Maintenance toolkit for the molcrafts marketplace — scaffold, audit, and release skills and plugins.",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "keywords": ["plugin-development", "molcrafts", "scaffolding", "release"]
     }
   ]

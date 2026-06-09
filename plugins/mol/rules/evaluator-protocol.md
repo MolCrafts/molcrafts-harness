@@ -73,8 +73,11 @@ out_of_scope:
     janitor) handle these.
   - `runtime` — requires executing code (test suite, CLI
     invocation, backend smoke).
-  - `ui_runtime` — requires driving a running frontend (Playwright
-    via `/mol:web`).
+  - `ui_runtime` — **legacy (pre-2026-06).** `/mol:spec` no longer
+    emits this type; UI checks now live in the spec body's
+    `## UI verification` section, verified non-bindingly by
+    `/mol:web`. Existing criteria of this type remain valid and are
+    still verified (and ledger-updated) by `/mol:web`.
   - `scientific` — requires numerical comparison against reference
     data or analytical solution.
   - `performance` — requires a benchmark with a quantified
@@ -136,19 +139,23 @@ The spec moves through these statuses:
 
 | spec `status:`  | What it means                                                                    |
 |-----------------|----------------------------------------------------------------------------------|
-| `draft`         | written but the user deferred approval; `acceptance.md` not yet on disk          |
+| `draft`         | legacy — `/mol:spec` now persists directly at `approved`; a `draft` spec (pre-2026-06, or hand-written) still refuses `/mol:impl` until re-run through `/mol:spec` |
 | `approved`      | user signed off both files; ready for `/mol:impl`                                |
 | `in-progress`   | `/mol:impl` is mid-run; tasks ticking off                                        |
-| `code-complete` | every `code` / `runtime` criterion is `status: verified`; runtime-evaluator types (`ui_runtime` / `scientific` / `performance` / `docs`) still `pending` — code work is done, runtime verification owed |
+| `code-complete` | every `code` / `runtime` criterion is `status: verified`; runtime-evaluator types (`scientific` / `performance` / `docs`, plus legacy `ui_runtime`) still `pending` — code work is done, runtime verification owed |
 | `done`          | every criterion is `status: verified`. **Only this status triggers deletion** of `<slug>.md`, `<slug>.acceptance.md`, and the INDEX entry |
 
 A spec with no runtime-evaluator-typed criteria skips
 `code-complete` — `/mol:impl` advances it directly from
 `in-progress` to `done` and deletes the artifacts immediately. A
 spec that *does* have such criteria parks at `code-complete`;
-running `/mol:web` / `/mol:bench` flips the relevant criteria to
-`verified`; `/mol:close <slug>` then re-checks the ledger and
-advances to `done` only when all criteria are verified.
+running `/mol:bench` (or `/mol:web` for legacy `ui_runtime`)
+flips the relevant criteria to `verified`; `/mol:close <slug>`
+then re-checks the ledger and advances to `done` only when all
+criteria are verified. `/mol:impl` and `/mol:impl-all` invoke
+`/mol:close` (default mode) automatically after every finished
+spec, so a fully-verified ledger self-closes without operator
+action.
 `/mol:close <slug> --manual` exists for the last-resort case
 where no evaluator skill is available for the project (e.g.
 `mol_project.bench.repo` is not configured): the operator
@@ -218,7 +225,8 @@ body are owned by `/mol:spec`.
 ### Naming convention
 
 The skill SHOULD be `mol:<axis>` so orchestrators can find it by
-convention: `/mol:web` for `ui_runtime`, `/mol:bench` for
+convention: `/mol:web` for legacy `ui_runtime` + spec-body UI
+verification, `/mol:bench` for
 `performance` and `scientific`. Each self-skips when its target
 type is not present in `acceptance.md`.
 
@@ -226,7 +234,7 @@ type is not present in `acceptance.md`.
 
 | Skill       | Handles `type`               | Prerequisite                                                                          |
 |-------------|------------------------------|---------------------------------------------------------------------------------------|
-| `mol:web`   | `ui_runtime`                 | A browser-automation MCP (Playwright MCP, claude-in-chrome, …) installed by the user  |
+| `mol:web`   | legacy `ui_runtime` criteria + non-binding spec-body `## UI verification` checks | A browser-automation MCP (Playwright MCP, claude-in-chrome, …) installed by the user  |
 | `mol:bench` | `scientific`, `performance`  | `mol_project.bench.repo` points at an installable pytest-benchmark `bm_*` repo (e.g. `bm-molrs-molpy/`); each criterion carries an `evaluator_hint` selector (`marker:` / `k:` / `path:`); reference libraries are deps of the bench repo, not of this skill |
 
 Add to this table when a new evaluator skill lands inside `mol`.
