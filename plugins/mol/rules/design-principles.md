@@ -153,7 +153,8 @@ mode the main loop never authors production source.
    one message; agents have isolated context windows so the
    orchestrator stays small.
 3. **Safety.** Read-only agents (`architect`, `optimizer`, `scientist`,
-   `compute-scientist`, `undergrad`, `pm`, `ci-guard`, `reviewer`)
+   `compute-scientist`, `undergrad`, `pm`, `ci-guard`, `ffi-guard`,
+   `reviewer`)
    cannot accidentally edit code; write-capable agents (`tester`,
    `documenter`) have edit rights only inside their declared scope.
 

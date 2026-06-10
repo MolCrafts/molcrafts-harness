@@ -45,6 +45,7 @@ OPUS_AGENTS = {
     "tester",
     "documenter",
     "implementer",
+    "ffi-guard",
 }
 
 SONNET_AGENTS = {

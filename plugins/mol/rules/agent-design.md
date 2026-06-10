@@ -69,8 +69,9 @@ revert, and cross-cutting judgment — that's skill-layer concerns.
 | `user` | doc-first learnability + cross-library composition (no glue) | `/mol:docs` (fix/complete docs) or `/mol:spec` (close a composition seam) |
 | `web-design` | visual / a11y / state coverage | `/mol:fix` (one fix per finding) |
 | `security-reviewer` | attack surface | `/mol:fix` (sanitize / parameterize / authorize) |
+| `ffi-guard` | FFI-boundary safety | `/mol:fix` (error-code path, handle conversion) or `/mol:spec` (API-shape change) |
 | `janitor` | hygiene / tech debt | **`/mol:simplify`** (the dedicated cleanup applier) |
-| `ci-guard` | CI parity | `/mol:fix` / `/mol:impl` per the agent's `Suggested agent:` route |
+| `ci-guard` | CI parity | **`/mol:ci-sync`** (config parity repair) / `/mol:fix` / `/mol:impl` per the agent's `Suggested agent:` route |
 | `librarian` | spec-time placement + reuse consult (fixed advisory report) | n/a — advice consumed by `/mol:spec`; the blueprint it reads is refreshed by `/mol:map` |
 | `reviewer` | aggregator (findings → table + verdict) | n/a — itself a reviewer over reviewers |
 
