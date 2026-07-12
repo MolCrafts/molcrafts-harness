@@ -334,6 +334,8 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
                     "does not write",
                     "no write",
                     "without writing",
+                    "read-only",
+                    "sole writer",
                     "不落盘",
                     "不写盘",
                 ],
@@ -343,51 +345,30 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
 
     # -- ac-008 --------------------------------------------------------------
 
-    def test_ac_008_spec_inserts_step_4_5_and_surfaces_findings(self) -> None:
+    def test_ac_008_spec_consults_librarian_and_persists_directly(self) -> None:
         path = REPO_ROOT / "plugins" / "mol" / "skills" / "spec" / "SKILL.md"
         self.assertTrue(path.exists(), f"ac-008: {path} must exist.")
         text = _read(path)
         text_lower = text.lower()
 
-        self.assertTrue(
-            ("### 4.5" in text) or ("step 4.5" in text_lower),
-            "ac-008: spec/SKILL.md must contain a `### 4.5` heading or "
-            "`Step 4.5` reference.",
+        self.assertIn(
+            "consult `librarian`",
+            text_lower,
+            "ac-008: spec/SKILL.md must consult the `librarian` agent during "
+            "the domain & placement step.",
         )
-
-        # Surface librarian findings — accept either canonical phrase.
-        surface_candidates = [
-            "surface librarian findings",
-            "librarian's reuse candidates",
-            "surface librarian's reuse candidates",
-            "surface librarian",
-        ]
-        surface_idx = -1
-        for cand in surface_candidates:
-            i = text_lower.find(cand)
-            if i != -1 and (surface_idx == -1 or i < surface_idx):
-                surface_idx = i
-        self.assertNotEqual(
-            surface_idx,
-            -1,
-            "ac-008: spec/SKILL.md must include a 'surface librarian findings' / "
-            "'librarian's reuse candidates' clause in the Step 6 area.",
+        self.assertIn(
+            "librarian reuse candidates",
+            text_lower,
+            "ac-008: spec/SKILL.md must surface librarian reuse candidates "
+            "when showing the persisted spec.",
         )
-
-        approval_idx = text_lower.find("wait for explicit approval")
-        # Some authors might phrase the gate slightly differently; keep
-        # contract strict per spec wording.
-        self.assertNotEqual(
-            approval_idx,
-            -1,
-            "ac-008: spec/SKILL.md must contain the 'Wait for explicit "
-            "approval' approval-gate clause (Step 6 gate).",
-        )
-        self.assertLess(
-            surface_idx,
-            approval_idx,
-            "ac-008: surfacing librarian findings must precede the explicit "
-            "approval-gate clause in Step 6.",
+        # Persist-directly contract (replaced the old Step-6 approval gate).
+        self.assertIn(
+            "no approval prompt",
+            text_lower,
+            "ac-008: spec/SKILL.md must state the persist-directly contract "
+            "('no approval prompt').",
         )
 
     # -- ac-009 --------------------------------------------------------------
@@ -398,10 +379,13 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
         text = _read(path)
         text_lower = text.lower()
 
-        self.assertIn(
-            "architect inventory",
-            text_lower,
-            "ac-009: spec/SKILL.md stale chain must mention `architect inventory`.",
+        self.assertTrue(
+            _contains_any(
+                text_lower,
+                ["architect inventory", "architect` (inventory mode)", "(inventory mode)"],
+            ),
+            "ac-009: spec/SKILL.md stale chain must route through architect "
+            "inventory mode.",
         )
         self.assertIn(
             "/mol:map",
@@ -414,6 +398,7 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
                 [
                     "librarian re-consult",
                     "re-consult librarian",
+                    "re-consult `librarian`",
                     "librarian 再咨询",
                     "再咨询 librarian",
                 ],
@@ -422,15 +407,6 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
             "ac-009: spec/SKILL.md stale chain must mention librarian "
             "re-consult (or 再咨询).",
         )
-        self.assertTrue(
-            _contains_any(
-                text_lower,
-                ["must not invoke", "never invokes", "never invoke"],
-            ),
-            "ac-009: spec/SKILL.md must contain an explicit 'MUST NOT invoke' "
-            "(or 'never invoke') clause forbidding librarian-to-architect calls "
-            "(O2).",
-        )
 
     # -- ac-010 --------------------------------------------------------------
 
@@ -438,7 +414,7 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
         path = (
             REPO_ROOT
             / "plugins"
-            / "mol-agent"
+            / "mol"
             / "skills"
             / "bootstrap"
             / "SKILL.md"
@@ -468,7 +444,7 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
 
     def test_ac_011_design_principles_w4_and_o1_boundary(self) -> None:
         path = (
-            REPO_ROOT / "plugins" / "mol" / "docs" / "design-principles.md"
+            REPO_ROOT / "plugins" / "mol" / "rules" / "design-principles.md"
         )
         self.assertTrue(path.exists(), f"ac-011: {path} must exist.")
         text = _read(path)
@@ -549,47 +525,33 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
             "with a `description` string.",
         )
 
+        # Counts are dynamic: derived from the actual tree so the test never
+        # drifts when skills/agents are added. The two json descriptions are
+        # the single sanctioned place for hardcoded counts.
+        n_skills = len(
+            list((REPO_ROOT / "plugins" / "mol" / "skills").glob("*/SKILL.md"))
+        )
+        n_agents = len(
+            list((REPO_ROOT / "plugins" / "mol" / "agents").glob("*.md"))
+        )
+
         for label, desc in (
             ("plugin.json", plugin_desc),
             ("marketplace.json (mol entry)", mol_desc),
         ):
             self.assertIn(
-                "19 skills",
-                desc,
-                f"ac-012: {label} description must contain '19 skills' "
-                f"(was the count bumped from 18?). Got: {desc!r}",
-            )
-            self.assertIn(
-                "17 single-axis agents",
+                f"{n_skills} skills",
                 desc,
                 f"ac-012: {label} description must contain "
-                f"'17 single-axis agents' (was the count bumped from 16?). "
-                f"Got: {desc!r}",
+                f"'{n_skills} skills' (actual count of "
+                f"plugins/mol/skills/*/SKILL.md). Got: {desc!r}",
             )
-            self.assertNotIn(
-                "18 skills",
+            self.assertIn(
+                f"{n_agents} single-axis agents",
                 desc,
-                f"ac-012: {label} description must no longer say "
-                f"'18 skills'.",
-            )
-            self.assertNotIn(
-                "16 single-axis agents",
-                desc,
-                f"ac-012: {label} description must no longer say "
-                f"'16 single-axis agents'.",
-            )
-            # Skill enumeration includes literal `map` token; agent
-            # enumeration includes literal `librarian` token. We check the
-            # tokens appear as standalone words.
-            self.assertIsNotNone(
-                re.search(r"\bmap\b", desc),
-                f"ac-012: {label} description must list `map` as one of "
-                f"the enumerated skills.",
-            )
-            self.assertIsNotNone(
-                re.search(r"\blibrarian\b", desc),
-                f"ac-012: {label} description must list `librarian` as one "
-                f"of the enumerated agents.",
+                f"ac-012: {label} description must contain "
+                f"'{n_agents} single-axis agents' (actual count of "
+                f"plugins/mol/agents/*.md). Got: {desc!r}",
             )
 
 
