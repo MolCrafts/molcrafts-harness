@@ -2,7 +2,7 @@
 name: undergrad
 description: User's-perspective reviewer — evaluates user-facing API, onboarding docs, error messages, and extension ergonomics as a new user would encounter them. Read-only.
 tools: Read, Grep, Glob, Bash, WebFetch
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:`. Read `mol_project.notes_path` for recent API/docs decisions.

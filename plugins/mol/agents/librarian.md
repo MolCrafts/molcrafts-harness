@@ -2,7 +2,7 @@
 name: librarian
 description: Spec-time placement & reuse consultant — reads `.claude/notes/architecture.md` and returns Reuse candidates / Recommended placement / Closest pattern / Confidence. Used by `/mol:spec` Step 4.5; read-only; architectural risk belongs to `architect`, not this agent.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:` frontmatter. Read project blueprint at `.claude/notes/architecture.md` (or `{$META.notes_path sibling}/architecture.md`) before responding.

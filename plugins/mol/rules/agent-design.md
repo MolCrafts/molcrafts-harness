@@ -12,13 +12,13 @@ others are read-only. The asymmetry is principled, not accidental.
 | **Skill** (`plugins/mol/skills/<name>/SKILL.md`) | the orchestrator | parses arguments, fans out, gates with build/test, applies patches, reverts on regression, decides routing |
 | **Agent** (`plugins/mol/agents/<name>.md`) | the single-axis specialist | reads code, produces findings or content along *one* axis, returns text |
 
-Skills compose agents. Agents do not compose skills (agents call
-agents only when the called agent is itself a single-axis
-specialist).
+Skills compose agents. Agents do not compose skills, and do not
+call other agents — the skill is the only orchestrator
+(design-principles rule O2).
 
 ## Producer vs reviewer
 
-The 14 agents fall into two kinds, distinguished by **what their
+The agents fall into two kinds, distinguished by **what their
 primary output is**:
 
 ### Producer agents
@@ -35,6 +35,7 @@ user-approval gate between drafting and persisting.
 | Agent | Produces | Why writing belongs in the agent |
 |---|---|---|
 | `tester` | test code (RED tests) | the produced test *is* the verification mechanism — running it is the gate. No external orchestration needed for the write itself. |
+| `implementer` | production source (one spec task / one fix patch) | the RED test written by `tester` *is* the gate for the write — the same mechanism that justifies `tester`'s write access; the calling skill still runs the full-suite gate and owns revert. |
 | `documenter` | docstrings + tutorials | docs don't change runtime behavior — zero behavioral risk. |
 | `playwright-evaluator` | screenshots / console / network logs | artifacts are evaluation by-products, not source-of-truth code. |
 
@@ -65,10 +66,13 @@ revert, and cross-cutting judgment — that's skill-layer concerns.
 | `compute-scientist` | numerical stability / HPC | `/mol:fix` (with regression test from `tester`) |
 | `pm` | public-API ergonomics / breaking change | `/mol:refactor` (with deprecation path) |
 | `undergrad` | new-user friction | `/mol:docs` (Mode B tutorial) or `/mol:fix` (error message) |
+| `user` | doc-first learnability + cross-library composition (no glue) | `/mol:docs` (fix/complete docs) or `/mol:spec` (close a composition seam) |
 | `web-design` | visual / a11y / state coverage | `/mol:fix` (one fix per finding) |
 | `security-reviewer` | attack surface | `/mol:fix` (sanitize / parameterize / authorize) |
+| `ffi-guard` | FFI-boundary safety | `/mol:fix` (error-code path, handle conversion) or `/mol:spec` (API-shape change) |
 | `janitor` | hygiene / tech debt | **`/mol:simplify`** (the dedicated cleanup applier) |
-| `ci-guard` | CI parity | `/mol:fix` / `/mol:impl` per the agent's `Suggested agent:` route |
+| `ci-guard` | CI parity | **`/mol:ci-sync`** (config parity repair) / `/mol:fix` / `/mol:impl` per the agent's `Suggested agent:` route |
+| `librarian` | spec-time placement + reuse consult (fixed advisory report) | n/a — advice consumed by `/mol:spec`; the blueprint it reads is refreshed by `/mol:map` |
 | `reviewer` | aggregator (findings → table + verdict) | n/a — itself a reviewer over reviewers |
 
 ## Why not let `optimizer` or `janitor` write?
@@ -104,6 +108,13 @@ argument doesn't apply to test files specifically.
 Same shape for `documenter` (docs don't affect runtime, so no
 gate needed) and `playwright-evaluator` (artifacts are
 evaluation outputs, not source).
+
+`implementer` extends the same argument to production code:
+unlike a reviewer finding, a spec task *is* 1:1 with its patch,
+and the gate already exists — the RED test written by `tester`
+plus the calling skill's full-suite gate. The skill still owns
+tick, commit, and revert; `implementer` never does any of the
+three.
 
 ## Adding a new agent
 
@@ -144,3 +155,6 @@ When proposing a new skill, decide whether it's:
 The git-workflow skills (`/mol:commit`, `/mol:push`, `/mol:pr`,
 `/mol:tag`) are a fifth kind — workflow-state mutators that
 chain into gates.
+
+Model-tier assignment per agent kind (opus / sonnet / haiku) lives
+in `plugins/mol/rules/model-policy.md`.

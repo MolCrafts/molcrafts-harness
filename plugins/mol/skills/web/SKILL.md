@@ -109,13 +109,7 @@ Print verdict in evaluator-protocol shape:
 - `.claude/specs/<slug>.artifacts/ac-005/console.log`
 ```
 
-Then, **for legacy `ac-NNN` criteria only**, update `acceptance.md` (carved-out exception in `plugins/mol/rules/evaluator-protocol.md` § *Field semantics*):
-
-- `✅ pass` → `status: verified`
-- `❌ fail` → `status: failed`
-- `⏭ skip` → leave `status` unchanged
-
-Set `last_checked: <today's ISO date>` alongside any flipped status. **Touch only `status` and `last_checked`** on criteria handled in this run — every other field (`id`, `summary`, `type`, `evaluator_hint`, `pass_when`) and unhandled criteria are immutable. Don't rewrite spec body, reorder, or add/remove ids.
+Then, **for legacy `ac-NNN` criteria only**, update `acceptance.md` per `plugins/mol/rules/evaluator-protocol.md` § *Ledger write-back* (pass → verified, fail → failed, skip → unchanged; `last_checked` beside any flip; touch nothing else — don't rewrite spec body, reorder, or add/remove ids).
 
 Spec-body `ui-NNN` checks are advisory: report the verdicts, write **nothing** back to spec or acceptance — they never gate close.
 
@@ -134,7 +128,7 @@ Always run cleanup, even on skip/fail, so half-finished evaluation doesn't leave
 ## Guardrails
 
 - **Read-only on source.** Never edits code. On `fail`, user (or orchestrator) decides whether to feed back into `/mol:fix` or `/mol:spec`.
-- **Write-narrow on `acceptance.md`, legacy criteria only.** May only update `status` and `last_checked` on just-evaluated legacy `ui_runtime` criteria, per evaluator-protocol exception. Spec-body `ui-NNN` checks write nothing. Never edit spec body or other fields. Never delete acceptance file — that's `/mol:close` at `done`.
+- **Write-narrow on `acceptance.md`, legacy criteria only.** May only update `status` and `last_checked` on just-evaluated legacy `ui_runtime` criteria, per evaluator-protocol § *Ledger write-back*. Spec-body `ui-NNN` checks write nothing. Never edit spec body or other fields. Never delete acceptance file — that's `/mol:close` at `done`.
 - **Artifacts under specs/, not docs/.** Artifacts are scratch — delete when spec is closed (`/mol:impl` Step 7 deletes spec; deleting `.artifacts/` is manual cleanup, since impl doesn't know about runtime artifacts by design).
 - **No auto-loop.** On fail, do not re-run after a code change. Loop-back decision belongs to orchestrator.
 - **Browser dialog hazard.** Avoid clicking elements that trigger native `alert/confirm/prompt` without first acknowledging the user — they block the session and break the next criterion.

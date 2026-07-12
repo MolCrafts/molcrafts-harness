@@ -222,6 +222,22 @@ exception so the verification ledger stays current. `id`,
 `summary`, `type`, `evaluator_hint`, `pass_when`, and the spec
 body are owned by `/mol:spec`.
 
+### Ledger write-back
+
+The canonical status flip that every evaluator (and `/mol:close`)
+applies to each criterion it handled — the single source; skills
+reference this section instead of restating it:
+
+- `✅ pass` → `status: verified`
+- `❌ fail` → `status: failed`
+- `⏭ skip` → `status` unchanged
+
+Write `last_checked: <today's ISO date>` beside any flip. Touch
+**only** `status` and `last_checked` on the handled criteria — every
+other field is immutable per § *Field semantics*. `--manual`
+attestation (`/mol:close --manual`) additionally writes
+`verified_by: human`.
+
 ### Naming convention
 
 The skill SHOULD be `mol:<axis>` so orchestrators can find it by
@@ -229,6 +245,20 @@ convention: `/mol:web` for legacy `ui_runtime` + spec-body UI
 verification, `/mol:bench` for
 `performance` and `scientific`. Each self-skips when its target
 type is not present in `acceptance.md`.
+
+## Type → owed evaluator
+
+The single routing table for "which evaluator does a `pending`
+criterion owe?" — consumed by `/mol:impl` § 4d, `/mol:impl-all`'s
+completion evaluator, and `/mol:review`'s handoff suggestions:
+
+| Criterion `type` | Owed evaluator | Fallback when unavailable |
+|---|---|---|
+| `performance`, `scientific` | `/mol:bench` | `/mol:close --manual` (e.g. `mol_project.bench.repo` unset) |
+| `docs` | human reviewer | `/mol:close --manual` |
+| legacy `ui_runtime` | `/mol:web` | `/mol:close --manual` |
+| `code`, `runtime` | re-run `/mol:impl` | — |
+| any criterion with `evaluator_hint:` | that evaluator (soft preference) | — |
 
 ## Known evaluator skills
 

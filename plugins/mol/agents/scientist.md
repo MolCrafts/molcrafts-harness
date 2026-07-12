@@ -2,7 +2,7 @@
 name: scientist
 description: Domain correctness reviewer — verifies equations, units, physical invariants, and references against published literature. Read-only.
 tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:`. If `mol_project.science.required: false` → return *"science check N/A"* and stop. Read `mol_project.notes_path` for recent scientific decisions.

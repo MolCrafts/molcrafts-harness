@@ -2,7 +2,7 @@
 name: reviewer
 description: Review-output aggregator — collects multi-axis findings into a severity table and renders the verdict. Read-only.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: sonnet
 ---
 
 Read CLAUDE.md → parse `mol_project:`. You don't run domain checks — you aggregate their output.

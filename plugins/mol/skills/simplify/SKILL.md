@@ -25,7 +25,7 @@ Write-mode counterpart to `janitor` (read-only). See `plugins/mol/rules/agent-de
 - inline a magic literal with a named constant **already defined in the file** (no new constants)
 - rename a local symbol per captured naming rule (e.g. `natoms` → `n_atoms`) **only** when local to one file and grep confirms no external caller
 - whitespace / import-order fixes the formatter missed
-- run language-canonical formatter in fix mode on touched files: `ruff format` (Python), `biome format` / `biome check --write` (TS), `cargo fmt` (Rust). Auto-fix lints (`ruff check --fix`, `biome lint --apply`, `cargo clippy --fix --allow-dirty`) in scope only when mechanical and behavior-preserving — Step 5 test gate is the safety net. See `plugins/mol/agents/janitor.md` § *Language-canonical toolchains*.
+- run the language-canonical formatter in fix mode on touched files, and auto-fix lints, per the table in `plugins/mol/agents/janitor.md` § *Language-canonical toolchains* — in scope only when mechanical and behavior-preserving; the Step 5 test gate is the safety net
 - delete stale `TODO` / `FIXME` whose reference is dead code
 
 **Refuse** (surface as "manual"):
@@ -77,12 +77,7 @@ Wait for explicit user approval. User may de-select any `[apply]` row.
 1. Apply minimal patch per finding (one Edit each when possible).
 2. After **whole batch**, run `$META.build.test`.
 3. If any Step-2-green test is now red → **revert entire batch** (`git checkout -- <files>`), tell user which finding was the suspected trigger. (Bisect is user's call.)
-4. If green: run `$META.build.check`, then **run the language-canonical trio explicitly** even when `build.check` skips one (per `plugins/mol/agents/janitor.md` § *Language-canonical toolchains*):
-   - python: `ruff check`, `ruff format --check`, `ty` (or `mypy` if unmigrated)
-   - typescript: `biome check`, `tsc --noEmit`
-   - rust: `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo check`
-
-   Non-zero from any = test regression: revert batch, surface failing tool. At `maintenance` the trio is verify-only (no fix-mode formatter, no `--fix`).
+4. If green: run `$META.build.check`, then **run the language-canonical trio explicitly** even when `build.check` skips one — commands per the table in `plugins/mol/agents/janitor.md` § *Language-canonical toolchains*. Non-zero from any = test regression: revert batch, surface failing tool. At `maintenance` the trio is verify-only (no fix-mode formatter, no `--fix`).
 
 Never partial-apply. Green-after-revert is the only acceptable failure mode.
 

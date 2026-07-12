@@ -1,20 +1,20 @@
 ---
-description: Batch-implement a chain of specs from start to finish. Given a spec prefix, discovers all matching specs in `.claude/specs/` sorted by numeric suffix, then drives the chain itself — running `/mol:impl` + `/mol:commit` + auto `/mol:close` per spec in order. After each spec a cheap-model evaluator subagent independently confirms the terminal state and acceptance ledger before the chain advances. All gating, TDD, simplify, and verdict logic lives in `/mol:impl`. Never stops to ask questions.
+description: Batch-implement a chain of specs from start to finish. Given a spec prefix, discovers all matching specs in `.claude/specs/` sorted by numeric suffix, then drives the chain itself — running `/mol:impl` per spec in order (each run commits and auto-closes itself). After each spec a cheap-model evaluator subagent independently confirms the terminal state and acceptance ledger before the chain advances. All gating, TDD, simplify, and verdict logic lives in `/mol:impl`. Never stops to ask questions.
 argument-hint: "<spec-prefix>"
 ---
 
 # /mol:impl-all — Batch Spec Chain Driver
 
-Drive an entire spec chain (`<base>-01-<phase>`, `<base>-02-<phase>`, …) by iterating `/mol:impl` on each spec in order, committing and auto-running `/mol:close` between specs. All gating, testing, simplifying, and status advancement is `/mol:impl`'s job — this skill only discovers the chain, keeps it moving, and independently verifies each step before advancing.
+Drive an entire spec chain (`<base>-01-<phase>`, `<base>-02-<phase>`, …) by iterating `/mol:impl` on each spec in order — each `/mol:impl` run commits and auto-closes its own spec. All gating, testing, simplifying, committing, and status advancement is `/mol:impl`'s job — this skill only discovers the chain, keeps it moving, and independently verifies each step before advancing.
 
 ```
 /mol:impl-all morse-bond
 → finds morse-bond-01-potential, morse-bond-02-gradient, morse-bond-03-optimization
-→ /mol:impl 01 → evaluator → /mol:commit → /mol:close → /mol:impl 02 → evaluator → /mol:commit → /mol:close → …
+→ /mol:impl 01 → evaluator → /mol:impl 02 → evaluator → /mol:impl 03 → evaluator
 → reports chain verdict
 ```
 
-**Never asks questions.** Fully autonomous — the skill drives the chain inside its own agentic loop (invoking `/mol:impl` and `/mol:commit` via the Skill tool). It does **not** rely on Claude Code's `/goal` built-in: `/goal` is user-invoked only and cannot be triggered programmatically by a skill.
+**Never asks questions.** Fully autonomous — the skill drives the chain inside its own agentic loop (invoking `/mol:impl` via the Skill tool). It does **not** rely on Claude Code's `/goal` built-in: `/goal` is user-invoked only and cannot be triggered programmatically by a skill.
 
 ---
 
@@ -49,7 +49,7 @@ For each spec, in sorted order (skip ones already terminal):
 
 **2a. Implement.** Invoke `/mol:impl <slug>` via the Skill tool. `/mol:impl` owns all guardrails (stage gate, science gate, scope classification, TDD, simplify, acceptance criteria, status advancement). Do not duplicate them here.
 
-**2b. Evaluate (independent check — the `/goal` analogue).** After `/mol:impl` exits, do **not** trust its self-report. Dispatch a lightweight evaluator subagent on the cheapest available model (Haiku class) via the Agent tool. This mirrors what `/goal` does between turns — a fast, independent model confirms the completion condition — except scoped per spec instead of per turn. The evaluator is **read-only**; it never edits specs, acceptance files, or code.
+**2b. Evaluate (independent check — the `/goal` analogue).** After `/mol:impl` exits, do **not** trust its self-report. Dispatch a lightweight read-only evaluator subagent via the Agent tool with **`model: haiku`** (per `plugins/mol/rules/model-policy.md`). This mirrors what `/goal` does between turns — a fast, independent model confirms the completion condition — except scoped per spec instead of per turn. The evaluator is **read-only**; it never edits specs, acceptance files, or code.
 
 Give the evaluator exactly this job:
 
@@ -77,19 +77,17 @@ Return strictly this shape:
   terminal_state: done | code-complete | stalled | anomaly
   verified_count: <int>
   pending_count:  <int>
-  pending:        [ { id, type, owed_evaluator } ]   # owed_evaluator per the
-                  # type → evaluator map: performance/scientific → /mol:bench,
-                  # docs → human, legacy ui_runtime → /mol:web,
-                  # code/runtime → re-run /mol:impl
+  pending:        [ { id, type, owed_evaluator } ]   # owed_evaluator per
+                  # plugins/mol/rules/evaluator-protocol.md § Type → owed evaluator
   reason:         <one line>
 ```
 
 **2c. Act on the verdict:**
 
-- `done` → `/mol:commit -m "feat(<base>): implement <phase> (<NN>/<total>)"`, then next spec.
-- `code-complete` → `/mol:commit` with whatever message `/mol:impl` parked it under, then **auto-invoke `/mol:close <slug>`** (default mode — never `--manual`). If it advances to `done` → treat as done, next spec. If still parked → record the `owed_evaluator` set from the evaluator's `pending` list; then next spec.
-- `stalled` → **stop the chain.** `/mol:impl` hit a blocker; later specs may depend on this one. Do not commit, do not skip ahead.
-- `anomaly` → **auto-invoke `/mol:close <slug>`** — a `code-complete` spec whose criteria are all `verified` is exactly what default-mode close advances. Close succeeds → treat as done, continue. Close refuses → **stop the chain** and surface the discrepancy.
+- `done` → next spec. (`/mol:impl` § 4c already committed and deleted the spec — no commit here.)
+- `code-complete` → record the `owed_evaluator` set from the evaluator's `pending` list, then next spec. (`/mol:impl` § 4d already committed and auto-invoked `/mol:close`; the park is post-close — no commit, no second close here.)
+- `stalled` → **stop the chain.** `/mol:impl` hit a blocker; later specs may depend on this one. Do not skip ahead.
+- `anomaly` → **auto-invoke `/mol:close <slug>`** (default mode — never `--manual`) as self-repair — a `code-complete` spec whose criteria are all `verified` is exactly what default-mode close advances; this covers the case where `/mol:impl`'s auto-close failed to fire. Close succeeds → treat as done, continue. Close refuses → **stop the chain** and surface the discrepancy.
 
 ### 3. Report
 
@@ -123,10 +121,10 @@ End-of-skill one-line summary: `/mol:impl-all: <N> done, <M> parked, <K> failed;
 ## Guardrails
 
 - **Never ask questions.** Autonomous batch mode — drive forward, report at end.
-- **Drive in-loop, not via `/goal`.** A skill cannot fire the `/goal` built-in (user-invoked only). Iterate the chain inside this skill's own agentic loop using the Skill tool for `/mol:impl` and `/mol:commit`. Claude Code's automatic context summarization keeps a long chain going across turns; no `/goal` substrate is needed or available.
-- **Don't duplicate `/mol:impl`.** All gates, TDD, simplify, acceptance, and status logic belongs to `/mol:impl`. This skill only iterates, verifies, and commits.
+- **Drive in-loop, not via `/goal`.** A skill cannot fire the `/goal` built-in (user-invoked only). Iterate the chain inside this skill's own agentic loop using the Skill tool for `/mol:impl` (and `/mol:close` on `anomaly`). Claude Code's automatic context summarization keeps a long chain going across turns; no `/goal` substrate is needed or available.
+- **Don't duplicate `/mol:impl`.** All gates, TDD, simplify, acceptance, commit, and status logic belongs to `/mol:impl`. This skill only iterates and verifies.
 - **Trust the evaluator, not the self-report.** Per-spec advancement is gated on the independent Haiku-class evaluator subagent reading the actual spec + acceptance ledger — the same independence principle as `/goal`'s between-turn check.
 - **Stop on stall.** If the evaluator returns `stalled`, stop the chain — later specs may depend on this one. `anomaly` is first self-repaired via `/mol:close`; stop only if close refuses.
 - **Auto-close every spec, never `--manual`.** `/mol:close` runs in default mode after each spec; manual attestation stays an operator-only decision.
-- **Commit every spec.** Each spec gets its own checkpoint so the chain is reviewable mid-flight.
+- **One checkpoint per spec — owned by `/mol:impl`.** Its § 4c/§ 4d finalize commits every spec, so the chain stays reviewable mid-flight; this skill never invokes `/mol:commit` or duplicates the close.
 - **Read-only evaluator.** The evaluator subagent inspects and reports; it never edits specs, acceptance files, or code. Only `/mol:impl` (and `/mol:close`) may mutate status.

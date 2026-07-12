@@ -1,6 +1,6 @@
 {
   "name": "mol-plugin",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Maintenance toolkit for the molcrafts marketplace — scaffold, audit, and release skills and plugins.",
   "author": { "name": "MolCrafts" },
   "homepage": "https://github.com/MolCrafts/claude-plugin",

@@ -1,7 +1,7 @@
 {
   "name": "mol",
-  "version": "0.8.0",
-  "description": "Project workflow toolkit — 25 skills + 17 single-axis agents organized around the planner→generator→evaluator harness pattern. Adapts per project via mol_project frontmatter.",
+  "version": "0.9.0",
+  "description": "Project workflow toolkit — 26 skills + 20 single-axis agents organized around the planner→generator→evaluator harness pattern. Adapts per project via mol_project frontmatter.",
   "author": { "name": "MolCrafts" },
   "homepage": "https://github.com/MolCrafts/claude-plugin",
   "repository": "https://github.com/MolCrafts/claude-plugin",

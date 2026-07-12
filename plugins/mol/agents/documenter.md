@@ -2,7 +2,7 @@
 name: documenter
 description: Documentation specialist — docstring audits in the style set by mol_project.doc.style, plus narrative tutorials. Writes docs.
 tools: Read, Grep, Glob, Write, Edit
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:`. Read `mol_project.notes_path` for recent doc decisions.

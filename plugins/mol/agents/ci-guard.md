@@ -2,7 +2,7 @@
 name: ci-guard
 description: CI-parity reviewer — detects the CI config, runs a tiered local equivalent (commit / push / merge), and reports what the remote pipeline will do. Read-only.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: sonnet
 ---
 
 Read CLAUDE.md → parse `mol_project:`. Read `mol_project.notes_path` for recent CI / release decisions. If `mol_project.ci` present, use verbatim; else detect from repo.

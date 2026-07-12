@@ -67,13 +67,7 @@ Emit one block per evaluator-protocol shape (`plugins/mol/rules/evaluator-protoc
 - `<bench.repo>/.benchmarks/<machine>/<slug>_ac-007.json`
 ```
 
-Then update `acceptance.md` for each handled criterion (the carved-out exception in `plugins/mol/rules/evaluator-protocol.md` § *Field semantics*):
-
-- `✅ pass` → `status: verified`
-- `❌ fail` → `status: failed`
-- `⏭ skip` → leave `status` unchanged
-
-Set `last_checked: <today's ISO date>` alongside any flipped status. Touch only `status` and `last_checked` on handled criteria; every other field stays immutable.
+Then update `acceptance.md` for each handled criterion per `plugins/mol/rules/evaluator-protocol.md` § *Ledger write-back* (pass → verified, fail → failed, skip → unchanged; `last_checked` beside any flip; touch nothing else).
 
 End with one-line summary:
 
@@ -119,7 +113,7 @@ For this skill to verify a criterion, the spec author (`/mol:spec`) should produ
 ## Guardrails
 
 - **Read-only on source.** Never edits implementation code, bench tests, or the bench repo. A failing comparison is fixed by `/mol:fix` in the target project (real regression) or by hand in the bench repo (wrong tolerance / test bug) — not here.
-- **Write-narrow on `acceptance.md`.** Only `status` + `last_checked` on just-evaluated criteria, per evaluator-protocol exception. Never edit spec body or other fields.
+- **Write-narrow on `acceptance.md`.** Only `status` + `last_checked` on just-evaluated criteria, per evaluator-protocol § *Ledger write-back*. Never edit spec body or other fields.
 - **The bench repo is authoritative.** Tolerances, reference imports, fixtures, and machine-name partitioning live in the bench repo. This skill does not override them or shell out to other benchmark frameworks. (A C++ / Rust-native suite would need its own evaluator skill — `/mol:bench` is pytest-benchmark-only by design.)
 - **Self-skip, don't crash.** Missing `bench.repo`, missing `pytest`, or missing `evaluator_hint` on a criterion → clean exit / `⏭ skip` with the specific gap named.
 - **No auto-loop.** Failed verdict does not trigger a re-run after a code change; loop-back belongs to `/mol:impl` or the user.

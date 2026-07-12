@@ -63,10 +63,11 @@ Parse `criteria:` from acceptance frontmatter. Categorise:
 ## 2. Default mode — `/mol:close <slug>`
 
 Walk **B** criteria first: re-evaluate each `pass_when` literally. If
-the condition still holds, flip to `status: verified` with
-`last_checked: <today>`. If it now fails, flip to `status: failed`,
-print the failure, **abort** (the spec is broken; do not advance to
-`done` until the operator fixes it).
+the condition still holds, flip to `status: verified`; if it now
+fails, flip to `status: failed` — both per
+`plugins/mol/rules/evaluator-protocol.md` § *Ledger write-back*. On a
+failure, print it and **abort** (the spec is broken; do not advance
+to `done` until the operator fixes it).
 
 If after **B** is processed all criteria are `verified` (i.e. **C**
 is empty), proceed to § 4 (Advance to done).
@@ -97,13 +98,11 @@ Exit without writing anything. Do not advance status.
 For each criterion in **C**:
 
 1. Print the criterion's `id`, `summary`, and full `pass_when` block.
-2. Flip `status: pending` → `status: verified`. Write
-   `last_checked: <today>`. Append a `verified_by: human` field next
-   to `last_checked` so the audit trail distinguishes
-   human-asserted-met from machine-checked-met. (`verified_by` is a
-   protocol extension — the evaluator-protocol allows status +
-   last_checked mutation; `verified_by` is informational and may be
-   stripped by future tooling, but is tolerated.)
+2. Flip `status: pending` → `status: verified` per
+   `plugins/mol/rules/evaluator-protocol.md` § *Ledger write-back*,
+   including its `--manual` extension — `verified_by: human` beside
+   `last_checked` — so the audit trail distinguishes
+   human-asserted-met from machine-checked-met.
 
 Then proceed to § 4.
 

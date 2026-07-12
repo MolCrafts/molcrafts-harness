@@ -2,7 +2,7 @@
 name: spec-writer
 description: Spec drafting specialist — produces spec body (Summary / Domain basis / Design / Files / Tasks / Testing / Out of scope) plus binding `<slug>.acceptance.md` criteria. Used by `/mol:spec`; returns text only, never writes to disk.
 tools: Read, Grep, Glob
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:` (`$META`). Read `mol_project.notes_path` for captured rules affecting spec format (naming, tolerances, units).

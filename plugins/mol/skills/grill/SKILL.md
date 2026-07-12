@@ -15,7 +15,7 @@ Relentless interview that takes a plan you *already have* and hammers it into sh
 
 Restate the plan / design being grilled in one sentence, in the user's language. List the code surface you read first — files, functions, related specs under `.claude/specs/`, notes under `.claude/notes/` — so questions and recommendations are grounded, not guessed.
 
-No actual plan supplied (just an open-ended topic or "should we…?") → this is `/mol:discuss` territory, not grilling. Say so and redirect; do not fabricate a plan to interrogate.
+No actual plan supplied (just an open-ended topic or "should we…?") → redirect to `/mol:discuss`; do not fabricate a plan to interrogate.
 
 ### 2. Build the decision tree
 
@@ -78,7 +78,7 @@ or
 
 - **Read-only on code.** Never edits files; never writes specs or notes. Persistence is `/mol:spec` (plan) or `/mol:note` (a rule that fell out).
 - **One question per turn.** Never batch questions.
-- **Always recommend an answer.** A bare open question is a `/mol:discuss`, not a grill.
+- **Always recommend an answer.** Never ask a bare open question.
 - **Self-answer from the codebase first.** Only ask the user what the code can't tell you.
-- **No plan → no grill.** Missing a concrete plan, redirect to `/mol:discuss`; never invent one to interrogate.
+- **No plan → no grill.** Redirect per Step 1.
 - **Do not auto-invoke `/mol:spec` or `/mol:impl`.** Converge hands off; the user decides when to spec.

@@ -138,6 +138,11 @@ The two layers must not collapse. A skill must not contain expert
 knowledge that belongs in an agent. An agent must not contain workflow
 choreography that belongs in a skill.
 
+Which model runs each layer — the two conversation modes
+(advisor / orchestration) and the opus / sonnet / haiku agent tiers —
+is defined in `plugins/mol/rules/model-policy.md`; in orchestration
+mode the main loop never authors production source.
+
 ## 3. Why This Split
 
 1. **Reusability.** Multiple skills delegate to the same agent (the
@@ -148,7 +153,8 @@ choreography that belongs in a skill.
    one message; agents have isolated context windows so the
    orchestrator stays small.
 3. **Safety.** Read-only agents (`architect`, `optimizer`, `scientist`,
-   `compute-scientist`, `undergrad`, `pm`, `ci-guard`, `reviewer`)
+   `compute-scientist`, `undergrad`, `pm`, `ci-guard`, `ffi-guard`,
+   `reviewer`)
    cannot accidentally edit code; write-capable agents (`tester`,
    `documenter`) have edit rights only inside their declared scope.
 

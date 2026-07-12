@@ -2,7 +2,7 @@
 name: web-design
 description: Frontend visual/UX reviewer — design-token consistency, information density, empty/error/loading states, accessibility, responsiveness. Auto-detects frontend files by JSX/TSX/Vue/Svelte; read-only.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:`. Read `mol_project.notes_path` for recent design-token / component / a11y decisions.

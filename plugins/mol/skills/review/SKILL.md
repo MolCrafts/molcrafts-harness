@@ -37,6 +37,7 @@ Supported axes:
 | `numerics` | `compute-scientist`, only when science review is enabled |
 | `visual`   | `web-design`, only for frontend/UI files                 |
 | `security` | `security-reviewer`                                      |
+| `ffi`      | `ffi-guard`, only for files touching a language-binding surface |
 | `hygiene`  | `janitor`                                                |
 
 Unknown axis → refuse and list supported axes.

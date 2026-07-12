@@ -2,7 +2,7 @@
 name: tester
 description: Test engineer — write-mode (used by `/mol:impl`, `/mol:fix`) authors RED-before-GREEN failing tests; analyze-mode (used by `/mol:test`) audits coverage/tolerance/determinism. Writes test files only in write-mode; never edits production code.
 tools: Read, Grep, Glob, Bash, Write, Edit
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:`. Read `mol_project.notes_path` for recent testing decisions before writing tests.

@@ -13,18 +13,19 @@ without re-deriving the rules.
 claude-plugin/
 ├── .claude-plugin/marketplace.json   # marketplace registry
 ├── plugins/
-│   ├── mol/                          # 25 workflow skills + 17 single-axis agents
+│   ├── mol/                          # workflow skills + single-axis agents (counts live in marketplace.json)
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── README.md
 │   │   ├── rules/
 │   │   │   ├── claude-md-metadata.md # mol_project frontmatter contract
 │   │   │   ├── design-principles.md  # harness layering + design rules
 │   │   │   ├── agent-design.md       # producer/reviewer split rationale
+│   │   │   ├── model-policy.md       # conversation modes + agent model tiers
 │   │   │   ├── evaluator-protocol.md # planner/generator/evaluator contract
 │   │   │   ├── large-spec-split.md   # auto-split rule for oversized specs
 │   │   │   └── stage-policy.md       # mol_project.stage behavior matrix
-│   │   ├── skills/                   # 25 SKILL.md (incl. bootstrap, grill, impl-all, map, simplify, web)
-│   │   └── agents/                   # 17 agent .md (incl. librarian, spec-writer, playwright-evaluator)
+│   │   ├── skills/                   # one dir per skill (incl. bootstrap, grill, impl-all, map, simplify, web)
+│   │   └── agents/                   # one .md per agent (incl. librarian, implementer, spec-writer)
 │   └── mol-plugin/                   # 4 marketplace-maintenance skills
 │       ├── .claude-plugin/plugin.json
 │       ├── README.md

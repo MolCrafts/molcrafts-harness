@@ -2,7 +2,7 @@
 name: debugger
 description: Failure-diagnosis reviewer — classifies build/test/runtime failures, identifies root cause, proposes a fix and preventive test. Read-only; used by `/mol:debug` and `/mol:fix` Step 2.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:` (`$META`). Read `mol_project.notes_path` for recent debugging conventions / known-flaky tests.

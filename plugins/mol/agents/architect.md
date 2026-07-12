@@ -2,7 +2,7 @@
 name: architect
 description: Architecture guardian — validates module boundaries, dependency graph, layer rules, and pattern compliance against CLAUDE.md. Read-only.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:` frontmatter. Read section named by `mol_project.arch.rules_section` (plus `mol_project.notes_path` for recent decisions) before any checks.

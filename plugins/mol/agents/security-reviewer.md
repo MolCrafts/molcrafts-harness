@@ -2,7 +2,7 @@
 name: security-reviewer
 description: Adversarial-input reviewer — scans for shell/SQL injection, path traversal, SSRF, prompt injection, deserialization, secret leakage, missing authorization. Auto-detects attack surface per file; read-only.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:`. Read `mol_project.notes_path` for threat-model / trust-boundary / accepted-risk decisions.

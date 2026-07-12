@@ -80,14 +80,13 @@ git add plugins/*/.claude-plugin/plugin.json
 git add .claude-plugin/marketplace.json
 ```
 
-Run `/mol:ship commit`. **BLOCK** → stop and surface blocker. **PROCEED** → commit + tag (skill provides its own message; does not delegate to `/mol:commit`):
+Invoke `/mol:commit "release: v<new>"` — it runs the `/mol:ship commit` gate itself (no separate `/mol:ship` call here; that would double-run the gate). **BLOCK** → stop and surface blocker. Approval was already collected in § 6, so confirm the shown message unchanged. After the commit lands:
 
 ```
-git commit -m "release: v<new>"
 git tag v<new>
 ```
 
-One commit, one tag, on `release/v<new>`. Master untouched. **Do not push** — publish phase is § 8.
+Tag creation stays here — `/mol:commit` never tags. One commit, one tag, on `release/v<new>`. Master untouched. **Do not push** — publish phase is § 8.
 
 ### 8. Report
 
@@ -110,20 +109,12 @@ Next steps to publish v<new>:
        git pull upstream master
        git branch -d release/v<new>
 
-A note on merge style for step 3: a *merge-commit* style merge
-preserves your local tag's commit SHA, so step 4 just works. A
-*squash* or *rebase* merge produces a different SHA on
-upstream/master, making the local tag orphan; /mol:tag's
-orphan-tag guard detects this and prints a retag recovery path.
-Pick merge-commit style if you can.
-
-Why both halves: the marketplace.json version bump lives in the
-release *commit*. If you only push the tag, the release tarball
-is correct, but marketplace.json on upstream's default branch
-still shows the old version, so users browsing the registry see
-the previous release. The branch-merge half is what makes the new
-version visible; the tag-push half is what triggers the GitHub
-Actions release workflow.
+Step 4's orphan-tag guard, the merge-style caveat (prefer a
+merge-commit merge; squash/rebase orphans the local tag), and the
+recovery paths are owned by /mol:tag Step 3 — see
+plugins/mol/skills/tag/SKILL.md. Short version: the version bump
+lives in the release *commit* (must merge first); the *tag* push
+triggers the release workflow.
 ```
 
 Single-remote layouts (no `upstream`) collapse 1–3 to one `git push` to the canonical default branch (still from `release/v<new>`, then fast-forward master locally); two phases (branch then tag) still apply.

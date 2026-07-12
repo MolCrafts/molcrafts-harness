@@ -51,7 +51,9 @@ For each `plugins/<plugin>/skills/<skill>/SKILL.md`:
 For each `plugins/<plugin>/agents/<agent>.md`:
 
 - YAML frontmatter parses
-- required fields per existing agents in `plugins/mol/agents/` (`name`, `description`, `tools`)
+- required fields per existing agents in `plugins/mol/agents/` (`name`, `description`, `tools`, `model`)
+- `model` is one of `opus | sonnet | haiku | inherit`
+- for agents under `plugins/mol/agents/`: `model: inherit` → 🟡 (policy requires an explicit tier — `plugins/mol/rules/model-policy.md`)
 - `tools` lists only what the role needs (read-only agents must not declare `Write`/`Edit`)
 - body's first non-frontmatter line mentions reading CLAUDE.md (Knowledge rule K1)
 

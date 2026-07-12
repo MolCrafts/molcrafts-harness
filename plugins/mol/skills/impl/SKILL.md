@@ -9,6 +9,8 @@ Read CLAUDE.md → parse `mol_project:` (`$META`); else emit adoption hint and s
 
 `/mol:impl` orchestrates a spec's Tasks checklist: pre-flight → iterate each task (RED → GREEN → tick) → verify → simplify → finalize (acceptance ledger + commit + auto-close). `/mol:simplify` and `/mol:close` run automatically every pass — never prompt the operator for either. All stage-policy decisions delegate to `/mol:simplify` (the single backward-compat gatekeeper, `plugins/mol/rules/stage-policy.md`).
 
+Orchestration mode per `plugins/mol/rules/model-policy.md`: this loop plans, routes, gates, and verifies — it never authors production source. Tests come from `tester`, production code from `implementer`.
+
 ---
 
 ## 1. Pre-flight
@@ -68,12 +70,12 @@ First **Write failing tests** task → delegate to `tester` agent. Required cate
 ### 2b. Implement (GREEN)
 
 For each remaining task:
-1. Make the change.
-2. Run `$META.build.test`; confirm green.
-3. Stay inside the layer from 1d.
-4. **Tick that task's box.**
+1. Delegate to `implementer` agent with: spec path, the task line, the RED test reference from 2a (command in `$META.build.test_single` form), the spec's Files section as scope, and the layer from 1d.
+2. `verdict: green` → run `$META.build.test_single` yourself to confirm (never trust the self-report), then **tick that task's box** — ticking stays here; `implementer` never ticks.
+3. `still-red` → re-delegate once with the failure output attached; still red after the retry → stop, re-invoke `/mol:spec` (supersede).
+4. `blocked:` → surface the blocker verbatim and stop (missing RED test → run 2a for that symbol; spec ambiguity → `/mol:spec`).
 
-Task infeasible → stop, re-invoke `/mol:spec` (supersede).
+Revert on regression is this skill's job (and `/mol:simplify`'s inside § 3); `implementer` never reverts.
 
 Every line — production or test — satisfies `$META.build.check`. No escape-hatch types (`Any`, `any`, `interface{}`).
 
@@ -120,11 +122,7 @@ All hold:
 
 1. Mark `status: code-complete`.
 2. Invoke `/mol:commit` (same as done path). BLOCK → drop to `in-progress`, stop.
-3. List the criteria left at `pending`, **grouped by evaluator owed** (per `evaluator-protocol.md`):
-   - `type: performance | scientific` → owed to `/mol:bench` (or `/mol:close --manual` if `mol_project.bench.repo` is not configured)
-   - `type: docs` → owed to a human reviewer (or `/mol:close --manual`)
-   - legacy `type: ui_runtime` (pre-2026-06 specs) → `/mol:web` or `/mol:close --manual`
-   - any criterion with `evaluator_hint:` set → owed to that specific evaluator
+3. List the criteria left at `pending`, **grouped by evaluator owed** per the routing table in `plugins/mol/rules/evaluator-protocol.md` § *Type → owed evaluator*.
 4. **Auto-close.** Invoke `/mol:close <slug>` (default mode) — no prompt. It re-checks the ledger and either advances to `done` + deletes spec/acceptance/INDEX, or leaves the spec parked and names what each pending criterion still owes.
 5. If still parked after auto-close, end with one line — `parked at code-complete; owes <evaluator(s)> for <criterion ids>` — and stop. No recipe block, no questions.
 6. Never delete spec/acceptance/INDEX directly on this path — deletion is `/mol:close`'s job.

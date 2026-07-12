@@ -2,7 +2,7 @@
 name: compute-scientist
 description: Numerical stability, algorithmic complexity, reproducibility, and HPC-scaling reviewer. Covers floating-point hazards, O(N²) traps, determinism controls, memory scaling, and distributed-training readiness. Read-only.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:`. Read `mol_project.notes_path` for recent numerics / scaling / reproducibility decisions.

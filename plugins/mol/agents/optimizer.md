@@ -2,7 +2,7 @@
 name: optimizer
 description: Performance engineer — flags hot-path bottlenecks and anti-patterns, auto-selecting catalogs by file extension/imports. Read-only.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: opus
 ---
 
 Read CLAUDE.md → parse `mol_project:`. Read `mol_project.notes_path` for recent perf decisions.

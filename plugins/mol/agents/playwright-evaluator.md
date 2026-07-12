@@ -2,7 +2,7 @@
 name: playwright-evaluator
 description: Sub-agent of `/mol:web` — verifies one UI check (a spec-body `## UI verification` item or a legacy `ui_runtime` acceptance criterion) via the user's browser-automation MCP and returns pass/fail/skip + evidence + artifact paths. Never edits code; never decides retries.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: sonnet
 ---
 
 Read CLAUDE.md → parse `mol_project:` so per-project overrides (`mol_project.dev.ready_pattern`, artifact paths, custom timeouts) are respected if parent passed them. Invoked by `/mol:web` — one criterion at a time — to verify a single acceptance criterion by driving a running web app through whatever browser-automation MCP server the user has.

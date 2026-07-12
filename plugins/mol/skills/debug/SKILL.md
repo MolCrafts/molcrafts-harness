@@ -21,4 +21,4 @@ Delegate entire diagnosis to `debugger` agent with `$ARGUMENTS` as failure sympt
 
 Render agent output verbatim. Do not re-summarize — agent's structured report is the contract `/mol:fix` reads.
 
-End with the one-line F2 summary: *"diagnosis only — invoke `/mol:fix <bug>` to apply the recommendation."*
+End with the one-line F2 summary: *"diagnosis only — invoke `/mol:fix <bug>` to apply; it consumes the report above without re-running diagnosis."*
