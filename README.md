@@ -14,6 +14,7 @@ without re-deriving the rules.
 
 ```
 claude-plugin/
+├── .github/workflows/validate-plugins.yml # stdlib-only metadata CI
 ├── .claude-plugin/marketplace.json   # marketplace registry
 ├── .agents/plugins/marketplace.json  # native Codex marketplace registry
 ├── plugins/
@@ -31,10 +32,12 @@ claude-plugin/
 │   │   │   └── stage-policy.md       # mol_project.stage behavior matrix
 │   │   ├── skills/                   # shared Claude/Codex skills + one CODEX.md runtime adapter
 │   │   └── agents/                   # one .md per agent (incl. librarian, implementer, spec-writer)
-│   └── mol-plugin/                   # 4 marketplace-maintenance skills
+│   └── mol-plugin/                   # 5 marketplace-maintenance skills
 │       ├── .claude-plugin/plugin.json
 │       ├── .codex-plugin/plugin.json
 │       ├── README.md
+│       ├── hooks/hooks.json          # developer-only post-edit validation
+│       ├── scripts/                  # deterministic dual-runtime validation
 │       └── skills/                   # shared skills + one CODEX.md runtime adapter
 ├── LICENSE
 └── README.md
@@ -45,7 +48,7 @@ claude-plugin/
 | Plugin | Purpose |
 |---|---|
 | [`mol`](plugins/mol/README.md) | Day-to-day project work, organized around the planner→generator→evaluator harness pattern: `/mol:bootstrap` (harness lifecycle — initialize, audit, repair) → `/mol:spec` (planner — self-validates spec quality and negotiates the binding `<slug>.acceptance.md` contract, with each `ac-*` carrying a `status: pending → verified / failed` ledger) → `/mol:impl` (generator — refuses without both files; parks at `status: code-complete` until runtime evaluators verify their criteria) → `/mol:review [--axis=<name>]` (unified static evaluator; aggregates 10 single-axis reviewers via the `reviewer` agent) → `/mol:web` (runtime UI evaluator; uses whatever browser-automation MCP you installed). Plus `/mol:fix`, `/mol:refactor`, `/mol:simplify` (apply janitor hygiene + enforce the language-canonical toolchain trio: ruff + ty / biome + tsc / cargo fmt + clippy + cargo check), `/mol:ship`, git workflow chain, …. Adapts to each project via `mol_project:` frontmatter. |
-| [`mol-plugin`](plugins/mol-plugin/README.md) | Maintaining this marketplace: `/mol-plugin:new-skill`, `/mol-plugin:check` (marketplace self-audit), `/mol-plugin:release`. |
+| [`mol-plugin`](plugins/mol-plugin/README.md) | Maintaining this marketplace: scaffold skills, run deterministic audits, smoke-test Claude/Codex installation, clean up content, and cut releases. |
 
 ## Install
 

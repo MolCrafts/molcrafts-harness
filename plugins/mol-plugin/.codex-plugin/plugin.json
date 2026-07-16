@@ -1,7 +1,7 @@
 {
   "name": "mol-plugin",
   "version": "0.9.1",
-  "description": "Maintenance toolkit for the MolCrafts plugin marketplace, including scaffolding, audits, cleanup, and releases.",
+  "description": "Maintenance toolkit for the MolCrafts plugin marketplace, including scaffolding, audits, smoke tests, cleanup, and releases.",
   "author": {
     "name": "MolCrafts"
   },
@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Mol Plugin",
     "shortDescription": "Maintain the MolCrafts plugin marketplace",
-    "longDescription": "Create, audit, clean up, and release plugins in the MolCrafts marketplace while preserving Claude Code and Codex compatibility.",
+    "longDescription": "Create, audit, smoke-test, clean up, and release plugins in the MolCrafts marketplace while preserving Claude Code and Codex compatibility.",
     "developerName": "MolCrafts",
     "category": "Productivity",
     "capabilities": [

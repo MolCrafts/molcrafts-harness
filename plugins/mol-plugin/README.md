@@ -37,9 +37,24 @@ Restart Codex and test updated skills in a new thread.
 | Skill | Purpose |
 |---|---|
 | `/mol-plugin:new-skill` | Scaffold one shared Claude/Codex skill in any plugin (`mol`, `mol-plugin`). Authors a complete, runnable SKILL.md (no TODO placeholders), links the common Codex adapter, and appends one README row. Runs `/mol-plugin:check`; does not touch plugin manifests. |
-| `/mol-plugin:check` | The marketplace's self-audit. Validates both marketplace formats, both manifests for every plugin, every shared `SKILL.md`, each Codex adapter, and every agent. Parallel to `/mol:bootstrap`, but for plugin source; read-only. |
+| `/mol-plugin:check` | The marketplace's self-audit. Runs the deterministic dual-runtime validator, then reviews semantic boundaries that scripts cannot judge. Parallel to `/mol:bootstrap`, but for plugin source; read-only. |
+| `/mol-plugin:smoke` | Validate with Claude Code's native CLI and install both plugins through an isolated temporary Codex home. Never changes user plugin configuration; `--static-only` skips installation. |
 | `/mol-plugin:release` | Unified version bump (patch/minor/major) — advances every Claude and Codex plugin manifest plus the Claude marketplace entries to one shared version, gates through `/mol:ship commit`, and produces one local commit + one local `v<X.Y.Z>` tag. Does not push or write a CHANGELOG. |
 | `/mol-plugin:janitor` | Content-side counterpart to `/mol-plugin:check`: walks every `SKILL.md` and agent `.md` in the marketplace, normalizes prose to plain imperative rules, enforces one responsibility per file, and removes duplicate responsibilities. Applies safe rewrites in place; surfaces splits, moves, merges, and contract-surface changes as AMBIGUITY without editing. Writes inside `plugins/<plugin>/skills/` and `plugins/<plugin>/agents/` only. |
+
+## Deterministic validation
+
+Run the same stdlib-only validator used by `/mol-plugin:check`, CI, and the
+developer hook:
+
+```bash
+python3 plugins/mol-plugin/scripts/validate_repository.py
+```
+
+Installing `mol-plugin` also loads `hooks/hooks.json`. After `Write` or `Edit`,
+the hook runs the validator only when the current repository contains the
+MolCrafts marketplace; it is a no-op everywhere else. `mol` itself ships no
+hook, so normal project users are unaffected.
 
 ## Workflow
 
@@ -47,6 +62,7 @@ Restart Codex and test updated skills in a new thread.
 /mol-plugin:new-skill mol:bench "Microbenchmark hot paths"
 # author the skill body
 /mol-plugin:check
+/mol-plugin:smoke --static-only
 # fix anything red
 /mol-plugin:release minor   # bumps every plugin to one shared version
 /mol:tag                    # push the v<X.Y.Z> tag to upstream
