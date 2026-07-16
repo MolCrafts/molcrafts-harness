@@ -1,7 +1,10 @@
 ---
+name: impl
 description: Implementation workflow — scope → spec → acceptance gate → TDD → implement → verify → auto simplify + close. Use after `/mol:spec` has produced an approved spec + acceptance file; writes code, tests, and docs while ticking the spec's Tasks/acceptance checkboxes, then auto-invokes `/mol:simplify` and `/mol:close` without prompting.
 argument-hint: "<feature description or path to spec file>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:impl — Spec Tasks Orchestrator
 

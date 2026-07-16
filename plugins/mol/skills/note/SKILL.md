@@ -1,7 +1,10 @@
 ---
+name: note
 description: Capture an architectural decision into the project's notes file. Detects conflicts with existing notes or CLAUDE.md, cleans up stale notes, and promotes stable rules into CLAUDE.md. Writes notes and (when promoting) CLAUDE.md.
 argument-hint: "<what to remember>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:note — Architecture Note
 

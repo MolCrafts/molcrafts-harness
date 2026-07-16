@@ -1,7 +1,10 @@
 ---
+name: bench
 description: "External benchmark evaluator — verifies `type: scientific` and `type: performance` criteria from `<slug>.acceptance.md` by running the project's separate `bm_*` pytest-benchmark suite (e.g. `bm-molrs-molpy/`), which pairs each kernel with an equality check against a user-named reference library (freud, scipy, LAMMPS, …). The bench repo owns the test bodies, reference imports, tolerances, and result storage; this skill selects tests per criterion, runs pytest, reports the verdict, and updates `acceptance.md`. Skips cleanly when no bench repo is configured."
 argument-hint: "<spec-slug> [<criterion-id>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:bench — External Benchmark Evaluator
 

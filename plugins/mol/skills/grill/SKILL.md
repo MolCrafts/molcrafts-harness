@@ -1,7 +1,10 @@
 ---
+name: grill
 description: Relentless one-question-at-a-time interview that hardens an already-formed plan or design before building — walks the decision tree dependency-first, recommends an answer for every question, and self-answers from the codebase where it can. Read-only; hands the sharpened plan to `/mol:spec`. Distinct from `/mol:discuss` (explores *whether / what* to do) — `/mol:grill` stress-tests a plan you *already have*. Supports Chinese and English.
 argument-hint: "<the plan or design to stress-test>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:grill — Plan Interrogation
 

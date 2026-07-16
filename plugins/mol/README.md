@@ -10,12 +10,18 @@ the *next* agent that walks in succeeds without re-deriving the rules.
 refactor, simplify, ship. The harness *itself* (CLAUDE.md, `.claude/notes/`,
 `.claude/specs/`) is installed and maintained by `/mol:bootstrap`.
 
+Claude Code is the canonical runtime. Codex loads the same skills through the
+plugin's native `.codex-plugin/plugin.json`; `skills/CODEX.md` translates tool,
+subagent, and plugin-path concepts without duplicating workflow bodies.
+
 Skills adapt to each project by reading a `mol_project:` YAML
 frontmatter block at the top of the project's `CLAUDE.md` — so one
 plugin serves Atomiverse, molpy, molexp, molrs, molvis, molq, and
 molnex without per-project forks.
 
 ## Install
+
+### Claude Code (primary)
 
 ```
 /plugin marketplace add https://github.com/MolCrafts/claude-plugin
@@ -24,6 +30,17 @@ molnex without per-project forks.
 
 For local development:
 `/plugin marketplace add <path-to-claude-plugin-checkout>`.
+
+### Codex
+
+```bash
+codex plugin marketplace add MolCrafts/claude-plugin
+codex plugin add mol@molcrafts
+```
+
+For local development:
+`codex plugin marketplace add <path-to-claude-plugin-checkout>`.
+Restart Codex and test updated skills in a new thread.
 
 ## Four-zone layering (active vs passive)
 

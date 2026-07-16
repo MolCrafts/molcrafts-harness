@@ -1,7 +1,10 @@
 ---
+name: fix
 description: Minimal-diff bug fix — reproduce, diagnose, patch the smallest surface, verify. Writes code.
 argument-hint: "<bug description, error message, or failing test>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:fix — Quick Fix
 

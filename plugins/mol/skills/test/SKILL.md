@@ -1,7 +1,10 @@
 ---
+name: test
 description: Run the project's test suite and analyze test quality, coverage gaps, and missing categories.
 argument-hint: "[module or test path]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:test — Test & Coverage Analysis
 

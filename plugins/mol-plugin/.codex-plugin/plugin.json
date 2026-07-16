@@ -1,0 +1,34 @@
+{
+  "name": "mol-plugin",
+  "version": "0.9.1",
+  "description": "Maintenance toolkit for the MolCrafts plugin marketplace, including scaffolding, audits, cleanup, and releases.",
+  "author": {
+    "name": "MolCrafts"
+  },
+  "homepage": "https://github.com/MolCrafts/claude-plugin",
+  "repository": "https://github.com/MolCrafts/claude-plugin",
+  "license": "MIT",
+  "keywords": [
+    "plugin-development",
+    "molcrafts",
+    "scaffolding",
+    "release"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Mol Plugin",
+    "shortDescription": "Maintain the MolCrafts plugin marketplace",
+    "longDescription": "Create, audit, clean up, and release plugins in the MolCrafts marketplace while preserving Claude Code and Codex compatibility.",
+    "developerName": "MolCrafts",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Check the MolCrafts plugin marketplace.",
+      "Create a new cross-platform plugin skill.",
+      "Prepare a unified plugin release."
+    ]
+  }
+}

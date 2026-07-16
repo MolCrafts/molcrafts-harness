@@ -1,7 +1,10 @@
 ---
+name: janitor
 description: Review every SKILL.md and agent .md in the marketplace for clarity, orthogonality, and brevity, applying safe rewrites in place and flagging judgement calls as AMBIGUITY. Pairs with `/mol-plugin:check` — that skill audits structure, this skill audits content.
 argument-hint: "[<plugin>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol-plugin:janitor — Skill & Agent Content Janitor
 
@@ -93,6 +96,7 @@ End with one-line F2 summary: files reviewed, lines simplified, overlap removed,
 
 - **Do not invent new architecture.** Two files overlap → AMBIGUITY; never merge/rename/move on your own.
 - **Do not change contract surfaces.** Frontmatter `description`, `argument-hint`, H1. Tighten language inside; never alter what the skill *is*.
+- **Preserve cross-platform markers.** `name` and the one-line `../CODEX.md` directive are required shared-skill structure, not duplicate responsibility.
 - **Do not edit non-target files.** READMEs, `plugin.json`, `marketplace.json`, `docs/` are out of scope.
 - **Do not touch user-authored prose** in `docs/` or `tests/`. Janitor scope is `skills/` and `agents/` only.
 - **Behavior-preserving by contract.** Pass must not change which skills exist, how they're invoked, or what they promise. Rewrite would → revert.

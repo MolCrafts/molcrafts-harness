@@ -1,7 +1,10 @@
 ---
+name: close
 description: "Advance a `code-complete` spec to `done` and delete it. Default mode re-checks the acceptance ledger and closes if every criterion is already `status: verified` (the common path after `/mol:bench` or `/mol:web` has run). With `--manual`, the operator asserts the remaining pending criteria are observably met outside the harness (e.g. when `mol_project.bench.repo` is not configured); the skill flips them to `verified` with an audit note, advances to `done`, and deletes spec + acceptance + INDEX entry."
 argument-hint: "<spec-slug> [--manual]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:close — Spec Closer
 

@@ -1,7 +1,10 @@
 ---
-description: Cut a unified release of the molcrafts marketplace — bumps every plugin's `plugin.json` + matching `marketplace.json` entries (all plugins share one version), runs `/mol-plugin:check`, and prepares one local commit + tag `v<X.Y.Z>`. Does not push; pair with `/mol:push` + `/mol:pr` + `/mol:tag` to publish.
+name: release
+description: Cut a unified Claude-first MolCrafts marketplace release — bumps both manifests for every plugin plus Claude marketplace versions, validates Codex compatibility, and prepares one local commit and tag. Does not push; pair with `/mol:push`, `/mol:pr`, and `/mol:tag`.
 argument-hint: "<patch | minor | major>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol-plugin:release — Plugin Release
 
@@ -10,8 +13,11 @@ Cut a unified release of the molcrafts marketplace. All plugins share one versio
 Write surface:
 
 - `plugins/<plugin>/.claude-plugin/plugin.json` (`version` field) for every plugin
+- `plugins/<plugin>/.codex-plugin/plugin.json` (`version` field) for every plugin
 - `.claude-plugin/marketplace.json` (matching `version` for every plugin entry)
 - one git commit + one git tag (when user opts in)
+
+`.agents/plugins/marketplace.json` intentionally has no duplicate version field and is never changed for a version-only release.
 
 **Does not** write CHANGELOG. Release notes live on the GitHub release + `git log`.
 
@@ -31,13 +37,13 @@ Invoke `/mol-plugin:check`. Verdict `FIX REQUIRED` → stop (user can override w
 
 ### 4. Compute the new version
 
-- Read shared version from any `plugin.json` (must agree; drift → § 5).
+- Read shared version from either manifest (all Claude and Codex manifests must agree; drift → § 5).
 - Bump per level (semver: `0.1.3` + patch → `0.1.4`, + minor → `0.2.0`, + major → `1.0.0`).
 - Record old → new.
 
 ### 5. Drift detection
 
-Any plugin's `plugin.json` differs from others (or from its `marketplace.json` entry) → stop. Report which plugins are out of sync. User either:
+Any Claude or Codex manifest version differs from the others, or any Claude marketplace version differs from its manifests → stop. Report which files are out of sync. User either:
 
 - aligns by hand and re-runs, or
 - asks for separate "drift fix" commit, then re-runs on aligned tree.
@@ -70,13 +76,15 @@ git switch -c release/v<new>
 
 For every plugin under `plugins/`:
 
-- write `plugin.json` with new version
+- update both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` with the new version
 - update entry in `.claude-plugin/marketplace.json` with same new version
+- leave `.agents/plugins/marketplace.json` unchanged
 
 Stage:
 
 ```
 git add plugins/*/.claude-plugin/plugin.json
+git add plugins/*/.codex-plugin/plugin.json
 git add .claude-plugin/marketplace.json
 ```
 

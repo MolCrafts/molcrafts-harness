@@ -1,0 +1,32 @@
+{
+  "name": "molcrafts",
+  "interface": {
+    "displayName": "MolCrafts"
+  },
+  "plugins": [
+    {
+      "name": "mol",
+      "source": {
+        "source": "local",
+        "path": "./plugins/mol"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "mol-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/mol-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

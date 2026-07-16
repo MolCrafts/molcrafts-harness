@@ -1,7 +1,10 @@
 ---
+name: refactor
 description: Restructure code while preserving all architectural invariants. Snapshot → incremental change → re-verify. Writes code.
 argument-hint: "<what to refactor and why>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:refactor — Refactor
 

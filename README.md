@@ -1,7 +1,10 @@
-# molcrafts claude plugin marketplace
+# MolCrafts plugin marketplace
 
-A Claude Code plugin marketplace for the molcrafts workspace
-(Atomiverse, molpy, molexp, molrs, molvis, molq, molnex), built around
+A Claude Code-first plugin marketplace for the MolCrafts workspace, with a
+native Codex marketplace and manifests that reuse the same skill workflows.
+Claude Code remains the canonical runtime and project-harness format.
+
+It supports Atomiverse, molpy, molexp, molrs, molvis, molq, and molnex, built around
 **harness engineering**: small, well-shaped harnesses with principled
 boundaries (public docs / passive internal context / runtime + active
 artifacts / thin router) so the next agent that walks in succeeds
@@ -12,9 +15,11 @@ without re-deriving the rules.
 ```
 claude-plugin/
 ├── .claude-plugin/marketplace.json   # marketplace registry
+├── .agents/plugins/marketplace.json  # native Codex marketplace registry
 ├── plugins/
 │   ├── mol/                          # workflow skills + single-axis agents (counts live in marketplace.json)
 │   │   ├── .claude-plugin/plugin.json
+│   │   ├── .codex-plugin/plugin.json
 │   │   ├── README.md
 │   │   ├── rules/
 │   │   │   ├── claude-md-metadata.md # mol_project frontmatter contract
@@ -24,12 +29,13 @@ claude-plugin/
 │   │   │   ├── evaluator-protocol.md # planner/generator/evaluator contract
 │   │   │   ├── large-spec-split.md   # auto-split rule for oversized specs
 │   │   │   └── stage-policy.md       # mol_project.stage behavior matrix
-│   │   ├── skills/                   # one dir per skill (incl. bootstrap, grill, impl-all, map, simplify, web)
+│   │   ├── skills/                   # shared Claude/Codex skills + one CODEX.md runtime adapter
 │   │   └── agents/                   # one .md per agent (incl. librarian, implementer, spec-writer)
 │   └── mol-plugin/                   # 4 marketplace-maintenance skills
 │       ├── .claude-plugin/plugin.json
+│       ├── .codex-plugin/plugin.json
 │       ├── README.md
-│       └── skills/                   # new-skill, check, janitor, release
+│       └── skills/                   # shared skills + one CODEX.md runtime adapter
 ├── LICENSE
 └── README.md
 ```
@@ -43,6 +49,8 @@ claude-plugin/
 
 ## Install
 
+### Claude Code (primary)
+
 ```
 /plugin marketplace add https://github.com/MolCrafts/claude-plugin
 /plugin install mol@molcrafts
@@ -54,6 +62,24 @@ themselves; most users skip it.
 For local development, `/plugin marketplace add <path-to-this-checkout>`
 works too. Restart the session or `/reload-plugins` to pick up new
 skills.
+
+### Codex
+
+```bash
+codex plugin marketplace add MolCrafts/claude-plugin
+codex plugin add mol@molcrafts
+```
+
+For local development, run
+`codex plugin marketplace add <path-to-this-checkout>`. Restart Codex and use a
+new thread after changing plugin skills so the installed plugin cache is
+refreshed. Codex reads `.agents/plugins/marketplace.json` and each plugin's
+`.codex-plugin/plugin.json`; it does not rely on the legacy Claude marketplace
+fallback.
+
+Both platforms load the same `plugins/<plugin>/skills/` files. Codex-specific
+tool, subagent, and path translation lives in `skills/CODEX.md`, so workflow
+changes remain single-source.
 
 ## Adopt in a project
 

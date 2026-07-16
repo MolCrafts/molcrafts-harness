@@ -1,7 +1,10 @@
 ---
+name: web
 description: "Frontend runtime evaluator — starts the project's dev server and verifies the spec body's non-binding `## UI verification` checks (plus legacy `type: ui_runtime` acceptance criteria from older specs) by driving the running app through whatever Playwright MCP is installed. Ad-hoc and advisory — UI checks no longer gate spec close; skips cleanly when no Playwright tools are available."
 argument-hint: "<spec-slug> [<criterion-id>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:web — Frontend Runtime Evaluator
 

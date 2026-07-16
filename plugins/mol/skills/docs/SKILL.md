@@ -1,7 +1,10 @@
 ---
+name: docs
 description: Documentation audit and writing — docstrings in the project's documented style plus narrative tutorials. Writes docs and code comments.
 argument-hint: "[path, spec slug, or feature name]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:docs — Documentation
 
