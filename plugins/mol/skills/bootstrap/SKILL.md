@@ -1,7 +1,10 @@
 ---
+name: bootstrap
 description: Initialize or maintain a repo's agent harness. Inspects the repo; if no harness exists, creates CLAUDE.md + .claude/notes/ + .claude/specs/ from scratch. If a harness already exists, audits it (health + design compliance) and applies structural repairs (frontmatter, managed sections, layout migrations). Idempotent — safe to re-run. Never writes project source.
 argument-hint: "[<project-root>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:bootstrap — Agent Harness Bootstrap
 

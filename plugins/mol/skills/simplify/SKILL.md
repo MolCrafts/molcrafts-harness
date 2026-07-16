@@ -1,7 +1,10 @@
 ---
+name: simplify
 description: Backward-compat gatekeeper + hygiene cleanup for the current diff, behavior-preserving under a test gate. Auto-invoked by `/mol:impl` Step 6.5; also runnable standalone after `/mol:review` to clean up dead code, magic numbers, and stage-appropriate legacy.
 argument-hint: "[path or list of files]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:simplify — Apply Hygiene Cleanup
 

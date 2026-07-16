@@ -1,7 +1,10 @@
 ---
+name: impl-all
 description: Batch-implement a chain of specs from start to finish. Given a spec prefix, discovers all matching specs in `.claude/specs/` sorted by numeric suffix, then drives the chain itself — running `/mol:impl` per spec in order (each run commits and auto-closes itself). After each spec a cheap-model evaluator subagent independently confirms the terminal state and acceptance ledger before the chain advances. All gating, TDD, simplify, and verdict logic lives in `/mol:impl`. Never stops to ask questions.
 argument-hint: "<spec-prefix>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:impl-all — Batch Spec Chain Driver
 

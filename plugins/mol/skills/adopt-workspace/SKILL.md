@@ -1,7 +1,10 @@
 ---
+name: adopt-workspace
 description: Adopt an arbitrary existing data directory as a molexp-compatible workspace. Inspects the source layout, proposes a project / experiment / run mapping for operator review, materializes the new workspace via molexp's Python API, then copies (default) or moves the files with per-file SHA-256 integrity verification. Copy-mode optionally deletes the source after a hard typed-path confirmation. Idempotent and resumable via an on-disk migration ledger. Writes only after explicit per-stage approval. Data-safety first — no destructive action without an explicit gate.
 argument-hint: "<source-dir> [<target-workspace-root>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:adopt-workspace — Workspace Adoption
 

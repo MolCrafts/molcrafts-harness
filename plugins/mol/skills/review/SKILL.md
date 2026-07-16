@@ -1,7 +1,10 @@
 ---
+name: review
 description: Multi-axis static code review with one aggregated verdict.
 argument-hint: "[<path> ...] [--axis=<name>[,<name>...]]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:review — Multi-Axis Code Review
 

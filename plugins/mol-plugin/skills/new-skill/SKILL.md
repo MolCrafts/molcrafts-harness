@@ -1,13 +1,16 @@
 ---
-description: Scaffold a new skill inside one of the molcrafts plugins (mol, mol-plugin) with a complete runnable SKILL.md (no TODO placeholders) and an updated README row. Use to add a new top-level skill; runs `/mol-plugin:check` at the end to verify.
+name: new-skill
+description: Scaffold one shared Claude-first skill inside a MolCrafts plugin, including Codex-compatible metadata and adapter linkage, without creating a duplicate workflow. Updates the plugin README and runs `/mol-plugin:check`.
 argument-hint: "<plugin:skill-name> [<one-line description>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol-plugin:new-skill — Skill Scaffold
 
 Scaffold a new skill in this marketplace (e.g. `mol:bench`, `mol-plugin:audit-templates`).
 
-Write surface: `plugins/<plugin>/skills/<skill-name>/SKILL.md` + one appended row in `plugins/<plugin>/README.md`'s skills table. Never touches existing skills, `plugin.json`, or other metadata.
+Write surface: `plugins/<plugin>/skills/<skill-name>/SKILL.md` + one appended row in `plugins/<plugin>/README.md`'s skills table. Reuse the plugin's existing `skills/CODEX.md`; never create a second Codex copy of the workflow. Never touch existing skills, plugin manifests, or marketplace metadata.
 
 ## Authorship contract
 
@@ -37,7 +40,7 @@ Read one existing SKILL.md under the same plugin. Default models:
 - `mol-agent` → `plugins/mol-agent/skills/check/SKILL.md` (read-only) or `plugins/mol-agent/skills/update/SKILL.md` (writing)
 - `mol-plugin` → `plugins/mol-plugin/skills/check/SKILL.md`
 
-Match structure (not content): frontmatter (`description` + `argument-hint`), H1 `/<plugin>:<skill>` heading, one-paragraph purpose, numbered Procedure, optional Guardrails, optional Idempotency, Output format.
+Match structure (not content): frontmatter (`name` + `description` + `argument-hint`), Codex adapter directive, H1 `/<plugin>:<skill>` heading, one-paragraph purpose, numbered Procedure, optional Guardrails, optional Idempotency, Output format.
 
 ### 3. Resolve the design before authoring
 
@@ -56,9 +59,12 @@ Frontmatter:
 
 ```markdown
 ---
+name: <skill-name>
 description: <one or two sentences captured verbatim from the user's intent; mention read-only vs. writes; mention any sibling-skill relationship that defines the boundary>
 argument-hint: "<concrete shape, per /mol-plugin:check Step 3 — e.g. <arg>, [arg], <arg> [<arg>], <a | b | c>>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 ```
 
 Body shape (numbered Procedure, concrete steps, no placeholders):
@@ -93,6 +99,7 @@ end>
 Integrity rules:
 
 - **Do not copy another skill's procedure verbatim.** Mirror headings + frontmatter shape; *author* the procedure.
+- **Do not create a Codex wrapper or mirror.** One `SKILL.md` is the workflow for both platforms; `skills/CODEX.md` owns runtime translation.
 - **Do not invent capabilities the user did not ask for.** Found yourself adding a feature unrequested → stop and ask.
 
 ### 5. Reach approval
@@ -126,6 +133,7 @@ End with one-line F2 summary.
 ## Guardrails
 
 - **No TODOs in the procedure body.** Distinguishes "scaffold" from "stub".
+- **One workflow file.** Never create `codex-skills/` or duplicate an existing skill for compatibility.
 - **Do not** create a skill in a non-existent plugin directory; new plugin = bigger decision.
 - **Do not** copy another skill's procedure body. Frontmatter shape and headings are fine to mirror.
 - **Do not** edit `plugin.json`, `marketplace.json`, or any README section other than the skills table.

@@ -1,7 +1,10 @@
 ---
+name: commit
 description: Stage and commit changes after running the /mol:ship commit gate (format + lint + pre-commit hooks). Refuses to commit when the gate reports BLOCK. Generates a conventional-commit message from the staged diff if the user does not supply one. Never pushes; commits are local-only.
 argument-hint: "[<message>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:commit — Gated Local Commit
 

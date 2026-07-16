@@ -1,7 +1,10 @@
 ---
+name: debug
 description: Diagnose build, test, or runtime failures with structured root-cause analysis. Read-only — never writes code. Delegates to the `debugger` agent. Use /mol:fix to actually patch.
 argument-hint: "<error message or symptom>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:debug — Diagnosis Only
 

@@ -1,7 +1,10 @@
 ---
+name: map
 description: Build or refresh the project blueprint at `.claude/notes/architecture.md` — a passive map of modules, public surfaces, and layer roles consumed by the `librarian` agent at spec time. Use whenever the architecture has drifted; idempotent and writes only after explicit user approval.
 argument-hint: "[<scope-path>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:map — Project Blueprint Builder
 

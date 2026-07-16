@@ -1,7 +1,10 @@
 ---
+name: pr
 description: Open a pull request from origin (your fork) to upstream's default branch via the gh CLI, drafting title and body from the commit range. Use to ship a feature branch; calls `/mol:push` first (which gates on `/mol:ship` and pushes to origin).
 argument-hint: "[<title>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:pr — Pull Request from Fork to Upstream
 

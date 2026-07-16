@@ -1,7 +1,10 @@
 ---
+name: discuss
 description: Free-form design / improvement / scientific-insight discussion that drives toward convergence and either hands the agreed direction to `/mol:spec` or discards the thread. Use for exploratory threads (vs `/mol:spec` for already-clear requirements, `/mol:grill` for hardening an already-formed plan, or `/mol:note` for decided rules); read-only; supports Chinese and English.
 argument-hint: "<topic or question>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:discuss — Design Discussion
 

@@ -1,7 +1,10 @@
 ---
+name: ship
 description: Pre-commit / pre-push / pre-merge CI-parity gate. Runs a tiered set of checks (format, lint, tests, full CI equivalent) and reports PROCEED or BLOCK. Never writes code.
 argument-hint: "<commit | push | merge>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:ship — CI Parity Gate
 

@@ -1,7 +1,10 @@
 ---
+name: litrev
 description: Literature and reference-implementation review before coding a domain-critical feature. Gated on mol_project.science.required.
 argument-hint: "<method or algorithm name>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:litrev — Literature Review
 

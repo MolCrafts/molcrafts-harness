@@ -1,7 +1,10 @@
 ---
+name: spec
 description: Convert a natural-language requirement into a structured spec under `.claude/specs/` plus a binding `<slug>.acceptance.md` contract that defines "done". Persists both files directly — no approval prompt. Use to start any non-trivial feature; detects conflicts with existing specs and supports Chinese and English.
 argument-hint: "<feature description>"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:spec — Specification Generator
 

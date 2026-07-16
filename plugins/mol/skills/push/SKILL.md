@@ -1,7 +1,10 @@
 ---
+name: push
 description: Push the current branch to origin (the contributor's fork) after gating with /mol:ship push (format + lint + full test suite). Auto-runs /mol:commit first if the working tree is dirty. Follows the standard GitHub fork convention — origin = your fork, upstream = the canonical repo — and never pushes branches to upstream.
 argument-hint: "[<branch>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:push — Gated Push to Fork
 

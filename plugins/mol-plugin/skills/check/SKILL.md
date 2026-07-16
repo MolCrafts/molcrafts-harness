@@ -1,92 +1,86 @@
 ---
-description: Self-check the marketplace — validates `marketplace.json`, every `plugin.json`, every SKILL.md and agent .md for required frontmatter, well-formed argument hints, valid cross-references, and naming consistency. Use after editing any of these files; read-only.
+name: check
+description: Audit the Claude-first marketplace and its Codex compatibility metadata. Runs the deterministic dual-manifest validator, then reviews semantic boundaries that a script cannot judge. Use after plugin, skill, agent, hook, or marketplace edits; read-only.
 argument-hint: "[<plugin>]"
 ---
 
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
+
 # /mol-plugin:check — Marketplace Self-Check
 
-Walk the marketplace tree and verify structural soundness before publishing. Read-only — reports findings; never edits.
+Validate repository contracts without editing. The script owns syntax, paths, names, versions, and cross-format consistency; this skill owns semantic accuracy, responsibility boundaries, and actionable reporting.
 
-Scope: no argument → every plugin in `.claude-plugin/marketplace.json`. With plugin name → just that one.
+Scope: no argument → both registered plugins. `<plugin>` → restrict semantic review to that plugin after the repository-wide deterministic gate.
 
 ## Procedure
 
-### 1. Marketplace registry
+### 1. Locate the marketplace root
 
-Read `.claude-plugin/marketplace.json`:
+Walk upward from the current directory until `.claude-plugin/marketplace.json` exists. No match → BLOCK with an instruction to run from this repository.
 
-- top-level required fields present (`name`, `owner`, `plugins`)
-- every `plugins[]` entry has `name`, `source`, `version`, `description`
-- `source` paths resolve to existing directories
-- no two plugins share a `name`
+Validate `<plugin>` against the authoritative Claude marketplace. Unknown name → print available names and stop.
 
-### 2. Per-plugin metadata
+### 2. Run the deterministic gate
 
-For each plugin under `plugins/`:
+Run the validator bundled with this plugin:
 
-- `.claude-plugin/plugin.json` exists and parseable
-- required: `name`, `version`, `description`
-- `name` matches directory name
-- `version` matches the entry in marketplace.json
-- `keywords` is an array if present
-
-### 3. Skills
-
-For each `plugins/<plugin>/skills/<skill>/SKILL.md`:
-
-- YAML frontmatter parses
-- `description` present and non-empty
-- `argument-hint` present (even if `""`); shape built from primitives in any combination:
-  - `<arg>` — required positional placeholder; `arg` may be short prose hint (`<feature description>`) or `|`-alternation of literals (`<commit | push | merge>`)
-  - `[arg]` — optional positional placeholder; same content rules
-  - `[<arg>]` and `<arg> [<arg>]` are explicit composites; allowed
-  - whitespace separates positional slots; do not embed parenthetical annotations (move into procedure body)
-- H1 is `# /<plugin>:<skill> — <title>` and matches directory name
-- file ends with the standard one-line summary convention (F2) — at minimum, procedure mentions an end-of-run summary
-- internal `/<plugin>:<verb>` references point at existing skills (this plugin or sibling)
-- `${CLAUDE_PLUGIN_ROOT}` references resolve to existing paths
-
-### 4. Agents (if plugin ships any)
-
-For each `plugins/<plugin>/agents/<agent>.md`:
-
-- YAML frontmatter parses
-- required fields per existing agents in `plugins/mol/agents/` (`name`, `description`, `tools`, `model`)
-- `model` is one of `opus | sonnet | haiku | inherit`
-- for agents under `plugins/mol/agents/`: `model: inherit` → 🟡 (policy requires an explicit tier — `plugins/mol/rules/model-policy.md`)
-- `tools` lists only what the role needs (read-only agents must not declare `Write`/`Edit`)
-- body's first non-frontmatter line mentions reading CLAUDE.md (Knowledge rule K1)
-
-### 5. Cross-plugin sanity
-
-- no two skills across plugins share the same `<plugin>:<verb>` qualified name
-- skills referencing each other (e.g. `/mol:bootstrap` inside `/mol:spec`) reference only existing skills
-- READMEs reference only existing skills
-
-### 6. Output
-
-Severity-sorted findings:
-
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate_repository.py" --root <root>
 ```
+
+When working directly from source and `${CLAUDE_PLUGIN_ROOT}` is unavailable, use `<root>/plugins/mol-plugin/scripts/validate_repository.py`.
+
+The script owns:
+
+- both marketplace schemas and matching plugin order
+- Claude and Codex manifest names, versions, required fields, and source paths
+- shared skill frontmatter, names, H1s, adapter directives, and references
+- agent frontmatter, model tiers, read-only tool boundaries, and knowledge bootstrap
+- default hook JSON shape
+- absence of duplicated Codex skill trees
+
+Any script error → `FIX REQUIRED`. Preserve its exact path and message in the report. Do not re-implement or second-guess deterministic checks in prose.
+
+### 3. Review semantic contracts
+
+For each in-scope plugin, read its README, manifests, `skills/*/SKILL.md`, `skills/CODEX.md`, agents, and rules needed by those skills. Judge only what syntax cannot establish:
+
+- **Responsibility:** plugin and skill descriptions match actual behavior; each skill owns one user-facing workflow.
+- **Boundaries:** read-only/write behavior is explicit; neighboring skills do not claim the same mutation or verdict.
+- **Delegation:** each agent has one expertise axis; producer/reviewer ownership matches `rules/agent-design.md`; workflows do not bypass required independence.
+- **Safety:** approval, clean-tree, destructive-action, push, tag, and release gates remain explicit and ordered.
+- **Progressive disclosure:** large rules live in shared rule/reference files; SKILL.md links them instead of copying them.
+- **Cross-runtime fidelity:** `skills/CODEX.md` translates runtime concepts without changing the Claude-first workflow contract.
+- **Documentation truth:** READMEs list existing capabilities and do not promise unimplemented plugins, skills, hooks, or MCP servers.
+
+Do not flag tone or formatting preferences unless they obscure an execution rule.
+
+### 4. Report
+
+Sort findings by severity:
+
+```text
 <emoji> <path> — <message>
-  Rule: <where it came from, e.g. "marketplace.json: name required",
-        "SKILL.md: argument-hint missing">
-  Fix: <one-line recommendation>
+  Rule: <deterministic validator | responsibility | boundaries |
+         delegation | safety | progressive-disclosure |
+         cross-runtime-fidelity | documentation-truth>
+  Fix: <one concrete recommendation>
 ```
 
-Count summary:
+Severity:
 
-| Plugin       | 🚨 | 🔴 | 🟡 | 🟢 |
-|--------------|----|----|----|----|
-| mol          |    |    |    |    |
-| mol-plugin   |    |    |    |    |
+- 🚨 invalid metadata, unsafe destructive behavior, or a missing required gate
+- 🔴 broken workflow contract, duplicated responsibility, or runtime incompatibility
+- 🟡 drift or ambiguity that should be corrected before release
+- 🟢 optional cleanup with no behavior impact
 
-Verdict: PUBLISH-READY / FIX REQUIRED.
+Render counts per plugin plus one `repository validator` row. Verdict is `PUBLISH-READY` only when the deterministic gate passes and no 🚨/🔴 semantic finding remains; otherwise `FIX REQUIRED`.
 
-End with one-line F2 summary.
+End with: `/mol-plugin:check: <PUBLISH-READY | FIX REQUIRED> — <N> errors, <M> warnings`.
 
 ## Guardrails
 
-- **Read-only.** Never write, never auto-fix.
-- **Do not** flag stylistic preferences (tone, sentence length). Validate structure, not voice.
-- **Do not** invent rules not listed here. Class of problem worth catching → surface as 🟡 with rule `"unspecified — consider adding to /mol-plugin:check"`.
+- Read-only: never patch, format, stage, commit, tag, install, or publish.
+- Keep deterministic rules in `scripts/validate_repository.py`, not duplicated in this skill.
+- Do not treat the Codex marketplace as authoritative; Claude metadata remains the source contract.
+- Do not invent new rules during an audit. A recurring new class belongs in the validator or this skill through a separate reviewed change.

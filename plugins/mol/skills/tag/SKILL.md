@@ -1,7 +1,10 @@
 ---
+name: tag
 description: Push an existing local release tag to upstream so the GitHub Actions release workflow fires. Use after `/mol-plugin:release` has cut the tag and `/mol:pr` has merged the version-bump commit to upstream's default branch; refuses orphan tags, overwrites, or pushing tags to origin.
 argument-hint: "[<tag>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:tag — Push Release Tag to Upstream
 

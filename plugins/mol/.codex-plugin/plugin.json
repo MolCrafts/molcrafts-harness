@@ -1,0 +1,35 @@
+{
+  "name": "mol",
+  "version": "0.10.0",
+  "description": "Project workflow toolkit for MolCrafts repositories, organized around the planner-generator-evaluator harness pattern.",
+  "author": {
+    "name": "MolCrafts"
+  },
+  "homepage": "https://github.com/MolCrafts/claude-plugin",
+  "repository": "https://github.com/MolCrafts/claude-plugin",
+  "license": "MIT",
+  "keywords": [
+    "molecular",
+    "workflow",
+    "scientific-computing",
+    "molcrafts",
+    "harness-engineering"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Mol",
+    "shortDescription": "Scientific project workflow toolkit",
+    "longDescription": "Plan, implement, review, test, document, and release MolCrafts projects with reusable harness-oriented workflows.",
+    "developerName": "MolCrafts",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Review this project with the Mol workflow.",
+      "Create an implementation spec for this change.",
+      "Diagnose this failure without editing code."
+    ]
+  }
+}

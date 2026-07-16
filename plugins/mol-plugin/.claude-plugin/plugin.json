@@ -1,10 +1,19 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "mol-plugin",
-  "version": "0.9.1",
-  "description": "Maintenance toolkit for the molcrafts marketplace — scaffold, audit, and release skills and plugins.",
-  "author": { "name": "MolCrafts" },
+  "displayName": "Mol Plugin",
+  "version": "0.10.0",
+  "description": "Maintenance toolkit for the MolCrafts marketplace — scaffold, audit, smoke-test, and release skills and plugins.",
+  "author": {
+    "name": "MolCrafts"
+  },
   "homepage": "https://github.com/MolCrafts/claude-plugin",
   "repository": "https://github.com/MolCrafts/claude-plugin",
   "license": "MIT",
-  "keywords": ["plugin-development", "molcrafts", "scaffolding", "release"]
+  "keywords": [
+    "plugin-development",
+    "molcrafts",
+    "scaffolding",
+    "release"
+  ]
 }

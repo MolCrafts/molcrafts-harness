@@ -1,7 +1,10 @@
 ---
+name: ci-sync
 description: Audit and repair CI / pre-commit parity — patches .pre-commit-config.yaml and the CI workflow so every check runs both locally at commit time and remotely, and scaffolds both files for projects that have neither. Write-mode counterpart of the read-only ci-guard agent; writes config files only, never source code.
 argument-hint: "[<project-root>]"
 ---
+
+> **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
 # /mol:ci-sync — CI / Pre-commit Parity Repair
 

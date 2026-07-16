@@ -46,7 +46,7 @@ decisions only it can make.
 
 | Tier (`model:`) | Agents | Why |
 |---|---|---|
-| `opus` | architect, scientist, compute-scientist, debugger, security-reviewer, optimizer, pm, librarian, undergrad, user, web-design, spec-writer, tester, documenter, implementer | judgment: design trade-offs, diagnosis, adversarial reasoning, artifact authorship |
+| `opus` | architect, scientist, compute-scientist, debugger, security-reviewer, optimizer, pm, librarian, undergrad, user, web-design, spec-writer, tester, documenter, implementer, ffi-guard | judgment: design trade-offs, diagnosis, adversarial reasoning, artifact authorship |
 | `sonnet` | ci-guard, playwright-evaluator, reviewer, janitor | mechanical: run tools, aggregate findings, pattern-match against fixed catalogs |
 | `haiku` | `/mol:impl-all` § 2b completion evaluator (prose-dispatched — no agent file) | binary ledger read against a fixed schema |
 
