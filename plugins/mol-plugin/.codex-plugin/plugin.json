@@ -1,6 +1,6 @@
 {
   "name": "mol-plugin",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Maintenance toolkit for the MolCrafts plugin marketplace, including scaffolding, audits, smoke tests, cleanup, and releases.",
   "author": {
     "name": "MolCrafts"
