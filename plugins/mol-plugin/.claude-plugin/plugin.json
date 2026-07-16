@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "mol-plugin",
   "displayName": "Mol Plugin",
-  "version": "0.10.0",
-  "description": "Maintenance toolkit for the MolCrafts marketplace — scaffold, audit, smoke-test, and release skills and plugins.",
+  "version": "0.10.1",
+  "description": "Maintenance toolkit for the MolCrafts marketplace \u2014 scaffold, audit, smoke-test, and release skills and plugins.",
   "author": {
     "name": "MolCrafts"
   },

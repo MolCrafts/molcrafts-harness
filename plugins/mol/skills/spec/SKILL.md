@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Convert a natural-language requirement into a structured spec under `.claude/specs/` plus a binding `<slug>.acceptance.md` contract that defines "done". Persists both files directly — no approval prompt. Use to start any non-trivial feature; detects conflicts with existing specs and supports Chinese and English.
+description: Convert a natural-language requirement into a structured spec under `.claude/specs/` plus a binding `<slug>.acceptance.md` contract that defines "done". Persists both files, then auto-invokes `/mol:grilling` in spec-audit mode — material holes supersede in place; clean audits point to `/mol:impl`. Use to start any non-trivial feature; detects conflicts with existing specs and supports Chinese and English.
 argument-hint: "<feature description>"
 ---
 
@@ -10,7 +10,7 @@ argument-hint: "<feature description>"
 
 Read CLAUDE.md → parse `mol_project:` (`$META`); else emit adoption hint and stop. Resolve `$META.specs_path` (default `.claude/specs/`); create dir if missing.
 
-Produces `<slug>.md` (design) + `<slug>.acceptance.md` (binding "done" contract per `plugins/mol/rules/evaluator-protocol.md`). `/mol:impl` refuses without both; deletes both when done. Specs live under `.claude/specs/` — never `docs/` or `.claude/notes/`.
+Produces `<slug>.md` (design) + `<slug>.acceptance.md` (binding "done" contract per `plugins/mol/rules/evaluator-protocol.md`). After persist, **always** stress-tests the written design via `/mol:grilling` (spec-audit). `/mol:impl` refuses without both files; deletes both when done. Specs live under `.claude/specs/` — never `docs/` or `.claude/notes/`.
 
 ## Procedure
 
@@ -52,15 +52,41 @@ Persist immediately — **no approval prompt, no waiting**:
 
 Then show spec body + acceptance exactly as written. Call out: librarian reuse candidates and how the Design's Reuse decision resolved each (first), criteria from Testing strategy, UI checks recorded in the spec body's **UI verification** section (never acceptance criteria), items deliberately not turned into criteria, supersede diff if any.
 
-Post-persist tweaks from the user → apply in place. Material design changes → re-invoke `spec-writer` (supersede) and overwrite.
+Tell the user: *"persisted — now entering `/mol:grilling` (spec-audit) before ready-for-impl."* Spec is on disk as `approved`, but Step 3.5 may supersede it.
+
+Post-persist tweaks the user requests **before** grilling finishes → apply in place. Material design changes mid-flight → fold into the audit / supersede path.
+
+### 3.5 Audit grill → supersede if needed
+
+**Mandatory.** Auto-invoke `/mol:grilling` in **spec-audit** mode with: `slug`, paths to the written spec + acceptance, and a short pointer that the Design/Tasks/acceptance surface is under test. Use the Skill tool (Claude) or read-and-execute `../grilling/SKILL.md` (Codex). Never call user-only `/mol:grill`.
+
+Chain of sub-specs → grill each sub-spec in chain order (or the first incomplete one if resuming); do not skip.
+
+When `/mol:grilling` returns:
+
+| `audit_result` | Action |
+|---|---|
+| `clean` | Optional: set non-binding frontmatter `grilled: true` on the spec file(s). Proceed to Step 4. |
+| `supersede_needed` | Re-invoke `spec-writer` with `conflict_decision: supersede:<slug>`, `request` = original request + Decisions log + supersede payload. On `Status: ok`, overwrite both files + INDEX (same as Step 3). Set `grilled: true` after successful supersede. If `blocked`, surface items and stop with files left as last good persist. |
+| redirected / under-formed | Leave last persisted files as `approved`. Surface Open list + reason. Do **not** delete. User may re-run `/mol:grilling mode:spec-audit <slug>` or re-spec. |
+
+**Grilling remains read-only** — this skill owns all supersede writes.
 
 ### 4. Report
 
-Spec path(s), task count, criteria count by `type`, runtime-evaluator flag (any non-`code`/`runtime` type → print evaluator hint). Chain → next-step pointer: *"start with `/mol:impl <base>-01-<phase>`"*. End with one-line summary.
+Only after Step 3.5 settles (clean, supersede applied, or explicit park on under-formed):
+
+Spec path(s), task count, criteria count by `type`, grill outcome (`clean` / `superseded` / `parked`).
+
+When outcome is `clean` or `superseded`: **auto-invoke `/mol:impl-all`** with the slug or chain base (no prompt). When `parked` / redirected: report only — do not implement.
+
+End with one-line summary after impl-all returns (or after park).
 
 ## Guardrails
 
 - **Chinese input** → `spec-writer` produces body in Chinese; frontmatter keys, INDEX entry, and Tasks verb-prefixes stay English for downstream tooling.
-- **Drafting is delegated** to `spec-writer` to keep parent context free for conversation. Triage, persistence, and INDEX upkeep stay here; persistence is automatic — never wait for approval. See `plugins/mol/rules/agent-design.md`.
+- **Drafting is delegated** to `spec-writer` to keep parent context free for conversation. Triage, persistence, INDEX upkeep, and post-persist supersede stay here; first persist is automatic — never wait for approval. See `plugins/mol/rules/agent-design.md`.
 - **UI-runtime checks never become acceptance criteria.** They live in the spec body's **UI verification** section (non-binding); `/mol:web` verifies them ad hoc and they never park a spec at `code-complete`.
-- **Spec lifecycle** (`draft` → `approved` → `in-progress` → `code-complete` → `done`) is defined in `plugins/mol/rules/evaluator-protocol.md`.
+- **Always auto-invoke `/mol:grilling` after persist.** Do not hand the user a "ready for impl" F2 before the audit settles.
+- **After grill settles clean (or supersede applied clean):** auto-invoke `/mol:impl-all <slug-or-prefix>` so implementation runs end-to-end without a second human kick. Parked grill redirect → do not impl.
+- **Spec lifecycle** (`draft` → `approved` → `in-progress` → `code-complete` → `done`) is defined in `plugins/mol/rules/evaluator-protocol.md`. `grilled: true` is advisory metadata, not a lifecycle state.

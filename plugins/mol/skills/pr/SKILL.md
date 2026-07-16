@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Open a pull request from origin (your fork) to upstream's default branch via the gh CLI, drafting title and body from the commit range. Use to ship a feature branch; calls `/mol:push` first (which gates on `/mol:ship` and pushes to origin).
+description: Open a pull request from origin to upstream's default branch via gh. Calls /mol:push first. Auto-drafts title/body and creates the PR with no approval wait. Auto-invoked by /mol-plugin:release.
 argument-hint: "[<title>]"
 ---
 
@@ -8,87 +8,56 @@ argument-hint: "[<title>]"
 
 # /mol:pr — Pull Request from Fork to Upstream
 
-Creates a GitHub PR. Base = `upstream` / `<default_branch>`; head = `origin` (fork). Direct upstream pushes out of scope — fork branch reaches upstream only via "PR + review."
+Creates a GitHub PR. Base = `upstream` / `<default_branch>`; head = `origin` (fork). **Fully agent-driven** — no title/body approval wait.
 
 ## Procedure
 
 ### 1. Resolve config
 
-- **Origin** must exist (`git remote get-url origin`). Else stop.
-- **Upstream**: `git remote get-url upstream`.
-  - Absent + `origin` is a fork (GitHub `parent` field set) → offer to add: `git remote add upstream <parent-url>`.
-  - Absent + `origin` not a fork → cannot proceed; stop and tell user.
-- **Branch**: `git rev-parse --abbrev-ref HEAD`.
+- **Origin** must exist. Else stop hard.
+- **Upstream**: absent + origin is a fork → `git remote add upstream <parent-url>` automatically. Absent + origin not a fork → stop hard.
+- **Branch**: current branch. Default branch as head → stop hard (switch to feature/release branch first).
 
-Resolve upstream default branch:
+Resolve upstream default branch via `upstream/HEAD` or `main`/`master`.
 
-```
-git fetch upstream
-git symbolic-ref --short refs/remotes/upstream/HEAD 2>/dev/null \
-  | sed 's@^upstream/@@'
-```
+### 2. Verify gh
 
-Fallback: `git ls-remote --heads upstream main master | head -1`.
-
-Current branch == default branch → stop. PR `master`-fork → `master`-upstream is rarely intent; ask user to create a feature branch.
-
-### 2. Verify gh is installed and authenticated
-
-`gh auth status`. Unauthenticated → stop, tell user to run `gh auth login` (interactive).
+`gh auth status`. Unauthenticated → stop hard with `gh auth login` instruction (cannot auto-login interactively).
 
 ### 3. Push first
 
-Invoke `/mol:push`. It runs `/mol:commit` if dirty (which gates on `/mol:ship commit`), then `/mol:ship push`, then `git push origin`. `/mol:push` blocker → stop.
+Invoke `/mol:push`. Blocker → stop.
 
-### 4. Draft title and body
+### 4. Draft title and body (no approval)
 
-Compare range: `upstream/<default_branch>..HEAD`.
+Compare `upstream/<default_branch>..HEAD`.
 
-`$ARGUMENTS` non-empty → treat as PR title.
-
-Else:
-
-- **Title** — one commit in range → its subject (≤ 70 chars; truncate with `…`). Multiple → pick dominant theme by reading subjects, prefix conventional-commit type, write a one-line summary.
-- **Body** — standard format:
-
-  ```
-  ## Summary
-  - <bullet 1>
-  - <bullet 2>
-
-  ## Test plan
-  - [ ] <what was tested locally>
-  - [ ] <regression risk to verify>
-  ```
-
-  Bullets explain **why**, not restate diff. Read commits + actual diff; do not just copy commit subjects.
-
-Show title + body. Wait for approval. User may edit either inline.
-
-### 5. Detect existing PR
+`$ARGUMENTS` non-empty → PR title. Else derive from commits. Body:
 
 ```
-gh pr view --json url,state 2>/dev/null
+## Summary
+- <bullets why>
+
+## Test plan
+- [x] local ship gate on push
+- [ ] CI on the PR
 ```
 
-PR exists for this branch and is `OPEN` → **do not create**. Report URL and stop. `CLOSED` / `MERGED` → ask whether to open new or revive.
+**Do not wait** for user edit. Create immediately.
 
-### 6. Create the PR
+### 5. Existing PR
+
+Open PR for this branch → report URL, no-op (idempotent).
+
+### 6. Create
 
 ```
 gh pr create \
   --base "<default_branch>" \
   --repo "<upstream-owner>/<upstream-repo>" \
   --title "<title>" \
-  --body "$(cat <<'EOF'
-<body>
-EOF
-)"
+  --body "<body>"
 ```
-
-`<upstream-owner>/<upstream-repo>` from parsing the `upstream` remote URL. Head auto-resolved by `gh` from branch's tracking remote (`/mol:push` set with `-u` on `origin`).
-
-`gh pr create` errors → surface verbatim.
 
 ### 7. Report
 
@@ -100,10 +69,10 @@ EOF
 ## Guardrails
 
 - **Never** create PR with default branch as head.
-- **Never** open PR without going through `/mol:push`.
-- **Never** `--draft` automatically — user decides on approval gate.
-- **Never** assign reviewers / add labels automatically.
+- **Never** skip `/mol:push`.
+- **Never** wait for title/body approval.
+- **Never** force-assign reviewers.
 
 ## Idempotency
 
-Re-run on a branch with an open PR is a no-op (reports existing URL). After existing PR merges/closes, a new run can open a new PR.
+Open PR already exists → report URL, success no-op.

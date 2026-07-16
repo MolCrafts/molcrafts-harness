@@ -1,142 +1,120 @@
 ---
 name: release
-description: Cut a unified Claude-first MolCrafts marketplace release — bumps both manifests for every plugin plus Claude marketplace versions, validates Codex compatibility, and prepares one local commit and tag. Does not push; pair with `/mol:push`, `/mol:pr`, and `/mol:tag`.
+description: Cut a unified marketplace release end-to-end — auto-commit dirty work if needed, bump all plugin manifests, commit release, push, open PR, merge to upstream, push tag. No approval waits. Fully agent-driven publish chain.
+disable-model-invocation: true
 argument-hint: "<patch | minor | major>"
 ---
 
 > **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
-# /mol-plugin:release — Plugin Release
+# /mol-plugin:release — Plugin Release (end-to-end)
 
-Cut a unified release of the molcrafts marketplace. All plugins share one version; one bump advances them all + produces one tag.
+Cut a unified release of the molcrafts marketplace and **publish it** without stopping for the user.
 
 Write surface:
 
-- `plugins/<plugin>/.claude-plugin/plugin.json` (`version` field) for every plugin
-- `plugins/<plugin>/.codex-plugin/plugin.json` (`version` field) for every plugin
-- `.claude-plugin/marketplace.json` (matching `version` for every plugin entry)
-- one git commit + one git tag (when user opts in)
+- `plugins/<plugin>/.claude-plugin/plugin.json` + `.codex-plugin/plugin.json` for every plugin
+- `.claude-plugin/marketplace.json` versions
+- local commit + annotated tag
+- remote: origin branch push → upstream PR → merge → tag push
 
-`.agents/plugins/marketplace.json` intentionally has no duplicate version field and is never changed for a version-only release.
+`.agents/plugins/marketplace.json` has no version field — never touch it for version-only releases.
 
-**Does not** write CHANGELOG. Release notes live on the GitHub release + `git log`.
+**Does not** write CHANGELOG.
 
 ## Procedure
 
 ### 1. Parse arguments
 
-Form: `<bump>` ∈ `patch | minor | major`. No plugin selection — releases are unified. Wanting to ship one plugin → unified-version policy is wrong; raise as design change, don't simulate.
+`<bump>` ∈ `patch | minor | major`. Unified version only.
 
-### 2. Confirm clean tree
+### 2. Working tree
 
-`git status --porcelain` empty; else stop, ask user to commit/stash. Confirm on default branch (warn if not).
+On non-default branch is fine (will create `release/v<new>` from current HEAD unless already on a release branch).
 
-### 3. Run validation
+`git status --porcelain` non-empty → **auto-invoke `/mol:commit`** with a generated message covering pending work (no stash, no ask). BLOCK → stop hard.
 
-Invoke `/mol-plugin:check`. Verdict `FIX REQUIRED` → stop (user can override with explicit confirmation).
+### 3. Validation
 
-### 4. Compute the new version
+Invoke `/mol-plugin:check` (deterministic validator + semantic skim).
 
-- Read shared version from either manifest (all Claude and Codex manifests must agree; drift → § 5).
-- Bump per level (semver: `0.1.3` + patch → `0.1.4`, + minor → `0.2.0`, + major → `1.0.0`).
-- Record old → new.
+`FIX REQUIRED` with 🚨/🔴 → stop hard and fix in-loop if mechanical; else stop with report.
+🟡 only → proceed.
 
-### 5. Drift detection
+### 4. Version
 
-Any Claude or Codex manifest version differs from the others, or any Claude marketplace version differs from its manifests → stop. Report which files are out of sync. User either:
+Read shared version from manifests (all must agree — drift → stop hard and report files).
 
-- aligns by hand and re-runs, or
-- asks for separate "drift fix" commit, then re-runs on aligned tree.
+Bump semver: patch / minor / major. Record `old → new`. Local tag `v<new>` already exists → stop hard.
 
-Never silently absorb drift.
-
-### 6. Reach approval
-
-Show:
-
-- old → new shared version
-- proposed commit message (`release: v<new>`)
-- proposed tag (`v<new>`)
-- list of plugins being advanced (visibility only)
-
-Wait for go-ahead.
-
-### 7. Apply
-
-**Switch to a release branch first.** Release commit + tag live on `release/v<new>`, not `master`:
-
-- `/mol:push` refuses to push the default branch from a fork.
-- Master stays untouched until PR merges; botched release = deletable branch.
+### 5. Branch + bump + commit + local tag
 
 ```
 git switch -c release/v<new>
 ```
 
-`release/v<new>` already exists locally → stop. User deletes (`git branch -D release/v<new>`) and re-runs.
+Branch exists → `git switch release/v<new>` and ensure it's based on current work; do not delete without reason.
 
 For every plugin under `plugins/`:
 
-- update both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` with the new version
-- update entry in `.claude-plugin/marketplace.json` with same new version
-- leave `.agents/plugins/marketplace.json` unchanged
+- set `version` in both Claude and Codex `plugin.json`
+- set matching entry versions in `.claude-plugin/marketplace.json`
 
-Stage:
+Stage only version files (plus any still-dirty release-related paths already committed in § 2).
 
-```
-git add plugins/*/.claude-plugin/plugin.json
-git add plugins/*/.codex-plugin/plugin.json
-git add .claude-plugin/marketplace.json
-```
-
-Invoke `/mol:commit "release: v<new>"` — it runs the `/mol:ship commit` gate itself (no separate `/mol:ship` call here; that would double-run the gate). **BLOCK** → stop and surface blocker. Approval was already collected in § 6, so confirm the shown message unchanged. After the commit lands:
+Invoke `/mol:commit "release: v<new>"`. BLOCK → stop.
 
 ```
-git tag v<new>
+git tag -a "v<new>" -m "release: v<new>"
 ```
 
-Tag creation stays here — `/mol:commit` never tags. One commit, one tag, on `release/v<new>`. Master untouched. **Do not push** — publish phase is § 8.
+### 6. Publish chain (no stops)
 
-### 8. Report
+1. **`/mol:push`** — release branch → origin.
+2. **`/mol:pr`** — origin → upstream default. Title `release: v<new>`.
+3. **Merge the PR** with a **merge commit** (preserves tag SHA):
 
-One-line summary: `released v0.1.1 → v0.1.2 (tag v0.1.2, N plugins advanced)`
+   ```
+   gh pr merge <number> --merge --admin
+   ```
 
-Print **publish sequence** (order is load-bearing):
+   Prefer `--merge` (not squash/rebase). If `--admin` unavailable, try without. If merge requires review and cannot merge → stop hard with PR URL (only hard stop left in publish).
+
+4. **Retag if needed.** Fetch upstream. If local tag `v<new>` is not an ancestor of `upstream/<default>` (squash merge case), delete local tag and retag at `upstream/<default>`:
+
+   ```
+   git fetch upstream
+   git tag -d v<new>
+   git tag -a v<new> -m "release: v<new>" upstream/<default>
+   ```
+
+5. **`/mol:tag v<new>`** — push tag to upstream.
+
+6. **Cleanup local default:**
+
+   ```
+   git switch <default>
+   git pull upstream <default>
+   git branch -d release/v<new>   # if fully merged
+   ```
+
+### 7. Report
 
 ```
-Next steps to publish v<new>:
-
-  (you are on release/v<new>; master is untouched)
-
-  1. /mol:push                 # push release/v<new> to origin (fork)
-  2. /mol:pr                   # open PR origin → upstream/master
-  3. (wait for PR to merge into upstream/master)
-  4. /mol:tag                  # push the tag — refuses if step 3
-                               # hasn't happened (orphan-tag guard)
-  5. cleanup:
-       git switch master
-       git pull upstream master
-       git branch -d release/v<new>
-
-Step 4's orphan-tag guard, the merge-style caveat (prefer a
-merge-commit merge; squash/rebase orphans the local tag), and the
-recovery paths are owned by /mol:tag Step 3 — see
-plugins/mol/skills/tag/SKILL.md. Short version: the version bump
-lives in the release *commit* (must merge first); the *tag* push
-triggers the release workflow.
+/mol-plugin:release: v<old> → v<new> (tag v<new>, N plugins)
+  branch: released and merged
+  tag:    pushed to upstream
 ```
-
-Single-remote layouts (no `upstream`) collapse 1–3 to one `git push` to the canonical default branch (still from `release/v<new>`, then fast-forward master locally); two phases (branch then tag) still apply.
 
 ## Guardrails
 
-- **Do not** push to a remote.
-- **Do not** force-overwrite an existing tag. `v<new>` already exists → stop.
-- **Do not** create or modify any CHANGELOG file.
-- **Do not** release if `/mol-plugin:check` reports `FIX REQUIRED` without explicit user override.
-- **Do not** advance a subset of plugins.
+- **Never** force-overwrite an existing remote tag.
+- **Never** write CHANGELOG.
+- **Never** wait for approval, go-ahead, or "next steps" handoff.
+- **Never** advance a subset of plugins.
+- **Do** auto-chain commit → push → pr → merge → tag.
+- Merge-commit preferred so orphan-tag guard stays green.
 
 ## Idempotency
 
-Same version twice = error (tag collision stops run). Redo a botched release → user deletes the tag manually (locally + remotely) and re-runs; this skill does not delete tags.
-
-Run reaching approval gate + rejected → tree exactly as found. No file writes before approval.
+Same version already on upstream default + tag present → report no-op success.

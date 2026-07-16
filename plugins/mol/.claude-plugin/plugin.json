@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "mol",
   "displayName": "Mol",
-  "version": "0.10.0",
-  "description": "Project workflow toolkit — 26 skills + 20 single-axis agents organized around the planner→generator→evaluator harness pattern. Adapts per project via mol_project frontmatter.",
+  "version": "0.10.1",
+  "description": "Project workflow toolkit \u2014 27 skills + 20 single-axis agents organized around the planner\u2192generator\u2192evaluator harness pattern. Adapts per project via mol_project frontmatter.",
   "author": {
     "name": "MolCrafts"
   },

@@ -74,13 +74,22 @@ Every skill runs in one of two modes, defined in
 - **Advisor (顾问模式)** — the deliverable is words: an answer, plan,
   verdict, or diagnosis. The main conversation (session model, top
   tier) authors it; agents only gather evidence. (`/mol:discuss`,
-  `/mol:grill`, `/mol:debug`, `/mol:review`, `/mol:test`, `/mol:ship`, …)
+  `/mol:grill` / `/mol:grilling`, `/mol:debug`, `/mol:review`,
+  `/mol:test`, `/mol:ship`, …)
 - **Orchestration (编排模式)** — the deliverable is artifacts: code,
   docs, specs, commits. The main loop plans, routes, gates, and
   verifies; opus-class producer agents author the artifacts — the
   main loop never authors production source (`implementer` writes
   code, `tester` tests, `documenter` docs). (`/mol:impl`, `/mol:fix`,
   `/mol:spec`, the git chain, …)
+
+Orthogonal to mode: **user- vs model-invoked** skills (who may fire
+them). User-only entries set `disable-model-invocation: true` (Claude)
+and `allow_implicit_invocation: false` (Codex). Anything auto-invoked
+by another skill must stay model-invoked. Full rule in
+[`rules/design-principles.md`](rules/design-principles.md) § 2.5.
+Example: thin `/mol:grill` (user) → body `/mol:grilling` (model;
+called by discuss + spec).
 
 Agents pin their model tier in frontmatter — `opus` for judgment,
 `sonnet` for mechanical work, `haiku` for `/mol:impl-all`'s completion
@@ -119,9 +128,10 @@ reach for it, and a one-line example.
 
 | Skill | What | When | Example |
 |---|---|---|---|
-| `/mol:discuss <topic>` | Free-form design / improvement / scientific-insight discussion. Frames the topic, drives toward convergence with an explicit per-turn `Convergence pulse`, and exits one of two ways: **converge** → packages a one-paragraph requirement and tells the user to invoke `/mol:spec` on it; **discard** → leaves no artifacts. Hard 8-turn cap. Read-only. Pairs upstream of `/mol:spec`. | When the requirement isn't yet clear enough for `/mol:spec` and you want to think it through with the agent. | `/mol:discuss should /mol:web own remote dev servers?` |
-| `/mol:grill <plan>` | Relentless one-question-at-a-time interview that hardens an already-formed plan before building. Walks the decision tree dependency-first, recommends an answer for every question, and self-answers from the codebase where it can; tracks state with a per-turn `Grill pulse`. Exits one of two ways: **converge** → packages a sharpened plan + Decisions log and tells the user to invoke `/mol:spec` on it; **redirect** → drops back to `/mol:discuss` when the plan dissolves, leaving no artifacts. Read-only. The bridge between `/mol:discuss` and `/mol:spec`. | When you already have a plan and want it stress-tested before writing the spec. | `/mol:grill cache force results per-frame keyed on neighbor-list hash` |
-| `/mol:spec` | Natural-language requirement → structured `<slug>.md` + binding `<slug>.acceptance.md` under `.claude/specs/`. Gated on a mandatory `librarian` codebase scan: every reuse candidate (tagged `reuse` / `generalize`) must be resolved in the spec's Design § Reuse decision — reimplementing an existing capability instead of reusing or generalizing it is invalid. Bulk drafting + self-validation (sections / atomic tasks / RED-before-GREEN / Files↔Tasks cross-reference / reuse & regression-example checks) is delegated to the `spec-writer` subagent so parent context stays small. Skill orchestrates conflict detection and persistence — both files are written immediately, no approval prompt. Detects conflicts with existing specs and updates them in place when superseded. | Before starting any non-trivial implementation. | `/mol:spec add Morse bond potential to molpy` |
+| `/mol:discuss <topic>` | Free-form design / improvement / scientific-insight discussion. Frames the topic, drives toward convergence with an explicit per-turn `Convergence pulse`, and exits one of two ways: **converge** → packages a one-paragraph requirement and **auto-invokes `/mol:grilling` (plan mode)**; **discard** → leaves no artifacts. Hard 8-turn cap. Read-only. Never auto-invokes `/mol:spec`. | When the requirement isn't yet clear enough for `/mol:spec` and you want to think it through with the agent. | `/mol:discuss should /mol:web own remote dev servers?` |
+| `/mol:grill <plan>` | **User-only entry** (`disable-model-invocation: true`). Thin wrapper that runs `/mol:grilling` in plan mode. Other skills must call `/mol:grilling` directly. | When you deliberately want to type a grill session on a plan you already have. | `/mol:grill cache force results per-frame keyed on neighbor-list hash` |
+| `/mol:grilling [mode] <plan\|slug>` | **Model-invoked** body. Relentless one-question-at-a-time interview; recommended answers; self-answers from the codebase; per-turn `Grill pulse`. Modes: **plan** (default) — sharpen a free-form plan → hand off to user for `/mol:spec`; **spec-audit** — stress-test a written spec → `audit_result: clean \| supersede_needed` (caller writes). Auto-invoked by `/mol:discuss` (plan) and `/mol:spec` (spec-audit). Read-only on source and specs. | Auto from discuss/spec, free-form “grill me”, or via `/mol:grill`. | `/mol:grilling mode:spec-audit morse-bond` |
+| `/mol:spec` | Natural-language requirement → structured `<slug>.md` + binding `<slug>.acceptance.md` under `.claude/specs/`. Gated on a mandatory `librarian` codebase scan: every reuse candidate (tagged `reuse` / `generalize`) must be resolved in the spec's Design § Reuse decision — reimplementing an existing capability instead of reusing or generalizing it is invalid. Bulk drafting + self-validation is delegated to `spec-writer`. Skill persists both files immediately, then **auto-invokes `/mol:grilling` (spec-audit)** — material holes supersede in place; clean audits point to `/mol:impl`. | Before starting any non-trivial implementation. | `/mol:spec add Morse bond potential to molpy` |
 | `/mol:litrev` | Literature + reference-implementation review (gated on `mol_project.science.required`). Returns equations, validation targets, open questions. | Before specifying a domain-critical feature. | `/mol:litrev Nose-Hoover thermostat` |
 
 ### 2 — Implement (writes code)
@@ -179,12 +189,12 @@ the standard GitHub fork convention: `origin` = your fork, `upstream`
 
 ```
 /mol:litrev <topic>           # only if science.required and you need refs
-/mol:grill <plan>             # optional: stress-test the plan one question at a time before speccing
-/mol:spec <feature>           # → <slug>.md + <slug>.acceptance.md, written immediately
-/mol:impl <slug>              # TDD; ticks tasks; auto-runs /mol:simplify + /mol:close
-/mol:web <slug>               # ad hoc, non-binding UI verification (optional)
+/mol:discuss <topic>          # interactive; converges → auto /mol:grilling (plan)
+/mol:grill <plan>             # interactive entry → /mol:grilling (plan)
+/mol:spec <feature>           # interactive grill after write; then auto /mol:impl-all
+/mol:impl-all <slug|prefix>   # default implement path — end-to-end, auto close
 /mol:review                   # full static review, all axes
-/mol:commit && /mol:push && /mol:pr
+/mol-plugin:release patch     # bump + commit + push + pr + merge + tag (no stops)
 ```
 
 ### Bug fix

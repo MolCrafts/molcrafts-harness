@@ -13,13 +13,47 @@ from typing import Any
 
 FRONTMATTER_RE = re.compile(r"^---\r?\n(.*?)\r?\n---(?:\r?\n|$)(.*)$", re.DOTALL)
 SKILL_REF_RE = re.compile(r"/(mol(?:-plugin)?):([a-z0-9][a-z0-9-]*)")
+# Positive auto-invoke mentions only (skip "do not/never auto-invoke …").
+AUTO_INVOKE_RE = re.compile(
+    r"(?i)(?:(?P<neg>do not|never)\s+)?(?P<auto>auto-)?invoke[sd]?\s+"
+    r"`/(?P<plugin>mol(?:-plugin)?):(?P<skill>[a-z0-9][a-z0-9-]*)`"
+)
 VALID_MODELS = {"opus", "sonnet", "haiku", "inherit"}
 VALID_INSTALL_POLICIES = {"AVAILABLE", "INSTALLED_BY_DEFAULT", "NOT_AVAILABLE"}
 VALID_AUTH_POLICIES = {"ON_INSTALL", "ON_USE"}
+TRUE_VALUES = {"true", "yes", "1"}
+FALSE_VALUES = {"false", "no", "0"}
 CODEX_DIRECTIVE = (
     "> **Codex:** Read `../CODEX.md` before executing this shared workflow. "
     "Claude Code follows the workflow directly."
 )
+
+
+def parse_boolish(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    lowered = value.strip().lower()
+    if lowered in TRUE_VALUES:
+        return True
+    if lowered in FALSE_VALUES:
+        return False
+    return None
+
+
+def read_allow_implicit_invocation(path: Path) -> bool | None:
+    """Return Codex policy.allow_implicit_invocation when present."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = re.search(
+        r"(?m)^\s*allow_implicit_invocation\s*:\s*(true|false)\s*$",
+        text,
+        re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    return match.group(1).lower() == "true"
 
 
 def parse_args() -> argparse.Namespace:
@@ -76,6 +110,10 @@ class Validator:
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self.skill_names: dict[str, set[str]] = {}
+        # (plugin, skill) → user-invoked (disable-model-invocation: true)
+        self.user_invoked: set[tuple[str, str]] = set()
+        # (plugin, skill) auto-invoked by some sibling skill body
+        self.auto_invoked: set[tuple[str, str]] = set()
 
     def rel(self, path: Path) -> str:
         try:
@@ -322,6 +360,57 @@ class Validator:
             expected_h1 = f"# /{plugin_name}:{skill_root.name} — "
             if expected_h1 not in body:
                 self.error(skill_md, f"H1 must begin with {expected_h1!r}")
+
+            disable_raw = fields.get("disable-model-invocation")
+            disable = parse_boolish(disable_raw)
+            if disable_raw is not None and disable is None:
+                self.error(
+                    skill_md,
+                    "disable-model-invocation must be true or false when set",
+                )
+            openai_yaml = skill_root / "agents" / "openai.yaml"
+            if disable is True:
+                self.user_invoked.add((plugin_name, skill_root.name))
+                if not openai_yaml.is_file():
+                    self.error(
+                        skill_md,
+                        "user-invoked skill requires agents/openai.yaml "
+                        "with policy.allow_implicit_invocation: false",
+                    )
+                else:
+                    allow = read_allow_implicit_invocation(openai_yaml)
+                    if allow is None:
+                        self.error(
+                            openai_yaml,
+                            "missing policy.allow_implicit_invocation "
+                            "(required for user-invoked skills)",
+                        )
+                    elif allow is True:
+                        self.error(
+                            openai_yaml,
+                            "allow_implicit_invocation must be false when "
+                            "disable-model-invocation: true",
+                        )
+            elif openai_yaml.is_file():
+                allow = read_allow_implicit_invocation(openai_yaml)
+                if allow is False and disable is not True:
+                    self.warn(
+                        openai_yaml,
+                        "allow_implicit_invocation: false but Claude frontmatter "
+                        "does not set disable-model-invocation: true",
+                    )
+                if allow is True and disable is True:
+                    self.error(
+                        openai_yaml,
+                        "allow_implicit_invocation: true conflicts with "
+                        "disable-model-invocation: true",
+                    )
+
+            for match in AUTO_INVOKE_RE.finditer(body):
+                if match.group("neg"):
+                    continue
+                self.auto_invoked.add((match.group("plugin"), match.group("skill")))
+
         self.skill_names[plugin_name] = skill_names
 
     def validate_agents(self, plugin_root: Path) -> None:
@@ -383,6 +472,22 @@ class Validator:
                         path,
                         f"reference /{target_plugin}:{target_skill} has no matching skill",
                     )
+        self.validate_invokers()
+
+    def validate_invokers(self) -> None:
+        """User-invoked skills must not be targets of sibling auto-invoke."""
+        for plugin, skill in sorted(self.auto_invoked):
+            if (plugin, skill) not in self.user_invoked:
+                continue
+            skill_md = (
+                self.root / "plugins" / plugin / "skills" / skill / "SKILL.md"
+            )
+            self.error(
+                skill_md if skill_md.is_file() else self.root / "plugins" / plugin,
+                f"/{plugin}:{skill} is user-invoked (disable-model-invocation: true) "
+                "but another skill auto-invokes it — make it model-invoked, or "
+                "auto-invoke a model-invoked body instead",
+            )
 
     def report(self, quiet: bool) -> int:
         for item in self.errors:

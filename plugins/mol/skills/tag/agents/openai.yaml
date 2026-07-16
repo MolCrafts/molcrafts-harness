@@ -1,0 +1,5 @@
+interface:
+  display_name: "Tag"
+  short_description: "Push a release tag to upstream"
+policy:
+  allow_implicit_invocation: true

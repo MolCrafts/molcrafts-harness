@@ -50,6 +50,7 @@ Extract from description + prior conversation:
 - **Behavior.** Decisive verbs (probe? generate? gate? delegate? orchestrate?). Branches (success/failure; converge/discard; PROCEED/BLOCK).
 - **Outputs.** Files written, agents invoked, user-facing shape, F2 one-line summary.
 - **Boundaries.** Read-only vs writing; what it refuses to touch; relation to neighbors (`/mol:spec` vs `/mol:note`, `/mol:fix` vs `/mol:impl`).
+- **Invoker class.** **User-invoked** (`disable-model-invocation: true` + `agents/openai.yaml` with `policy.allow_implicit_invocation: false`) when only the human should fire it and **no** sibling will auto-invoke it. **Model-invoked** (omit the flag; optional `allow_implicit_invocation: true`) when the model or another skill must reach it. **Invoker rule:** if skill A auto-invokes skill B, B is model-invoked. See `plugins/mol/rules/design-principles.md` § 2.5. Prefer a thin user entry + model-invoked body only when the same procedure needs both deliberate typing and auto-call (e.g. `/mol:grill` → `/mol:grilling`).
 
 Any unclear → **ask 1–2 targeted questions**. Never write with gaps.
 
@@ -61,10 +62,22 @@ Frontmatter:
 ---
 name: <skill-name>
 description: <one or two sentences captured verbatim from the user's intent; mention read-only vs. writes; mention any sibling-skill relationship that defines the boundary>
+# user-invoked only (omit both lines for model-invoked):
+# disable-model-invocation: true
 argument-hint: "<concrete shape, per /mol-plugin:check Step 3 — e.g. <arg>, [arg], <arg> [<arg>], <a | b | c>>"
 ---
 
 > **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
+```
+
+If user-invoked, also write `plugins/<plugin>/skills/<skill-name>/agents/openai.yaml`:
+
+```yaml
+interface:
+  display_name: "<Title Case Name>"
+  short_description: "<one-line human summary>"
+policy:
+  allow_implicit_invocation: false
 ```
 
 Body shape (numbered Procedure, concrete steps, no placeholders):
@@ -109,6 +122,8 @@ Show the path + **complete** body. Approval is for redirection ("change step 3 t
 ### 6. Apply
 
 Write the file. Report `created plugins/<plugin>/skills/<skill-name>/SKILL.md`.
+
+If user-invoked, also write `plugins/<plugin>/skills/<skill-name>/agents/openai.yaml` with `policy.allow_implicit_invocation: false` (and report that path).
 
 ### 7. Register in the plugin README
 
