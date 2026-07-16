@@ -1,0 +1,5 @@
+interface:
+  display_name: "Grilling"
+  short_description: "Stress-test a plan or written spec one question at a time"
+policy:
+  allow_implicit_invocation: true

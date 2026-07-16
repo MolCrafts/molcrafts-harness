@@ -1,6 +1,6 @@
 ---
 name: push
-description: Push the current branch to origin (the contributor's fork) after gating with /mol:ship push (format + lint + full test suite). Auto-runs /mol:commit first if the working tree is dirty. Follows the standard GitHub fork convention — origin = your fork, upstream = the canonical repo — and never pushes branches to upstream.
+description: Push the current branch to origin after /mol:ship push. Auto-runs /mol:commit if dirty. No confirmation prompts. Never force-pushes; never pushes tags (use /mol:tag). Auto-invoked by /mol:pr and /mol-plugin:release.
 argument-hint: "[<branch>]"
 ---
 
@@ -10,48 +10,37 @@ argument-hint: "[<branch>]"
 
 Writes to a remote: `git push origin`. Standard GitHub fork-and-PR layout:
 
-- **`origin`** = contributor's personal fork. Feature branches push here.
-- **`upstream`** (when present) = canonical org-owned repo. Branches **never** push here from this skill — reach upstream only via `/mol:pr`.
+- **`origin`** = contributor's personal fork. Feature / release branches push here.
+- **`upstream`** (when present) = canonical org-owned repo. Branches **never** push here from this skill — reach upstream only via `/mol:pr` (+ merge).
 
-Single-remote layouts (solo / non-fork) have no `upstream`; warn and ask explicit confirmation before pushing to `origin`.
+**Fully agent-driven** — no confirmation prompts.
 
 ## Procedure
 
 ### 1. Resolve branch and remote
 
 - Branch: `$ARGUMENTS` if provided, else current (`git rev-parse --abbrev-ref HEAD`).
-- Detect remotes: `git remote`. Push target = `origin`. Missing → stop.
+- Push target = `origin`. Missing → stop hard.
 
-`upstream` exists and `origin == upstream` (same URL) → warn (no fork/canonical separation); ask explicit confirmation.
+Single-remote (no `upstream`) → push to `origin` without asking.
 
-Only `origin` exists (no `upstream`) → warn: "no upstream remote configured — pushing directly to origin." Ask confirmation. (User can `git remote add upstream <url>` for the safety check.)
+### 2. Default-branch guard (forks only)
 
-### 2. Refuse default branch on a forked repo
+`upstream` exists and current branch == upstream default → **stop hard** (do not push default from a fork). Create/switch to a feature or release branch instead — no user prompt, report the stop.
 
-Resolve upstream default branch:
-
-```
-git symbolic-ref --short refs/remotes/upstream/HEAD 2>/dev/null \
-  | sed 's@^upstream/@@'
-```
-
-Fallback: `git ls-remote --heads upstream main master | head -1`.
-
-Current branch == default + `upstream` exists → stop. Pushing fork's `master`/`main` is rarely intent; ask user to create a feature branch.
-
-No `upstream` → skip this check.
+No `upstream` → skip.
 
 ### 3. Commit pending work first
 
-`git status --porcelain` non-empty → invoke `/mol:commit` (which runs `/mol:ship commit` gate). BLOCK → stop.
+`git status --porcelain` non-empty → invoke `/mol:commit` (no prompt). BLOCK → stop.
 
 Clean tree → skip.
 
 ### 4. Run the push gate
 
-Invoke `/mol:ship push`. The `push` tier is `commit` ⊇ format + lint + pre-commit ⊇ full test suite. Budget 5–10 min.
+Invoke `/mol:ship push`.
 
-**BLOCK** → stop, relay top blocker + suggested `/mol:fix` / `/mol:impl` action. Do not push.
+**BLOCK** → stop with blocker (attempt `/mol:fix` once if clearly mechanical; else stop).
 **PROCEED** → continue.
 
 ### 5. Push
@@ -60,29 +49,24 @@ Invoke `/mol:ship push`. The `push` tier is `commit` ⊇ format + lint + pre-com
 git push -u origin <branch>
 ```
 
-`-u` on first push so subsequent `git pull` / `git push` without args target `origin`. Never use `--force` / `--force-with-lease` from this skill — non-fast-forward needed → user does it manually.
+Never `--force` / `--force-with-lease`.
 
 ### 6. Report
-
-Emit the one-line F2 summary plus a next-step pointer:
 
 ```
 /mol:push: pushed <branch> → origin/<branch>
   <short-sha-range>
-
-next: /mol:pr     (open PR against upstream/<default_branch>)
 ```
-
-Already exists on origin + fast-forward → mention. Remote rejected → surface git error verbatim and stop.
 
 ## Guardrails
 
-- **Never** push to `upstream`. Branches reach upstream only via `/mol:pr`.
-- **Never** force-push (`-f` / `--force` / `--force-with-lease`).
-- **Never** push the default branch from a fork without explicit user confirmation.
-- **Never** skip the `/mol:ship push` gate.
-- **Never** push tags from this skill — tags go through `/mol:tag`.
+- **Never** push to `upstream`.
+- **Never** force-push.
+- **Never** push the default branch from a fork.
+- **Never** skip `/mol:ship push`.
+- **Never** push tags — `/mol:tag` only.
+- **Never** wait for confirmation.
 
 ## Idempotency
 
-Up-to-date branch → no-op (`Everything up-to-date`). Reported as success.
+Up-to-date branch → no-op success.

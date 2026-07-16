@@ -1,7 +1,7 @@
 ---
 name: impl
-description: Implementation workflow — scope → spec → acceptance gate → TDD → implement → verify → auto simplify + close. Use after `/mol:spec` has produced an approved spec + acceptance file; writes code, tests, and docs while ticking the spec's Tasks/acceptance checkboxes, then auto-invokes `/mol:simplify` and `/mol:close` without prompting.
-argument-hint: "<feature description or path to spec file>"
+description: Implementation workflow for one spec — TDD → implement → verify → auto simplify + auto close (with auto evaluators). For a chain prefix or multi-spec feature, prefer /mol:impl-all (or pass a prefix — this skill forwards). Fully agent-driven after a written spec; never asks the operator to close or pick next steps.
+argument-hint: "<slug | spec-prefix | feature description>"
 ---
 
 > **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
@@ -10,7 +10,9 @@ argument-hint: "<feature description or path to spec file>"
 
 Read CLAUDE.md → parse `mol_project:` (`$META`); else emit adoption hint and stop. Print `[mol] stage: <value>`.
 
-`/mol:impl` orchestrates a spec's Tasks checklist: pre-flight → iterate each task (RED → GREEN → tick) → verify → simplify → finalize (acceptance ledger + commit + auto-close). `/mol:simplify` and `/mol:close` run automatically every pass — never prompt the operator for either. All stage-policy decisions delegate to `/mol:simplify` (the single backward-compat gatekeeper, `plugins/mol/rules/stage-policy.md`).
+`/mol:impl` orchestrates a **single** spec's Tasks checklist: pre-flight → iterate each task (RED → GREEN → tick) → verify → simplify → finalize (acceptance ledger + commit + auto evaluators + auto-close). `/mol:simplify` and `/mol:close` run automatically every pass — never prompt the operator for either. All stage-policy decisions delegate to `/mol:simplify`.
+
+**Chain / batch:** if `$ARGUMENTS` matches a chain prefix with ≥2 specs (`<prefix>-NN-*` under `$META.specs_path`), **forward immediately to `/mol:impl-all <prefix>`** and exit. Prefer `/mol:impl-all` as the default user-facing implement command for multi-spec work.
 
 Orchestration mode per `plugins/mol/rules/model-policy.md`: this loop plans, routes, gates, and verifies — it never authors production source. Tests come from `tester`, production code from `implementer`.
 
@@ -20,9 +22,11 @@ Orchestration mode per `plugins/mol/rules/model-policy.md`: this loop plans, rou
 
 ### 1a. Scope & branch
 
+If chain prefix detected (≥2 matching specs) → invoke `/mol:impl-all` and stop.
+
 Classify against `$META.arch.style`: SMALL (<3 files, existing pattern) / MEDIUM (3–8 files, new pattern) / LARGE (new top-level concept).
 
-LARGE on a monolithic spec → stop, re-invoke `/mol:spec` to produce a chain.
+LARGE on a monolithic spec → re-invoke `/mol:spec` to produce a chain, then `/mol:impl-all` on the chain — no user prompt.
 
 When slug matches `<base>-<NN>-<phase>` or scope is LARGE: if on default branch, checkout `feat/<base>` (create if needed). No prompt. Silent otherwise.
 
@@ -94,7 +98,7 @@ Run in parallel: `$META.build.check` + `$META.build.test` (full suite) + the spe
 
 Invoke `/mol:simplify` on touched files. **Mandatory.** `/mol:simplify` decides: delete legacy (`experimental`) / shim (`stable`) / migration-note (`beta`) / leave (`maintenance`). Runs its own build/test gate; reverts on regression.
 
-If revert → leave `in-progress`, surface trigger, stop. User resolves; re-run `/mol:impl`; 1c recovers.
+If revert → leave `in-progress`, surface trigger, attempt one `/mol:fix` cycle on the simplify regression; still bad → stop hard (resume via 1c on re-run).
 
 If "Hygiene cleanup" task exists → tick it; else add one line recording simplify ran clean.
 
@@ -128,8 +132,8 @@ All hold:
 1. Mark `status: code-complete`.
 2. Invoke `/mol:commit` (same as done path). BLOCK → drop to `in-progress`, stop.
 3. List the criteria left at `pending`, **grouped by evaluator owed** per the routing table in `plugins/mol/rules/evaluator-protocol.md` § *Type → owed evaluator*.
-4. **Auto-close.** Invoke `/mol:close <slug>` (default mode) — no prompt. It re-checks the ledger and either advances to `done` + deletes spec/acceptance/INDEX, or leaves the spec parked and names what each pending criterion still owes.
-5. If still parked after auto-close, end with one line — `parked at code-complete; owes <evaluator(s)> for <criterion ids>` — and stop. No recipe block, no questions.
+4. **Auto-evaluators then auto-close.** For each owed evaluator on pending non-`code`/`runtime` criteria, invoke it once (`/mol:bench`, `/mol:web`, …) when configured. Then invoke `/mol:close <slug>` (default mode) — no prompt. `/mol:close` re-checks, auto-attests remaining C criteria with `verified_by: agent-auto` when no evaluator can flip them, and deletes artifacts on success.
+5. If close still fails (failed criteria / commit gate) → stop hard with the failure. **Never** ask the operator to close or pass `--manual`.
 6. Never delete spec/acceptance/INDEX directly on this path — deletion is `/mol:close`'s job.
 
 For chained specs, exit cleanly after commit + auto-close — don't start the next spec (that's `/mol:impl-all`'s job).

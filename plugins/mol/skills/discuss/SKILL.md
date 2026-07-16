@@ -1,6 +1,6 @@
 ---
 name: discuss
-description: Free-form design / improvement / scientific-insight discussion that drives toward convergence and either hands the agreed direction to `/mol:spec` or discards the thread. Use for exploratory threads (vs `/mol:spec` for already-clear requirements, `/mol:grill` for hardening an already-formed plan, or `/mol:note` for decided rules); read-only; supports Chinese and English.
+description: Free-form design / improvement / scientific-insight discussion that drives toward convergence, then auto-invokes `/mol:grilling` on the agreed requirement (or discards the thread). Use for exploratory threads (vs `/mol:spec` for already-clear requirements, `/mol:grilling` for hardening an already-formed plan, or `/mol:note` for decided rules); read-only; supports Chinese and English.
 argument-hint: "<topic or question>"
 ---
 
@@ -10,7 +10,7 @@ argument-hint: "<topic or question>"
 
 Read CLAUDE.md → parse `mol_project:` (`$META`).
 
-Conversational skill for working through design trade-offs, improvement ideas, or scientific insights *before* a spec. Two exit doors — **converge** (hand off to `/mol:spec`) or **discard** (leave no trace). Distinct from `/mol:spec` (requirement already clear), `/mol:grill` (hardens a plan you *already have* — grill needs a concrete plan, discuss explores *whether / what*), and `/mol:note` (captures *decided* rules).
+Conversational skill for working through design trade-offs, improvement ideas, or scientific insights *before* a spec. Two exit doors — **converge** (package requirement → auto-invoke `/mol:grilling` plan mode) or **discard** (leave no trace). Distinct from `/mol:spec` (requirement already clear), `/mol:grilling` (hardens a plan you *already have*), and `/mol:note` (captures *decided* rules).
 
 ## Procedure
 
@@ -37,15 +37,17 @@ Divergence signals: open list grows turn-over-turn; user keeps reframing topic; 
 
 Hard cap: **8 turns**. At turn 8 → force verdict (Step 3 or 4).
 
-### 3. Converge → hand off to `/mol:spec`
+### 3. Converge → auto-invoke `/mol:grilling` (plan mode)
 
 When pulse reads "converging" *and* open list is empty (or user accepts remaining opens as out-of-scope):
 
-- one-paragraph requirement, in user's language, that a fresh `/mol:spec` could consume verbatim
-- short "Context from discussion" block listing alternatives considered and reason this won — becomes spec's *Why*
-- relevant file paths from Step 1
-
-Tell the user: *"converged. To produce the binding spec, run `/mol:spec <one-paragraph requirement>`. Paste the Context block as additional context if you want the trade-off rationale captured."* Do not invoke `/mol:spec` yourself.
+1. Produce:
+   - one-paragraph requirement, in user's language, that a fresh `/mol:spec` could consume verbatim
+   - short "Context from discussion" block listing alternatives considered and reason this won — becomes the grill Decisions seed / later spec *Why*
+   - relevant file paths from Step 1
+2. Tell the user briefly: *"converged — entering `/mol:grilling` to stress-test the plan before you spec."*
+3. **Auto-invoke `/mol:grilling`** in **plan** mode with the one-paragraph requirement + Context block as the plan under test. Use the Skill tool (Claude) or read-and-execute `../grilling/SKILL.md` (Codex). Never call user-only `/mol:grill`.
+4. After grilling finishes, its own handoff applies: sharpened plan → user runs `/mol:spec` when ready. **Do not** invoke `/mol:spec` from discuss.
 
 ### 4. Discard cleanly
 
@@ -53,6 +55,7 @@ When pulse reads "diverging" or "stuck" for two consecutive turns, when user cha
 
 - say so explicitly + name the reason in one sentence (e.g. *"discarded — depends on a decision in `auth/` that hasn't been made yet"*)
 - write nothing: no notes, no draft spec, no `.claude/notes/` entry, no `.claude/specs/` entry
+- do **not** invoke grilling
 - if a *stable rule* fell out (rare), suggest user run `/mol:note` separately — do not promote yourself
 
 Discard is first-class. Not-converging is fine; shipping a half-decided spec is not.
@@ -61,13 +64,13 @@ Discard is first-class. Not-converging is fine; shipping a half-decided spec is 
 
 - Framing sentence + surfaced code-surface bullets (Step 1).
 - Per-turn `Convergence pulse` block.
-- On convergence: one-paragraph requirement + Context block + handoff instruction.
+- On convergence: one-paragraph requirement + Context block + auto-invoke `/mol:grilling` (then grilling's output).
 - On discard: one-sentence reason; nothing else.
 
 One-line F2 summary:
 
 ```
-/mol:discuss <topic>: converged → /mol:spec <one-line requirement>
+/mol:discuss <topic>: converged → /mol:grilling → (user) /mol:spec <one-line requirement>
 ```
 
 or
@@ -79,7 +82,7 @@ or
 ## Guardrails
 
 - **Read-only on code.** Never edits files. Spec written by `/mol:spec`.
-- **Do not promote** outputs into `.claude/specs/` or `.claude/notes/notes.md`. Convergence hands off; discard leaves no trace.
+- **Do not promote** outputs into `.claude/specs/` or `.claude/notes/notes.md`. Convergence hands off to grilling; discard leaves no trace.
 - **Do not silently merge with `/mol:note`.** Stable rule emerges → surface as `/mol:note` suggestion.
-- **Do not auto-loop or auto-invoke `/mol:spec`.** User decides.
+- **Auto-invoke `/mol:grilling` on converge; never auto-invoke `/mol:spec`.** User decides when to spec after grilling.
 - **Hard 8-turn cap.**

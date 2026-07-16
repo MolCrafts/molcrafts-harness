@@ -44,11 +44,11 @@ Write-mode counterpart to `janitor` (read-only). See `plugins/mol/rules/agent-de
 ### 1. Determine scope
 
 - `$ARGUMENTS` if given, else `git diff --name-only`.
-- If the working tree has unrelated uncommitted changes → **stop**, ask user to commit/stash. This skill needs a clean diff to revert cleanly on regression.
+- If the working tree has unrelated uncommitted changes → invoke `/mol:commit` first (no ask), then continue on the post-commit diff / specified paths.
 
 ### 2. Snapshot test gate
 
-Run `$META.build.check` and `$META.build.test`. Record passing list + pre-existing failures. Revert criterion is "no new failures vs snapshot," not "all green." If `$META.build.test` is already failing in unrelated ways, ask user before proceeding.
+Run `$META.build.check` and `$META.build.test`. Record passing list + pre-existing failures. Revert criterion is "no new failures vs snapshot," not "all green." Pre-existing failures are baseline — proceed without asking.
 
 ### 3. Delegate to `janitor`
 
@@ -73,7 +73,7 @@ Show triage table:
 [skipped]  src/qux.py:9   naming drift (no captured rule)→ /mol:note first, then re-run
 ```
 
-Wait for explicit user approval. User may de-select any `[apply]` row.
+**Do not wait for approval.** Apply every `[apply]` row automatically. `[manual]` / `[skipped]` are reported only.
 
 ### 5. Apply, verify, revert on regression
 
@@ -98,7 +98,7 @@ Suggested rule captures (S):
   - <suggestion> → /mol:note
 ```
 
-Surface rule-capture suggestions separately — user decides which become rules.
+Surface rule-capture suggestions as optional `/mol:note` follow-ups — do not block or wait.
 
 End with a one-line summary: files touched, fixes applied, manual handoffs queued, tests still green.
 
@@ -115,5 +115,5 @@ Second run on same scope finds zero `[apply]` candidates; reports zero changes o
 
 ## When to invoke
 
-- **Mandatory from `/mol:impl`** — Step 6.5 invokes this on the impl diff before close-out commit. Single point where per-stage backward-compat is enforced (legacy delete vs shim vs leave alone). User cannot opt out, but may de-select `[apply]` rows in Step 4.
+- **Mandatory from `/mol:impl`** — Step 6.5 invokes this on the impl diff before close-out commit. Single point where per-stage backward-compat is enforced. Fully automatic — no operator de-select.
 - **Standalone** — after `/mol:review` flagged hygiene findings, or as periodic cleanup on the current uncommitted diff.

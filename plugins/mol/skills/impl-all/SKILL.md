@@ -1,7 +1,7 @@
 ---
 name: impl-all
-description: Batch-implement a chain of specs from start to finish. Given a spec prefix, discovers all matching specs in `.claude/specs/` sorted by numeric suffix, then drives the chain itself — running `/mol:impl` per spec in order (each run commits and auto-closes itself). After each spec a cheap-model evaluator subagent independently confirms the terminal state and acceptance ledger before the chain advances. All gating, TDD, simplify, and verdict logic lives in `/mol:impl`. Never stops to ask questions.
-argument-hint: "<spec-prefix>"
+description: Default end-to-end implementer — discover a spec or chain under a prefix, drive /mol:impl per spec with independent completion checks, auto-run evaluators and /mol:close until every spec is done. Never asks questions; never leaves closing to the human. Prefer this over bare /mol:impl for any feature work.
+argument-hint: "<spec-prefix or slug>"
 ---
 
 > **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
@@ -17,7 +17,7 @@ Drive an entire spec chain (`<base>-01-<phase>`, `<base>-02-<phase>`, …) by it
 → reports chain verdict
 ```
 
-**Never asks questions.** Fully autonomous — the skill drives the chain inside its own agentic loop (invoking `/mol:impl` via the Skill tool). It does **not** rely on Claude Code's `/goal` built-in: `/goal` is user-invoked only and cannot be triggered programmatically by a skill.
+**Never asks questions.** Fully autonomous — the skill drives the chain inside its own agentic loop (invoking `/mol:impl` via the Skill tool). Single-slug prefixes (one matching spec) are valid — still the preferred entry for "implement this feature end-to-end".
 
 ---
 
@@ -88,36 +88,25 @@ Return strictly this shape:
 **2c. Act on the verdict:**
 
 - `done` → next spec. (`/mol:impl` § 4c already committed and deleted the spec — no commit here.)
-- `code-complete` → record the `owed_evaluator` set from the evaluator's `pending` list, then next spec. (`/mol:impl` § 4d already committed and auto-invoked `/mol:close`; the park is post-close — no commit, no second close here.)
+- `code-complete` → auto-invoke owed evaluators then `/mol:close <slug>` again (self-repair). Still code-complete after close → **stop the chain** with the close failure (do not ask the human to close). Close success → next spec.
 - `stalled` → **stop the chain.** `/mol:impl` hit a blocker; later specs may depend on this one. Do not skip ahead.
-- `anomaly` → **auto-invoke `/mol:close <slug>`** (default mode — never `--manual`) as self-repair — a `code-complete` spec whose criteria are all `verified` is exactly what default-mode close advances; this covers the case where `/mol:impl`'s auto-close failed to fire. Close succeeds → treat as done, continue. Close refuses → **stop the chain** and surface the discrepancy.
+- `anomaly` → **auto-invoke `/mol:close <slug>`** as self-repair. Close succeeds → treat as done, continue. Close refuses → **stop the chain** with the discrepancy (no human close recipe).
 
 ### 3. Report
 
-Show one row per spec with its terminal status, using the evaluator's verdict (not the main-loop self-report). For every spec at `code-complete`, attribute the parking reason to the specific evaluator the subagent named, so the operator knows what to run next (or whether `/mol:close --manual` is appropriate).
+Show one row per spec with its terminal status, using the evaluator's verdict (not the main-loop self-report).
 
 ```
 ═══ [mol:impl-all] chain verdict ═══
 
   morse-bond-01-potential      done
   morse-bond-02-gradient       done
-  morse-bond-03-optimization   code-complete   owes: /mol:bench  (2 perf criteria)
+  morse-bond-03-optimization   done
 
-  2 done, 1 parked, 0 failed
+  3 done, 0 failed
 ```
 
-After the table, if any spec is still parked (auto-close already ran per spec and could not advance it), print once:
-
-```
-PARKED specs owe runtime evaluators (/mol:close already attempted).
-To finish: run the owed evaluator (e.g. `/mol:bench <slug>`), then
-`/mol:close <slug>` — or `/mol:close <slug> --manual` when no evaluator
-is configured (e.g. mol_project.bench.repo unset).
-```
-
-Skip the note entirely if no spec parked (chain reached `done` end-to-end).
-
-End-of-skill one-line summary: `/mol:impl-all: <N> done, <M> parked, <K> failed; chain <prefix>` (or `BLOCKED: <reason>` if step 1 refused or the chain stalled).
+If the chain stopped early, print the hard failure once (no human close menu). End-of-skill one-line summary: `/mol:impl-all: <N> done, <K> failed; chain <prefix>` (or `BLOCKED: <reason>`).
 
 ---
 
@@ -128,6 +117,6 @@ End-of-skill one-line summary: `/mol:impl-all: <N> done, <M> parked, <K> failed;
 - **Don't duplicate `/mol:impl`.** All gates, TDD, simplify, acceptance, commit, and status logic belongs to `/mol:impl`. This skill only iterates and verifies.
 - **Trust the evaluator, not the self-report.** Per-spec advancement is gated on the independent Haiku-class evaluator subagent reading the actual spec + acceptance ledger — the same independence principle as `/goal`'s between-turn check.
 - **Stop on stall.** If the evaluator returns `stalled`, stop the chain — later specs may depend on this one. `anomaly` is first self-repaired via `/mol:close`; stop only if close refuses.
-- **Auto-close every spec, never `--manual`.** `/mol:close` runs in default mode after each spec; manual attestation stays an operator-only decision.
+- **Auto-close every spec.** `/mol:close` runs after each spec (evaluators + agent-auto attestation). Never leave a close step for the human.
 - **One checkpoint per spec — owned by `/mol:impl`.** Its § 4c/§ 4d finalize commits every spec, so the chain stays reviewable mid-flight; this skill never invokes `/mol:commit` or duplicates the close.
 - **Read-only evaluator.** The evaluator subagent inspects and reports; it never edits specs, acceptance files, or code. Only `/mol:impl` (and `/mol:close`) may mutate status.

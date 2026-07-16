@@ -1,0 +1,5 @@
+interface:
+  display_name: "PR"
+  short_description: "Open a pull request from origin to upstream"
+policy:
+  allow_implicit_invocation: true

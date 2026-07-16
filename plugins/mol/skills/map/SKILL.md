@@ -1,6 +1,6 @@
 ---
 name: map
-description: Build or refresh the project blueprint at `.claude/notes/architecture.md` — a passive map of modules, public surfaces, and layer roles consumed by the `librarian` agent at spec time. Use whenever the architecture has drifted; idempotent and writes only after explicit user approval.
+description: Build or refresh the project blueprint at `.claude/notes/architecture.md` — a passive map of modules, public surfaces, and layer roles consumed by the `librarian` agent at spec time. Use whenever the architecture has drifted; idempotent; writes automatically when the inventory drifts (no approval wait).
 argument-hint: "[<scope-path>]"
 ---
 
@@ -76,19 +76,11 @@ If diff is empty (modulo `_Generated_` line):
 
 Stop. No file touch. (I1 idempotent no-op branch.)
 
-### 5. User-confirm gate (HARD — never skip)
+### 5. Auto-write (no approval wait)
 
-Show diff (or full proposed inventory on first run). **Wait for approval.** No write past this gate.
-
-Acceptable responses:
-
-- approve / yes / 同意 → Step 6.
-- edit X / fix Y / reword Z → tweak inline if surface, else re-invoke `architect` with constraint hint; re-diff at Step 4.
-- defer → stop without writing; no draft persisted.
+Show the diff summary for the log, then proceed immediately to write. Fully agent-driven — do not wait for approve/defer.
 
 ### 6. Write the blueprint
-
-After approval:
 
 - file absent → create with shell from Step 3.
 - file exists → replace only between `<!-- mol:map:managed begin -->` and `<!-- mol:map:managed end -->`.
@@ -114,7 +106,7 @@ No-op branch:
 ## Guardrails
 
 - **Read-only on production code.** Writes only the blueprint under `.claude/notes/`. Never edits source, specs, or CLAUDE.md.
-- **No write past the gate.** Step 5 mandatory; no `--yes` shortcut.
+- **Write when drift exists.** Empty diff → no-op; non-empty → write without asking.
 - **Idempotent re-runs.** No drift → zero filesystem changes.
 - **No agent-to-agent calls.** This skill orchestrates `architect` (inventory mode); routing happens here (O2).
 - **Stable markers required.** Every write between `<!-- mol:map:managed begin -->` / `<!-- mol:map:managed end -->`.

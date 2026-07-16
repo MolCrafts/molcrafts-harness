@@ -143,6 +143,62 @@ Which model runs each layer — the two conversation modes
 is defined in `plugins/mol/rules/model-policy.md`; in orchestration
 mode the main loop never authors production source.
 
+## 2.5 Skill Invokers (user vs model)
+
+Skills have a second axis beyond advisor/orchestration: **who may
+fire them**. Borrowed from the [mattpocock productivity skills](
+https://github.com/mattpocock/skills/tree/main/skills/productivity)
+pattern (thin user entry + model-reachable body).
+
+| Kind | Claude frontmatter | Codex (`skills/<name>/agents/openai.yaml`) | Who can fire it | Cost |
+|---|---|---|---|---|
+| **User-invoked** | `disable-model-invocation: true` | `policy.allow_implicit_invocation: false` | Only the user typing the name | Zero description **context load**; pays human **cognitive load** |
+| **Model-invoked** | omit the flag (default) | omit, or `allow_implicit_invocation: true` | User, model, **or another skill** | Description sits in the window every turn |
+
+**Invoker rule.** If skill A auto-invokes skill B, B **must** be
+model-invoked. User-invoked is only for deliberate human entry points
+that no workflow must call. A user-invoked skill cannot be reached by
+the model or by siblings — that is the point, and the footgun.
+
+**When to split by invocation** (not every skill needs a pair):
+
+- Keep **one** skill when it is only ever typed by hand *or* only
+  ever reached as a subroutine — not both.
+- Split into a **thin user entry** + **model-invoked body** when the
+  same procedure must be (a) deliberately typed and (b) auto-invoked
+  by other skills. Example: `/mol:grill` (user-only entry) → runs
+  `/mol:grilling` (body; called by `/mol:discuss` and `/mol:spec`).
+
+Pick model-invocation only when the agent must reach the skill on its
+own, or another skill must. If it only ever fires by hand and nothing
+in the chain calls it, make it user-invoked and pay no context load.
+
+Canonical plan chain under this rule:
+
+```
+/mol:discuss ──converge──▶ /mol:grilling (plan)
+                              │
+                              ▼ (user types)
+                          /mol:spec ──persist──▶ /mol:grilling (spec-audit)
+                                                    │ holes → supersede in place
+                                                    │ clean → /mol:impl-all (auto, end-to-end)
+```
+
+### Autonomy boundary
+
+**Interactive (may wait on the human):** only `/mol:discuss`, `/mol:grill`,
+`/mol:grilling`, and the interview turns inside `/mol:spec`'s post-persist
+grill. Planning decisions are human.
+
+**Fully agent-driven (never wait for approval / "what next?"):** implement,
+close, simplify, commit, push, pr, tag, release, bench, web, ship gates,
+fix/refactor apply loops once kicked, bootstrap repairs that are
+mechanical. Closing a spec is **never** the human's job — `/mol:close`
+auto-runs evaluators and agent-auto-attests remaining criteria.
+
+Publish chain is one shot: `/mol-plugin:release` → commit → push → pr →
+merge → tag.
+
 ## 3. Why This Split
 
 1. **Reusability.** Multiple skills delegate to the same agent (the

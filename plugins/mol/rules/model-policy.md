@@ -13,13 +13,21 @@ session-model changes.
 | **Advisor** (顾问模式) | words — an answer, plan, verdict, or diagnosis | the main conversation (session model, top tier) | gather evidence only |
 | **Orchestration** (编排模式) | artifacts — code, docs, specs, commits | opus-class producer agents | author the artifacts |
 
-- Advisor skills: `/mol:discuss`, `/mol:grill`, `/mol:debug`,
-  `/mol:review`, `/mol:test`, `/mol:ship`, `/mol:litrev`, `/mol:note`,
-  `/mol:map`. The judgment in the deliverable is the top model's own;
-  reviewer agents feed it findings.
+- Advisor skills: `/mol:discuss`, `/mol:grill` (user entry),
+  `/mol:grilling` (body — still advisor even when auto-invoked from
+  orchestration), `/mol:debug`, `/mol:review`, `/mol:test`,
+  `/mol:ship`, `/mol:litrev`, `/mol:note`, `/mol:map`. The judgment
+  in the deliverable is the top model's own; reviewer agents feed it
+  findings.
 - Orchestration skills: `/mol:spec`, `/mol:impl`, `/mol:impl-all`,
   `/mol:fix`, `/mol:refactor`, `/mol:docs`, `/mol:simplify`, and the
   git chain. The main loop plans, routes, gates, and verifies.
+
+Invoker class (user vs model — who may *fire* the skill) is orthogonal
+to advisor/orchestration (what the skill *delivers*). See
+`plugins/mol/rules/design-principles.md` § 2.5. Example: `/mol:grilling`
+is advisor + model-invoked; `/mol:spec` is orchestration + model-invoked
+and auto-invokes grilling after persist.
 
 A skill's mode follows its deliverable, not a flag. A skill that both
 answers and writes (e.g. `/mol:spec`) is orchestration: the persisted

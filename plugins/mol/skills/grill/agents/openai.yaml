@@ -1,0 +1,5 @@
+interface:
+  display_name: "Grill"
+  short_description: "User-only entry — stress-test a plan via grilling"
+policy:
+  allow_implicit_invocation: false

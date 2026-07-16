@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Stage and commit changes after running the /mol:ship commit gate (format + lint + pre-commit hooks). Refuses to commit when the gate reports BLOCK. Generates a conventional-commit message from the staged diff if the user does not supply one. Never pushes; commits are local-only.
+description: Stage safe changes and commit after the /mol:ship commit gate. Auto-stages non-secret paths, auto-generates the message when none is supplied, never waits for approval. Never pushes; commits are local-only. Auto-invoked by /mol:push, /mol:impl, /mol:close, /mol-plugin:release.
 argument-hint: "[<message>]"
 ---
 
@@ -10,7 +10,7 @@ argument-hint: "[<message>]"
 
 Write skill: stages files + creates a commit. Pushing is `/mol:push`.
 
-Contract: no commit without a passing pre-commit gate. Gate lives in `/mol:ship commit`.
+Contract: no commit without a passing pre-commit gate. Gate lives in `/mol:ship commit`. **Fully agent-driven** — never waits for the user.
 
 ## Procedure
 
@@ -18,31 +18,34 @@ Contract: no commit without a passing pre-commit gate. Gate lives in `/mol:ship 
 
 `git status --porcelain` empty → stop, report nothing to commit.
 
-### 2. Decide what to stage
+### 2. Stage automatically
 
-- Already staged → treat as commit contents; do not auto-add unstaged.
-- Nothing staged + unstaged changes exist → list them, ask user to `git add` all or pick subset. Never `git add -A` / `git add .` silently (risks `.env`, credentials, large binaries).
+- Already staged → keep; also stage any remaining unstaged **safe** paths needed for a coherent commit of the current work.
+- Nothing staged + changes exist → stage every changed/untracked path **except** secret/binary refuse list:
 
-Stage by exact paths only. Never `-A` / `.` / globs.
+  Refuse (never stage; strip if already staged and abort that path):
+  `.env`, `.env.*`, `*.pem`, `*.key`, `id_rsa*`, `*.p12`, credentials files, obvious secret names.
+
+Stage by explicit paths from `git status` (never blind `git add -A` on unknown trees when secret-looking paths exist; when the refuse list is empty, `git add -A` is allowed).
+
+Do **not** ask the user which files to include.
 
 ### 3. Run the pre-commit gate
 
 Invoke `/mol:ship commit`.
 
-- **BLOCK** → stop, relay top blocker + recommended `/mol:fix` (or `/mol:impl` / `/mol:refactor`) action. Do not commit.
+- **BLOCK** → fix blockers in-loop when cheap (format/lint auto-fix via project tools); re-run gate once. Still BLOCK → stop with the failure (hard stop only for unrecoverable gates). Do not commit.
 - **PROCEED** → continue.
 
 ### 4. Resolve the commit message
 
-`$ARGUMENTS` non-empty → use as commit subject.
+`$ARGUMENTS` non-empty → use as commit subject (no approval).
 
-Else generate conventional-commit message from staged diff:
+Else generate conventional-commit message from staged diff and **use it immediately** (no approval wait):
 
-- Type (inferred from paths): `feat` / `fix` / `refactor` / `docs` / `test` / `chore` / `perf` / `ci`.
+- Type: `feat` / `fix` / `refactor` / `docs` / `test` / `chore` / `perf` / `ci`.
 - Subject: ≤ 72 chars, imperative, no trailing period.
-- Body (optional): wrap at 72 cols, explain *why* not *what* when non-obvious.
-
-Show proposed message; wait for approval (user may edit inline).
+- Body optional when non-obvious.
 
 ### 5. Commit
 
@@ -50,27 +53,25 @@ Show proposed message; wait for approval (user may edit inline).
 git commit -m "<subject>" [-m "<body>"]
 ```
 
-Never `--no-verify` / `--no-gpg-sign` / `--amend`. Pre-commit hook fails despite PROCEED → real signal: surface output, fix, re-stage, re-run `/mol:commit`. Do **not** amend (failed commit means no commit, so amend mutates *previous* commit).
+Never `--no-verify` / `--no-gpg-sign` / `--amend` from this skill (close may amend its own close commit only). Pre-commit hook fails despite PROCEED → fix, re-stage, re-run `/mol:commit`.
 
 ### 6. Report
-
-Emit the one-line F2 summary plus a next-step pointer:
 
 ```
 /mol:commit: committed <short-sha> on <branch>
   <subject>
-
-next: /mol:push   (push to origin = your fork)
 ```
+
+No "please push" prompt — callers chain `/mol:push` when needed.
 
 ## Guardrails
 
 - **Do not** `git push` (use `/mol:push`).
-- **Do not** stage with `-A` / `.` / globs.
 - **Do not** skip hooks (`--no-verify`).
-- **Do not** amend — always new commit.
-- **Do not** commit `.env`, credentials, `*.key` / `*.pem` / `id_rsa*` even if staged — warn and require explicit confirmation.
+- **Do not** wait for message or path approval.
+- **Do not** commit secret paths (refuse list above).
+- **Do not** amend — always new commit (except callers that own an atomic amend protocol, e.g. `/mol:close`).
 
 ## Idempotency
 
-Clean tree → no-op ("nothing to commit"). Two runs commit twice only if new staged changes between; otherwise second run is no-op.
+Clean tree → no-op ("nothing to commit").

@@ -9,6 +9,22 @@ Apply this file only when Codex loads a skill from this plugin. Claude Code foll
 - Preserve `/mol:<name>` in user-facing output. In Codex, it means the sibling skill at `../<name>/SKILL.md`, selected through the skill picker or loaded explicitly by another workflow.
 - Treat invocation text supplied with the selected skill as `$ARGUMENTS`.
 
+## Invokers (user vs model)
+
+Claude and Codex use different knobs for the same split (see
+`../../rules/design-principles.md` § 2.5):
+
+| Intent | Claude (`SKILL.md` frontmatter) | Codex (`skills/<name>/agents/openai.yaml`) |
+|---|---|---|
+| User-invoked only | `disable-model-invocation: true` | `policy.allow_implicit_invocation: false` |
+| Model- or skill-reachable | omit the flag | omit, or `allow_implicit_invocation: true` |
+
+When a workflow auto-invokes a sibling, that sibling **must** be
+model-invoked. Read the target skill's `SKILL.md` and any
+`agents/openai.yaml` before executing it in-thread. Never route an
+auto-invoke through a user-only entry (e.g. call `/mol:grilling`, not
+`/mol:grill`).
+
 ## Paths
 
 Resolve plugin-owned paths from the active skill directory, not from the user's repository:
