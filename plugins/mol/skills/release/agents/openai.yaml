@@ -1,0 +1,5 @@
+interface:
+  display_name: "Release"
+  short_description: "Ecosystem package release: gates + commit/push/pr/tag chain"
+policy:
+  allow_implicit_invocation: false

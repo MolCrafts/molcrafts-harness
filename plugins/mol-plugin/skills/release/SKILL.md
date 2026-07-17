@@ -11,6 +11,8 @@ argument-hint: "<patch | minor | major>"
 
 Cut a unified release of the molcrafts marketplace and **publish it** without stopping for the user.
 
+Not for product libraries (molrs, molpack, molpy, …). Those use **`/mol:release`** (dependency + docs + harness gates, then commit → push → pr → merge → tag).
+
 Write surface:
 
 - `plugins/<plugin>/.claude-plugin/plugin.json` + `.codex-plugin/plugin.json` for every plugin
@@ -36,10 +38,10 @@ On non-default branch is fine (will create `release/v<new>` from current HEAD un
 
 ### 3. Validation
 
-Invoke `/mol-plugin:check` (deterministic validator + semantic skim).
+Invoke `/mol-plugin:check` (structure + content + smoke). Prefer full check before cut; `--static-only` only if Claude/Codex CLIs are unavailable in this environment and structure already passed recently.
 
-`FIX REQUIRED` with 🚨/🔴 → stop hard and fix in-loop if mechanical; else stop with report.
-🟡 only → proceed.
+`FIX REQUIRED` / smoke BLOCK with 🚨/🔴 → stop hard and fix in-loop if mechanical; else stop with report.
+🟡 / smoke WARN / content AMBIGUITY only → proceed (list AMBIGUITY in the release report).
 
 ### 4. Version
 

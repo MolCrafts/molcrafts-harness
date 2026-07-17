@@ -37,15 +37,12 @@ Restart Codex and test updated skills in a new thread.
 | Skill | Purpose |
 |---|---|
 | `/mol-plugin:new-skill` | Scaffold one shared Claude/Codex skill in any plugin (`mol`, `mol-plugin`). Authors a complete, runnable SKILL.md (no TODO placeholders), links the common Codex adapter, and appends one README row. Runs `/mol-plugin:check`; does not touch plugin manifests. |
-| `/mol-plugin:check` | The marketplace's self-audit. Runs the deterministic dual-runtime validator, then reviews semantic boundaries that scripts cannot judge. Parallel to `/mol:bootstrap`, but for plugin source; read-only. |
-| `/mol-plugin:smoke` | Validate with Claude Code's native CLI and install both plugins through an isolated temporary Codex home. Never changes user plugin configuration; `--static-only` skips installation. |
-| `/mol-plugin:release` | Unified version bump (patch/minor/major) — advances every Claude and Codex plugin manifest plus the Claude marketplace entries to one shared version, gates through `/mol:ship commit`, and produces one local commit + one local `v<X.Y.Z>` tag. Does not push or write a CHANGELOG. |
-| `/mol-plugin:janitor` | Content-side counterpart to `/mol-plugin:check`: walks every `SKILL.md` and agent `.md` in the marketplace, normalizes prose to plain imperative rules, enforces one responsibility per file, and removes duplicate responsibilities. Applies safe rewrites in place; surfaces splits, moves, merges, and contract-surface changes as AMBIGUITY without editing. Writes inside `plugins/<plugin>/skills/` and `plugins/<plugin>/agents/` only. |
+| `/mol-plugin:check` | Unified marketplace self-check: deterministic dual-runtime validator, semantic contracts, skill/agent content janitor (safe rewrites), and Claude/Codex install smoke. Flags: `[<plugin>] [--static-only] [--no-write]`. |
+| `/mol-plugin:release` | Unified version bump (patch/minor/major) — advances every Claude and Codex plugin manifest plus the Claude marketplace entries to one shared version, gates through `/mol-plugin:check` + commit chain, and publishes end-to-end. Does not write a CHANGELOG. |
 
 ## Deterministic validation
 
-Run the same stdlib-only validator used by `/mol-plugin:check`, CI, and the
-developer hook:
+Run the same stdlib-only validator used by `/mol-plugin:check` (structure phase), CI, and the developer hook:
 
 ```bash
 python3 plugins/mol-plugin/scripts/validate_repository.py
@@ -61,11 +58,11 @@ hook, so normal project users are unaffected.
 ```
 /mol-plugin:new-skill mol:bench "Microbenchmark hot paths"
 # author the skill body
-/mol-plugin:check
-/mol-plugin:smoke --static-only
+/mol-plugin:check              # structure + content + smoke
+/mol-plugin:check --static-only  # faster: no Claude/Codex install
 # fix anything red
-/mol-plugin:release minor   # bumps every plugin to one shared version
-/mol:tag                    # push the v<X.Y.Z> tag to upstream
+/mol-plugin:release minor
+/mol:tag
 ```
 
 ## License

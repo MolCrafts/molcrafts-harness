@@ -1,4 +1,0 @@
-interface:
-  display_name: "Plugin Smoke Test"
-  short_description: "Verify Claude and Codex plugin installation"
-  default_prompt: "Use $smoke to verify this marketplace in Claude Code and Codex."

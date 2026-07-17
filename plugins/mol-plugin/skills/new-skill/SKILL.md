@@ -64,7 +64,7 @@ name: <skill-name>
 description: <one or two sentences captured verbatim from the user's intent; mention read-only vs. writes; mention any sibling-skill relationship that defines the boundary>
 # user-invoked only (omit both lines for model-invoked):
 # disable-model-invocation: true
-argument-hint: "<concrete shape, per /mol-plugin:check Step 3 — e.g. <arg>, [arg], <arg> [<arg>], <a | b | c>>"
+argument-hint: "<concrete shape — e.g. <arg>, [arg], <arg> [<arg>], <a | b | c>>"
 ---
 
 > **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.

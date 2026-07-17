@@ -8,8 +8,8 @@
     {
       "name": "mol",
       "source": "./plugins/mol",
-      "description": "Project workflow toolkit \u2014 27 skills + 20 single-axis agents organized around the planner\u2192generator\u2192evaluator harness pattern. Adapts per project via mol_project frontmatter.",
-      "version": "0.10.3",
+      "description": "Project workflow toolkit \u2014 28 skills + 20 single-axis agents organized around the planner\u2192generator\u2192evaluator harness pattern. Adapts per project via mol_project frontmatter.",
+      "version": "0.11.0",
       "keywords": [
         "molecular",
         "workflow",
@@ -21,8 +21,8 @@
     {
       "name": "mol-plugin",
       "source": "./plugins/mol-plugin",
-      "description": "Maintenance toolkit for the MolCrafts marketplace \u2014 scaffold, audit, smoke-test, and release skills and plugins.",
-      "version": "0.10.3",
+      "description": "Maintenance toolkit for the MolCrafts marketplace \u2014 scaffold skills, unified check (structure + content + install smoke), and release.",
+      "version": "0.11.0",
       "keywords": [
         "plugin-development",
         "molcrafts",

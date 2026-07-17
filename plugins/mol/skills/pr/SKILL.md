@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Open a pull request from origin to upstream's default branch via gh. Calls /mol:push first. Auto-drafts title/body and creates the PR with no approval wait. Auto-invoked by /mol-plugin:release.
+description: Open a pull request from origin to upstream's default branch via gh. Calls /mol:push first. Auto-drafts title/body and creates the PR with no approval wait. Auto-invoked by /mol:release and /mol-plugin:release.
 argument-hint: "[<title>]"
 ---
 

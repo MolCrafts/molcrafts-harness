@@ -1,6 +1,6 @@
 ---
 name: push
-description: Push the current branch to origin after CI-parity pre-commit + /mol:ship push. Ensures pre-commit is installed and mirrors CI, auto-fixes failures in a loop, never force-pushes. Only offers --no-verify after fix attempts fail and the user explicitly accepts. Auto-invoked by /mol:pr and /mol-plugin:release.
+description: Push the current branch to origin after CI-parity pre-commit + /mol:ship push. Ensures pre-commit is installed and mirrors CI, auto-fixes failures in a loop, never force-pushes. Only offers --no-verify after fix attempts fail and the user explicitly accepts. Auto-invoked by /mol:pr, /mol:release, and /mol-plugin:release.
 argument-hint: "[<branch>]"
 ---
 

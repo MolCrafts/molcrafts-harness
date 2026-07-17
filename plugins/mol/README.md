@@ -81,7 +81,7 @@ Every skill runs in one of two modes, defined in
   verifies; opus-class producer agents author the artifacts — the
   main loop never authors production source (`implementer` writes
   code, `tester` tests, `documenter` docs). (`/mol:impl`, `/mol:fix`,
-  `/mol:spec`, the git chain, …)
+  `/mol:spec`, the git chain, `/mol:release`, …)
 
 Orthogonal to mode: **user- vs model-invoked** skills (who may fire
 them). User-only entries set `disable-model-invocation: true` (Claude)
@@ -181,7 +181,8 @@ the standard GitHub fork convention: `origin` = your fork, `upstream`
 | `/mol:commit [<msg>]` | Stage + commit gated on `/mol:ship commit` (format + lint + pre-commit). Generates a conventional-commit message from the diff if you don't supply one. Local only — does not push. | Whenever you'd run `git commit`. | `/mol:commit` &nbsp;·&nbsp; `/mol:commit fix: clamp distance in morse kernel` |
 | `/mol:push [<branch>]` | Push to **origin** (your fork) gated on `/mol:ship push` (full test suite). Auto-runs `/mol:commit` first if the tree is dirty. Refuses to push the upstream default branch from a fork. | Whenever you'd run `git push`. | `/mol:push` |
 | `/mol:pr [<title>]` | Open a pull request from `origin` to `upstream/<default_branch>` via `gh`. Calls `/mol:push` first. Drafts title + body from the commit range; refuses to create a duplicate of an existing open PR. | When the branch is ready for review. | `/mol:pr` |
-| `/mol:tag [<tag>]` | Push an existing release tag (created by `/mol-plugin:release`) to **upstream** so a `on: push: tags:` workflow fires. Refuses to push to origin when upstream exists; refuses to overwrite a remote tag. | After `/mol-plugin:release` cuts the local tag. | `/mol:tag v0.2.0` |
+| `/mol:release <patch\|minor\|major>` | **Ecosystem library** release end-to-end (not the harness). Hard-gates first-party path/editable deps + registry versions, docs currency, and harness currency; bumps package version; chains `/mol:commit` → push → pr → merge → `/mol:tag`. Distinct from `/mol-plugin:release`. | When shipping molrs / molpack / molpy / … to crates.io · PyPI · npm. | `/mol:release patch` |
+| `/mol:tag [<tag>]` | Push an existing release tag (created by `/mol:release` or `/mol-plugin:release`) to **upstream** so a `on: push: tags:` workflow fires. Refuses to push to origin when upstream exists; refuses to overwrite a remote tag. | After a release skill cuts the local tag. | `/mol:tag v0.2.0` |
 
 ## Common workflows
 
@@ -194,7 +195,8 @@ the standard GitHub fork convention: `origin` = your fork, `upstream`
 /mol:spec <feature>           # interactive grill after write; then auto /mol:impl-all
 /mol:impl-all <slug|prefix>   # default implement path — end-to-end, auto close
 /mol:review                   # full static review, all axes
-/mol-plugin:release patch     # bump + commit + push + pr + merge + tag (no stops)
+/mol:release patch            # ecosystem libs: gates + commit/push/pr/tag
+/mol-plugin:release patch     # harness marketplace only
 ```
 
 ### Bug fix

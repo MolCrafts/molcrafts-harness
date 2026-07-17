@@ -1,6 +1,6 @@
 ---
 name: tag
-description: Push an existing local release tag to upstream so the release workflow fires. Auto after /mol-plugin:release has merged the version-bump commit. No approval wait when safety checks pass. Refuses orphan tags and force overwrites.
+description: Push an existing local release tag to upstream so the release workflow fires. Auto after /mol:release or /mol-plugin:release has merged the version-bump commit. No approval wait when safety checks pass. Refuses orphan tags and force overwrites.
 argument-hint: "[<tag>]"
 ---
 
@@ -46,6 +46,6 @@ Never `--force`. Never `git push --tags`.
 ## Guardrails
 
 - **Never** force-push a tag.
-- **Never** create tags here (creation is `/mol-plugin:release`).
+- **Never** create tags here (creation is `/mol:release` or `/mol-plugin:release`).
 - **Never** push orphan tags.
 - **Never** wait for approval when checks pass.

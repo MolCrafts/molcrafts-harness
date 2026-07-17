@@ -196,8 +196,14 @@ fix/refactor apply loops once kicked, bootstrap repairs that are
 mechanical. Closing a spec is **never** the human's job — `/mol:close`
 auto-runs evaluators and agent-auto-attests remaining criteria.
 
-Publish chain is one shot: `/mol-plugin:release` → commit → push → pr →
-merge → tag.
+Two publish chains (never mix them):
+
+- **Harness marketplace:** `/mol-plugin:release` → commit → push → pr →
+  merge → tag (plugins under `molcrafts-harness` only).
+- **Ecosystem libraries:** `/mol:release` → dep/docs/harness gates →
+  version bump → commit → push → pr → merge → tag. Dependencies on
+  the official registry **before** dependents; tag-triggered CI
+  publishes to crates.io / PyPI / npm when configured.
 
 ## 3. Why This Split
 

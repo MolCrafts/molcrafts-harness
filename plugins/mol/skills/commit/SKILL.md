@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Stage safe changes and commit after the /mol:ship commit gate. Auto-stages non-secret paths, auto-generates the message when none is supplied, never waits for approval. Never pushes; commits are local-only. Auto-invoked by /mol:push, /mol:impl, /mol:close, /mol-plugin:release.
+description: Stage safe changes and commit after the /mol:ship commit gate. Auto-stages non-secret paths, auto-generates the message when none is supplied, never waits for approval. Never pushes; commits are local-only. Auto-invoked by /mol:push, /mol:impl, /mol:close, /mol:release, /mol-plugin:release.
 argument-hint: "[<message>]"
 ---
 
