@@ -111,12 +111,22 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
             body_lower,
             "ac-001: /mol:map procedure must name a `diff` step.",
         )
+        # Autonomy contract (v0.10.1+): map writes without a human approval
+        # gate — only discuss/grill/spec stay interactive. Still requires an
+        # explicit auto-write / no-approval clause so the contract is visible.
         self.assertTrue(
             _contains_any(
                 body_lower,
-                ["user-confirm", "user confirm", "wait for approval"],
+                [
+                    "auto-write",
+                    "no approval wait",
+                    "without asking",
+                    "no approval",
+                    "fully agent-driven",
+                ],
             ),
-            "ac-001: /mol:map procedure must name a user-confirm / approval gate.",
+            "ac-001: /mol:map procedure must name auto-write / no-approval "
+            "(agent-driven; no user-confirm gate).",
         )
         self.assertTrue(
             _contains_any(body_lower, ["idempotent", "already current", "蓝图已是最新"]),
@@ -125,37 +135,48 @@ class ProjectBlueprintMechanismTests(unittest.TestCase):
 
     # -- ac-002 --------------------------------------------------------------
 
-    def test_ac_002_map_skill_gates_writes_on_user_confirmation(self) -> None:
+    def test_ac_002_map_skill_writes_after_diff_without_user_gate(self) -> None:
         path = REPO_ROOT / "plugins" / "mol" / "skills" / "map" / "SKILL.md"
         self.assertTrue(path.exists(), f"ac-002: {path} must exist.")
         text = _read(path).lower()
 
-        # Walk indices: a "diff" mention must come before a gate clause
-        # ("wait for approval" / "do not write past this gate"), which must
-        # come before a "write" mention.
+        # Walk indices: "diff" then auto-write (no human gate), then write.
         diff_idx = text.find("diff")
         self.assertNotEqual(
             diff_idx, -1, "ac-002: SKILL.md must mention `diff`."
         )
 
-        gate_candidates = ["wait for approval", "do not write past this gate"]
-        gate_idx = -1
-        for cand in gate_candidates:
+        auto_candidates = [
+            "auto-write",
+            "no approval wait",
+            "without asking",
+            "proceed immediately to write",
+        ]
+        auto_idx = -1
+        for cand in auto_candidates:
             i = text.find(cand, diff_idx)
-            if i != -1 and (gate_idx == -1 or i < gate_idx):
-                gate_idx = i
+            if i != -1 and (auto_idx == -1 or i < auto_idx):
+                auto_idx = i
         self.assertNotEqual(
-            gate_idx,
+            auto_idx,
             -1,
-            "ac-002: SKILL.md must contain a 'wait for approval' or 'do not "
-            "write past this gate' clause AFTER the diff step.",
+            "ac-002: SKILL.md must contain an auto-write / no-approval clause "
+            "AFTER the diff step (agent-driven; no user gate).",
         )
 
-        write_idx = text.find("write", gate_idx)
+        write_idx = text.find("write", auto_idx)
         self.assertNotEqual(
             write_idx,
             -1,
-            "ac-002: SKILL.md must mention a `write` step AFTER the gate clause.",
+            "ac-002: SKILL.md must mention a `write` step AFTER the auto-write clause.",
+        )
+        # Regression: must NOT reintroduce a hard user-confirm gate.
+        self.assertFalse(
+            _contains_any(
+                text,
+                ["wait for approval", "user-confirm gate (hard"],
+            ),
+            "ac-002: /mol:map must not wait for user approval before writing.",
         )
 
     # -- ac-003 --------------------------------------------------------------

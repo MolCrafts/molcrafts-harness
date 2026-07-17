@@ -30,11 +30,24 @@ Stage by explicit paths from `git status` (never blind `git add -A` on unknown t
 
 Do **not** ask the user which files to include.
 
-### 3. Run the pre-commit gate
+### 3. Run the pre-commit gate (CI parity)
 
-Invoke `/mol:ship commit`.
+1. Ensure `.pre-commit-config.yaml` exists and hooks are installed
+   (`pre-commit install` if `.git/hooks/pre-commit` missing). Missing config →
+   invoke `/mol:ci-sync` first. Still missing → **BLOCK**, do not commit.
+2. Run staged hooks the way git will: either rely on the upcoming
+   `git commit` hook run, or proactively:
 
-- **BLOCK** → fix blockers in-loop when cheap (format/lint auto-fix via project tools); re-run gate once. Still BLOCK → stop with the failure (hard stop only for unrecoverable gates). Do not commit.
+   ```
+   pre-commit run
+   ```
+
+   On failure → fix and re-stage, up to 3 cycles. Still red → **BLOCK**
+   (do not offer `--no-verify` here; that escape hatch lives only on
+   `/mol:push` after the user explicitly accepts).
+3. Invoke `/mol:ship commit` for any extra commit-tier checks not in hooks.
+
+- **BLOCK** → fix when mechanical; re-run. Still BLOCK → stop. Do not commit.
 - **PROCEED** → continue.
 
 ### 4. Resolve the commit message
@@ -53,7 +66,7 @@ Else generate conventional-commit message from staged diff and **use it immediat
 git commit -m "<subject>" [-m "<body>"]
 ```
 
-Never `--no-verify` / `--no-gpg-sign` / `--amend` from this skill (close may amend its own close commit only). Pre-commit hook fails despite PROCEED → fix, re-stage, re-run `/mol:commit`.
+Never `--no-verify` / `--no-gpg-sign` / `--amend` from this skill (close may amend its own close commit only). **`--no-verify` is forbidden in commit** — fix the hooks or stop; push-time bypass is a separate, user-gated decision on `/mol:push`. Pre-commit hook fails despite PROCEED → fix, re-stage, re-run `/mol:commit`.
 
 ### 6. Report
 
@@ -67,8 +80,9 @@ No "please push" prompt — callers chain `/mol:push` when needed.
 ## Guardrails
 
 - **Do not** `git push` (use `/mol:push`).
-- **Do not** skip hooks (`--no-verify`).
+- **Do not** skip hooks (`--no-verify` is never used by this skill).
 - **Do not** wait for message or path approval.
+- **Do** keep pre-commit hooks CI-parity (same commands as the remote workflow).
 - **Do not** commit secret paths (refuse list above).
 - **Do not** amend — always new commit (except callers that own an atomic amend protocol, e.g. `/mol:close`).
 

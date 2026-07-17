@@ -16,8 +16,8 @@ Read CLAUDE.md → parse `mol_project:` (`$META`).
 
 First positional arg selects the gate. Cumulative — `merge` ⊇ `push` ⊇ `commit`.
 
-- `commit` — format + lint + pre-commit hooks. Before every `git commit`. Fast (~60s).
-- `push` — adds full test suite. Before every `git push`. Medium (5–10 min).
+- `commit` — format + lint + **project pre-commit hooks** (must mirror CI). Before every `git commit`. Fast (~60s).
+- `push` — full pre-commit `--all-files` + full test suite. Before every `git push`. Medium (5–10 min). **Iron law on `/mol:push`:** hooks installed, CI-parity, green — or user-explicit `--no-verify` only.
 - `merge` — mirrors remote CI locally. Before merge to `main`/`master`. Heavy (full CI wall-clock).
 
 `$ARGUMENTS` empty → default to `commit` and state the assumption.
@@ -26,15 +26,17 @@ First positional arg selects the gate. Cumulative — `merge` ⊇ `push` ⊇ `co
 
 1. **Resolve tier** from `$ARGUMENTS`.
 
-2. **Delegate to `ci-guard` agent** with tier as input. Agent detects CI config, runs tier's commands, interprets failures, reports CI-only drift modes (platform, matrix, secrets, cache, services).
+2. **Pre-commit presence (commit/push tiers).** If `.pre-commit-config.yaml` is missing → report 🚨 Critical `PRECOMMIT_MISSING` and **BLOCK**. If present but hooks not installed → 🚨 `PRECOMMIT_NOT_INSTALLED`. If CI has checks absent from pre-commit → 🚨 `CI_ONLY` drift (route `/mol:ci-sync`).
 
-3. **Aggregate** findings into severity table:
+3. **Delegate to `ci-guard` agent** with tier as input. Agent detects CI config, runs tier's commands (including `pre-commit run --all-files` on push when available), interprets failures, reports CI-only drift modes (platform, matrix, secrets, cache, services).
+
+4. **Aggregate** findings into severity table:
 
    | 🚨 Critical | 🔴 High | 🟡 Medium | 🟢 Low |
    |-------------|---------|-----------|--------|
    | N           | N       | N         | N      |
 
-4. **Decide verdict** from tier + findings:
+5. **Decide verdict** from tier + findings:
 
    - `commit` + any 🚨 → **BLOCK COMMIT**
    - `push` + any 🚨 → **BLOCK PUSH**
@@ -42,7 +44,7 @@ First positional arg selects the gate. Cumulative — `merge` ⊇ `push` ⊇ `co
    - No blocker at requested tier → **PROCEED**
    - 🟡 / 🟢 informational; never block.
 
-5. **Route fixes.** For each blocker, name the `/mol:*` skill (this skill refuses to edit):
+6. **Route fixes.** For each blocker, name the `/mol:*` skill (this skill refuses to edit):
 
    - lint / format → `/mol:fix <file>` with failing rule
    - failing test → `/mol:fix` (expected to pass) or `/mol:impl` (feature incomplete)
@@ -50,7 +52,9 @@ First positional arg selects the gate. Cumulative — `merge` ⊇ `push` ⊇ `co
    - doc drift → `/mol:docs`
    - CI-config drift (matrix / secrets / runner) → ask user to update `$META.ci` or workflow file. Never edit workflows automatically.
 
-6. **Never auto-fix.** Refuses to edit even when fix is trivial. Hand user a concrete next action.
+7. **Never auto-fix.** Refuses to edit even when fix is trivial. Callers (`/mol:push`, `/mol:commit`) own the fix loop. This skill only reports PROCEED/BLOCK.
+
+Missing pre-commit or CI_ONLY drift is always a push-tier 🚨.
 
 ## Output
 
