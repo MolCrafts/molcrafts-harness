@@ -1,6 +1,6 @@
 {
   "name": "mol",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Project workflow toolkit for MolCrafts repositories, organized around the planner-generator-evaluator harness pattern.",
   "author": {
     "name": "MolCrafts"
