@@ -1,6 +1,6 @@
 ---
 name: review
-description: Multi-axis static review with one verdict. Free-form before commit/PR: 看看这 diff/review this — not every casual turn. Optional --axis=. Read-only.
+description: "Multi-axis static review with one verdict. Free-form before commit/PR: 看看这 diff/review this — not every casual turn. Optional --axis=. Read-only."
 argument-hint: "[<path> ...] [--axis=<name>[,<name>...]]"
 ---
 

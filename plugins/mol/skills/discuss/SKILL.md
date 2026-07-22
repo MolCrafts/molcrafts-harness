@@ -1,6 +1,6 @@
 ---
 name: discuss
-description: Structured design discussion with Convergence pulse; converge → auto /mol:grilling, or discard. Free-form: 该不该做/几种方案/should we/trade-offs — load this skill, not bare chat. Not for clear specs (/mol:spec), formed plans (/mol:grilling), or decided rules (/mol:note). Read-only.
+description: "Structured design discussion with Convergence pulse; converge → auto /mol:grilling, or discard. Free-form: 该不该做/几种方案/should we/trade-offs — load this skill, not bare chat. Not for clear specs (/mol:spec), formed plans (/mol:grilling), or decided rules (/mol:note). Read-only."
 argument-hint: "<topic or question>"
 ---
 

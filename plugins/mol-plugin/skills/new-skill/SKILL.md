@@ -143,7 +143,10 @@ Invoke `/mol-plugin:check <plugin>` to confirm structural validation. Errors →
 
 ### 9. Suggest release follow-up
 
-If this skill should ship next release, tell user to run `/mol-plugin:release patch` and `/mol:tag`. Don't run those — release timing is the user's call.
+If this skill should ship next release, tell user to run
+`/mol-plugin:release patch` (commit → push origin/fork → PR upstream →
+green checks → merge → `/mol:tag`). Don't run those — release timing is
+the user's call; never suggest `git push upstream`.
 
 End with one-line F2 summary.
 

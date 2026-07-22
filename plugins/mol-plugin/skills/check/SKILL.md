@@ -59,6 +59,12 @@ For each in-scope plugin, read README, manifests, `skills/*/SKILL.md`, `skills/C
 - **Boundaries** — read-only vs write explicit; no two skills claim the same mutation/verdict
 - **Delegation** — one axis per agent; producer/reviewer split matches `plugins/mol/rules/agent-design.md`
 - **Safety** — approval, clean-tree, destructive, push, tag, release gates explicit and ordered
+- **Git publish** — when auditing `mol` push/pr/release/tag or `mol-plugin` release, require alignment with `plugins/mol/rules/git-publish.md`:
+  - branch push target = **`origin` (fork) only**; never branch-push to `upstream`
+  - land on org default only via **`/mol:pr` → green checks → merge**
+  - release publish steps include wait-for-checks and forbid merging red CI
+  - pre-commit ≡ CI called out before push (via `/mol:push` / `/mol:ship push` / `/mol:ci-sync`)
+  - skills that contradict this rule → 🔴 FIX REQUIRED
 - **Progressive disclosure** — large rules live in shared rule files; skills link them
 - **Cross-runtime fidelity** — `skills/CODEX.md` translates runtime only; does not change Claude-first workflow
 - **Documentation truth** — READMEs list real capabilities only

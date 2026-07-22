@@ -1,6 +1,6 @@
 ---
 name: fix
-description: Minimal-diff bug fix (reproduce → diagnose or consume /mol:debug → patch → verify). Free-form: 修这个/failing test/stack trace. Unclear root cause → /mol:debug first. Writes code; all stages.
+description: "Minimal-diff bug fix (reproduce → diagnose or consume /mol:debug → patch → verify). Free-form: 修这个/failing test/stack trace. Unclear root cause → /mol:debug first. Writes code; all stages."
 argument-hint: "<bug description, error message, or failing test>"
 ---
 

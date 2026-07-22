@@ -1,6 +1,6 @@
 ---
 name: note
-description: Sync a decided rule into the harness (CLAUDE.md + `.claude/notes/**`) — supersede/delete fossils, never append-only. Free-form: 记下来/约定变了/we decided/supersede. Writes harness knowledge only.
+description: "Sync a decided rule into the harness (CLAUDE.md + `.claude/notes/**`) — supersede/delete fossils, never append-only. Free-form: 记下来/约定变了/we decided/supersede. Writes harness knowledge only."
 argument-hint: "<the decision or correction to capture>"
 ---
 

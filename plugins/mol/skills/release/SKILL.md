@@ -1,6 +1,6 @@
 ---
 name: release
-description: Ecosystem library release end-to-end — first-party dep/registry gates, docs + harness currency, version bump, then /mol:commit → push → pr → merge → /mol:tag. User-only. Distinct from /mol-plugin:release (marketplace).
+description: Ecosystem library release end-to-end — first-party dep/registry gates, docs + harness currency, version bump, then /mol:commit → push(origin) → pr(upstream) → green checks → merge → /mol:tag. Never direct-push to upstream. User-only. Distinct from /mol-plugin:release (marketplace).
 disable-model-invocation: true
 argument-hint: "<patch | minor | major> [<package-or-manifest path>]"
 ---
@@ -9,7 +9,13 @@ argument-hint: "<patch | minor | major> [<package-or-manifest path>]"
 
 # /mol:release — Ecosystem Package Release
 
-Product libraries (molrs, molpack, molpy, molvis, molexp, …): version bump → commit → push → PR → merge → tag. Prefer tag-triggered CI for crates.io / PyPI / npm — do not publish inline unless the project has no tag workflow.
+Read `../../rules/git-publish.md` first — same remotes, pre-commit ≡ CI,
+and PR-first chain as everyday push/pr.
+
+Product libraries (molrs, molpack, molpy, molvis, molexp, …): version bump
+→ commit → **push fork** → **PR** → **green checks** → merge → tag.
+Prefer tag-triggered CI for crates.io / PyPI / npm — do not publish
+inline unless the project has no tag workflow.
 
 | Skill | Releases |
 |---|---|
@@ -45,7 +51,7 @@ Emit publish order (deps → this). Cycle among separately published packages �
 
 **3c. Harness** — if sibling `molcrafts-harness` exists: dirty or untagged commits that this package's harness relies on → BLOCK until `/mol-plugin:release`. Missing checkout → 🟡 skip.
 
-**3d. CI** — `/mol:ship push`. BLOCK → ≤3 fix cycles or stop.
+**3d. CI** — `/mol:ship push` (implies pre-commit ≡ CI). BLOCK → ≤3 fix cycles or stop.
 
 ### 4–5. Version + branch + commit + local tag
 
@@ -53,24 +59,27 @@ Read versions; bump semver; local tag `v<new>` must not exist. `git switch -c re
 
 Update only publish surface: crate/py/npm version fields; README badges that hardcode version. **Never** CHANGELOG. Stage release paths → `/mol:commit "release: v<new>"` → `git tag -a v<new> -m "release: v<new>"`.
 
-### 6. Publish chain (no stops)
+### 6. Publish chain (no direct upstream branch push)
 
-1. `/mol:push` → origin  
-2. `/mol:pr` title `release: v<new>`  
-3. `gh pr merge <n> --merge --admin` (prefer merge commit; try without `--admin` if needed)  
-4. If tag not on `upstream/<default>` after squash: retag at that tip  
-5. `/mol:tag v<new>`  
-6. Switch default, pull upstream, delete merged `release/v<new>`  
+1. `/mol:push` → **origin only** (fork; pre-commit full + ship)
+2. `/mol:pr` title `release: v<new>` (base = upstream default)
+3. **Wait for green PR checks** — `gh pr checks <n> --watch` (or poll until all required checks pass). Red or timeout → **BLOCK**; do not merge; report failures.
+4. `gh pr merge <n> --merge` (prefer merge commit; **no `--admin` unless checks are already green and the only blocker is admin-only protection** — never to override red CI)
+5. If tag not on `upstream/<default>` after squash: retag at that tip
+6. `/mol:tag v<new>` (tag only → upstream)
+7. Switch default, pull upstream, delete merged `release/v<new>` locally and on origin
 
 ### 7. Report
 
 ```
 /mol:release: v<old> → v<new>
-  package / deps / docs / harness / tag / publish path
+  package / deps / docs / harness / PR / checks / tag / publish path
 ```
 
 ## Guardrails
 
 - Never force-overwrite remote tags; never skip gates; never wait for approval.
+- **Never** `git push upstream <branch>` or push the release branch to the org default — always fork → PR → merge.
+- **Never** merge a red PR (avoids red Actions email storms on the org repo).
 - Never use inside `molcrafts-harness` for marketplace versions (`/mol-plugin:release`).
 - Dependent after dependency on registry. Idempotent if version+tag already on upstream.

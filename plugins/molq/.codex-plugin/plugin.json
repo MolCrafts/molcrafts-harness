@@ -1,6 +1,6 @@
 {
   "name": "molq",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "molq job lifecycle via molmcp: dashboard, logs, opt-in submit/cancel for local and HPC schedulers.",
   "author": {
     "name": "MolCrafts"

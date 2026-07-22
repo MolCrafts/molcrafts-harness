@@ -9,7 +9,7 @@
       "name": "mol",
       "source": "./plugins/mol",
       "description": "Project workflow toolkit \u2014 27 skills + 20 single-axis agents organized around the planner\u2192generator\u2192evaluator harness pattern. Adapts per project via mol_project frontmatter.",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "keywords": [
         "molecular",
         "workflow",
@@ -22,7 +22,7 @@
       "name": "molexp",
       "source": "./plugins/molexp",
       "description": "molexp data-workspace tooling \u2014 adopt legacy experiment directories into Workspace \u2192 Project \u2192 Experiment \u2192 Run.",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "keywords": [
         "molexp",
         "experiment",
@@ -35,7 +35,7 @@
       "name": "molq",
       "source": "./plugins/molq",
       "description": "molq job lifecycle via molmcp \u2014 list/status/logs, opt-in submit and cancel for local/SLURM/PBS/LSF.",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "keywords": [
         "molq",
         "hpc",
@@ -48,7 +48,7 @@
       "name": "mol-plugin",
       "source": "./plugins/mol-plugin",
       "description": "Maintenance toolkit for the MolCrafts marketplace \u2014 scaffold skills, unified check (structure + content + install smoke), and release.",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "keywords": [
         "plugin-development",
         "molcrafts",

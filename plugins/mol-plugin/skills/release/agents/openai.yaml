@@ -1,5 +1,5 @@
 interface:
   display_name: "Release"
-  short_description: "Cut a unified marketplace release (local commit + tag)"
+  short_description: "Marketplace release: fork push + PR + green merge + tag"
 policy:
   allow_implicit_invocation: false

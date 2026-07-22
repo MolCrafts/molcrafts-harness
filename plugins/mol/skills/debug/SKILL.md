@@ -1,6 +1,6 @@
 ---
 name: debug
-description: Diagnose-only (read-only) root cause for build/test/runtime failures. Free-form: 为啥挂/先诊断/don't patch yet. Then /mol:fix to apply.
+description: "Diagnose-only (read-only) root cause for build/test/runtime failures. Free-form: 为啥挂/先诊断/don't patch yet. Then /mol:fix to apply."
 argument-hint: "<error message or symptom>"
 ---
 

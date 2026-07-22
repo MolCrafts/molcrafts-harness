@@ -1,6 +1,6 @@
 ---
 name: test
-description: Run suite + analyze-mode tester audit (layout/naming/single-function/hard-coded regressions). Free-form: 跑测试/覆盖/test quality. Read-only; writes go via /mol:impl or /mol:fix.
+description: "Run suite + analyze-mode tester audit (layout/naming/single-function/hard-coded regressions). Free-form: 跑测试/覆盖/test quality. Read-only; writes go via /mol:impl or /mol:fix."
 argument-hint: "[module or test path]"
 ---
 

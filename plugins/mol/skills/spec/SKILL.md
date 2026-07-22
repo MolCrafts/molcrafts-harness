@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Requirement → structured spec + acceptance under `.claude/specs/`, then auto grill (spec-audit) → clean auto impl-all. Tier C: 落盘/写 spec/spec this (slash optional); never silent from discuss/grill.
+description: "Requirement → structured spec + acceptance under `.claude/specs/`, then auto grill (spec-audit) → clean auto impl-all. Tier C: 落盘/写 spec/spec this (slash optional); never silent from discuss/grill."
 argument-hint: "<feature description>"
 ---
 

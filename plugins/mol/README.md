@@ -171,17 +171,27 @@ reach for it, and a one-line example.
 
 ### 6 — Git workflow (writes / pushes)
 
-A linear chain. Each step gates with `/mol:ship` underneath. Follows
-the standard GitHub fork convention: `origin` = your fork, `upstream`
-= canonical repo. None of these need extra config.
+A linear **PR-first** chain. Shared invariants live in
+`plugins/mol/rules/git-publish.md`. Each step gates with `/mol:ship`
+underneath.
+
+**Remotes:** `origin` = your **fork** (only place branches are pushed);
+`upstream` = **canonical MolCrafts repo** (land via PR + merge only —
+never `git push upstream <branch>`). Pre-commit must mirror CI so
+failures are caught before any push; that keeps org-repo Actions green
+and avoids failure emails to all watchers.
+
+```
+/mol:commit  →  /mol:push (origin)  →  /mol:pr  →  green checks  →  merge  →  [/mol:tag]
+```
 
 | Skill | What | When | Example |
 |---|---|---|---|
 | `/mol:commit [<msg>]` | Stage + commit gated on `/mol:ship commit` (format + lint + pre-commit). Generates a conventional-commit message from the diff if you don't supply one. Local only — does not push. | Whenever you'd run `git commit`. | `/mol:commit` &nbsp;·&nbsp; `/mol:commit fix: clamp distance in morse kernel` |
-| `/mol:push [<branch>]` | Push to **origin** (your fork) gated on `/mol:ship push` (full test suite). Auto-runs `/mol:commit` first if the tree is dirty. Refuses to push the upstream default branch from a fork. | Whenever you'd run `git push`. | `/mol:push` |
-| `/mol:pr [<title>]` | Open a pull request from `origin` to `upstream/<default_branch>` via `gh`. Calls `/mol:push` first. Drafts title + body from the commit range; refuses to create a duplicate of an existing open PR. | When the branch is ready for review. | `/mol:pr` |
-| `/mol:release <patch\|minor\|major>` | **Ecosystem library** release end-to-end (not the harness). Hard-gates first-party path/editable deps + registry versions, docs currency, and harness currency; bumps package version; chains `/mol:commit` → push → pr → merge → `/mol:tag`. Distinct from `/mol-plugin:release`. | When shipping molrs / molpack / molpy / … to crates.io · PyPI · npm. | `/mol:release patch` |
-| `/mol:tag [<tag>]` | Push an existing release tag (created by `/mol:release` or `/mol-plugin:release`) to **upstream** so a `on: push: tags:` workflow fires. Refuses to push to origin when upstream exists; refuses to overwrite a remote tag. | After a release skill cuts the local tag. | `/mol:tag v0.2.0` |
+| `/mol:push [<branch>]` | Push to **origin only** (fork), after full `pre-commit run --all-files` + `/mol:ship push` (CI parity). Auto-commits if dirty. **Never** pushes branches to `upstream`. | Whenever you'd run `git push` to your fork. | `/mol:push` |
+| `/mol:pr [<title>]` | Open a PR from `origin` → `upstream/<default_branch>` via `gh`. Calls `/mol:push` first. The **only** legal path onto the org default branch. Drafts title + body; idempotent if PR already open. | When the branch is ready to land on the canonical repo. | `/mol:pr` |
+| `/mol:release <patch\|minor\|major>` | **Ecosystem library** release end-to-end (not the harness). Dep/docs/harness gates → version bump → commit → push(origin) → pr → **wait green checks** → merge → `/mol:tag`. Distinct from `/mol-plugin:release`. | When shipping molrs / molpack / molpy / … to crates.io · PyPI · npm. | `/mol:release patch` |
+| `/mol:tag [<tag>]` | Push an existing release tag (created by `/mol:release` or `/mol-plugin:release`) to **upstream** so a `on: push: tags:` workflow fires. Refuses orphan tags and force overwrites. | After the release PR has merged. | `/mol:tag v0.2.0` |
 
 ## Common workflows
 
@@ -204,7 +214,7 @@ the standard GitHub fork convention: `origin` = your fork, `upstream`
 /mol:debug <symptom>          # optional: diagnose-only first
 /mol:fix <bug>                # write regression test + minimal patch
 /mol:review --axis=arch       # or any single axis you suspect
-/mol:commit && /mol:push
+/mol:commit && /mol:push && /mol:pr   # fork only, then PR — never push upstream
 ```
 
 ### Single-axis spot check
