@@ -1,0 +1,33 @@
+{
+  "name": "molexp",
+  "version": "0.11.0",
+  "description": "molexp data-workspace tooling: adopt legacy experiment directories into Workspace \u2192 Project \u2192 Experiment \u2192 Run.",
+  "author": {
+    "name": "MolCrafts"
+  },
+  "homepage": "https://github.com/MolCrafts/molcrafts-harness",
+  "repository": "https://github.com/MolCrafts/molcrafts-harness",
+  "license": "MIT",
+  "keywords": [
+    "molexp",
+    "experiment",
+    "workspace",
+    "scientific-computing",
+    "molcrafts"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "MolExp",
+    "shortDescription": "molexp workspace adoption tooling",
+    "longDescription": "Lift ad-hoc experimental data folders into molexp's four-tier workspace layout with integrity-verified copy/move.",
+    "developerName": "MolCrafts",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Adopt this results directory as a molexp workspace."
+    ]
+  }
+}

@@ -1,12 +1,12 @@
 ---
 name: adopt-workspace
-description: Adopt an arbitrary existing data directory as a molexp-compatible workspace. Inspects the source layout, proposes a project / experiment / run mapping for operator review, materializes the new workspace via molexp's Python API, then copies (default) or moves the files with per-file SHA-256 integrity verification. Copy-mode optionally deletes the source after a hard typed-path confirmation. Idempotent and resumable via an on-disk migration ledger. Writes only after explicit per-stage approval. Data-safety first — no destructive action without an explicit gate.
+description: Lift an existing data directory into a molexp Workspace→Project→Experiment→Run layout (inspect, propose mapping, SHA-256 copy/move, resumable ledger). Data-safety first — every destructive step gated. Distinct from /mol:bootstrap (agent harness).
 argument-hint: "<source-dir> [<target-workspace-root>]"
 ---
 
 > **Codex:** Read `../CODEX.md` before executing this shared workflow. Claude Code follows the workflow directly.
 
-# /mol:adopt-workspace — Workspace Adoption
+# /molexp:adopt-workspace — Workspace Adoption
 
 Take an existing folder of experimental data — whatever shape the operator happens to have — and lift it into a molexp workspace whose layout matches the four-tier `Workspace → Project → Experiment → Run` `Folder` family defined in `molexp/CLAUDE.md`. Distinct from `/mol:bootstrap` (which scaffolds the *agent* harness — CLAUDE.md, `.claude/notes/`, `.claude/specs/`): this skill scaffolds the *data* harness. Read-mostly until the operator approves; writes are gated, verified, and journaled.
 
@@ -187,7 +187,7 @@ Record the deletion (or skip) in the ledger as a `deleted_at` block with the cho
 One-line summary at the end:
 
 ```
-/mol:adopt-workspace: copied N files (P projects, E experiments, R runs) into <target>; ledger at <target>/.molexp-migration.json
+/molexp:adopt-workspace: copied N files (P projects, E experiments, R runs) into <target>; ledger at <target>/.molexp-migration.json
 ```
 
 or `moved` / `resumed-and-completed` / `BLOCKED: <reason>` / `ABORTED at step <n>` as appropriate. Final stats: total bytes, elapsed wall time, number of symlinks copied vs dereferenced, number of skipped entries.

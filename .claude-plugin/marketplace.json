@@ -8,7 +8,7 @@
     {
       "name": "mol",
       "source": "./plugins/mol",
-      "description": "Project workflow toolkit \u2014 28 skills + 20 single-axis agents organized around the planner\u2192generator\u2192evaluator harness pattern. Adapts per project via mol_project frontmatter.",
+      "description": "Project workflow toolkit \u2014 27 skills + 20 single-axis agents organized around the planner\u2192generator\u2192evaluator harness pattern. Adapts per project via mol_project frontmatter.",
       "version": "0.11.0",
       "keywords": [
         "molecular",
@@ -16,6 +16,19 @@
         "scientific-computing",
         "molcrafts",
         "harness-engineering"
+      ]
+    },
+    {
+      "name": "molexp",
+      "source": "./plugins/molexp",
+      "description": "molexp data-workspace tooling \u2014 adopt legacy experiment directories into Workspace \u2192 Project \u2192 Experiment \u2192 Run.",
+      "version": "0.11.0",
+      "keywords": [
+        "molexp",
+        "experiment",
+        "workspace",
+        "scientific-computing",
+        "molcrafts"
       ]
     },
     {

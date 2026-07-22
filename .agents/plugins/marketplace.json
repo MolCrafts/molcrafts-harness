@@ -17,6 +17,18 @@
       "category": "Productivity"
     },
     {
+      "name": "molexp",
+      "source": {
+        "source": "local",
+        "path": "./plugins/molexp"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
       "name": "mol-plugin",
       "source": {
         "source": "local",

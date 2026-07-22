@@ -122,7 +122,6 @@ reach for it, and a one-line example.
 | Skill | What | When | Example |
 |---|---|---|---|
 | `/mol:bootstrap` | Initialize or maintain the agent harness. Managed CLAUDE.md includes **Design preferences (default)** (OOP, no factories, no god data, no all-in-one APIs, tests-mirror-src) and the **iron law — no silent debt** (discovered anti-patterns / pre-existing failures are prioritized or hard-stop routed, never ignored). Three paths: create / audit+repair / no-op. Never writes project source. | First time in a project; after upgrading mol; when harness has drifted. | `/mol:bootstrap` |
-| `/mol:adopt-workspace` | Adopt an arbitrary existing data directory as a molexp-compatible workspace (`Workspace → Project → Experiment → Run` folder family). Inspects the source, proposes a mapping for operator review, materializes via molexp's Python API, then copy-verifies (default) or move-verifies each file with SHA-256. Resumable via an on-disk ledger; copy-mode optionally deletes the source after a typed-path gate. | Lifting legacy experimental data into a fresh molexp workspace; consolidating ad-hoc result folders. | `/mol:adopt-workspace ./old-results ./new-workspace` |
 
 ### 1 — Plan & specify
 

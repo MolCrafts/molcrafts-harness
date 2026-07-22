@@ -12,11 +12,12 @@ from typing import Any
 
 
 FRONTMATTER_RE = re.compile(r"^---\r?\n(.*?)\r?\n---(?:\r?\n|$)(.*)$", re.DOTALL)
-SKILL_REF_RE = re.compile(r"/(mol(?:-plugin)?):([a-z0-9][a-z0-9-]*)")
+# Any marketplace plugin name (mol, mol-plugin, molexp, …).
+SKILL_REF_RE = re.compile(r"/([a-z][a-z0-9-]*):([a-z0-9][a-z0-9-]*)")
 # Positive auto-invoke mentions only (skip "do not/never auto-invoke …").
 AUTO_INVOKE_RE = re.compile(
     r"(?i)(?:(?P<neg>do not|never)\s+)?(?P<auto>auto-)?invoke[sd]?\s+"
-    r"`/(?P<plugin>mol(?:-plugin)?):(?P<skill>[a-z0-9][a-z0-9-]*)`"
+    r"`/(?P<plugin>[a-z][a-z0-9-]*):(?P<skill>[a-z0-9][a-z0-9-]*)`"
 )
 VALID_MODELS = {"opus", "sonnet", "haiku", "inherit"}
 VALID_INSTALL_POLICIES = {"AVAILABLE", "INSTALLED_BY_DEFAULT", "NOT_AVAILABLE"}

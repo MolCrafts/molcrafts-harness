@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "mol",
-  "displayName": "Mol",
+  "name": "molexp",
+  "displayName": "MolExp",
   "version": "0.11.0",
-  "description": "Project workflow toolkit \u2014 27 skills + 20 single-axis agents organized around the planner\u2192generator\u2192evaluator harness pattern. Adapts per project via mol_project frontmatter.",
+  "description": "molexp data-workspace tooling — adopt legacy experiment directories into Workspace \u2192 Project \u2192 Experiment \u2192 Run.",
   "author": {
     "name": "MolCrafts"
   },
@@ -11,10 +11,10 @@
   "repository": "https://github.com/MolCrafts/molcrafts-harness",
   "license": "MIT",
   "keywords": [
-    "molecular",
-    "workflow",
+    "molexp",
+    "experiment",
+    "workspace",
     "scientific-computing",
-    "molcrafts",
-    "harness-engineering"
+    "molcrafts"
   ]
 }
