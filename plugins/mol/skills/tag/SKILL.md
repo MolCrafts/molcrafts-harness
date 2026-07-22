@@ -8,7 +8,10 @@ argument-hint: "[<tag>]"
 
 # /mol:tag — Push Release Tag to Upstream
 
-Push the release tag (only the tag) to `upstream` (or `origin` when single-remote). **Fully agent-driven** when safety checks pass.
+Read `../../rules/git-publish.md`. Push the release **tag only** to
+`upstream` (or `origin` when single-remote) — never branch tips.
+Branches land via `/mol:pr` + merge first. **Fully agent-driven** when
+safety checks pass.
 
 ## Procedure
 

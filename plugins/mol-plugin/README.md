@@ -38,7 +38,7 @@ Restart Codex and test updated skills in a new thread.
 |---|---|
 | `/mol-plugin:new-skill` | Scaffold one shared Claude/Codex skill in any plugin (`mol`, `mol-plugin`). Authors a complete, runnable SKILL.md (no TODO placeholders), links the common Codex adapter, and appends one README row. Runs `/mol-plugin:check`; does not touch plugin manifests. |
 | `/mol-plugin:check` | Unified marketplace self-check: deterministic dual-runtime validator, semantic contracts, skill/agent content janitor (safe rewrites), and Claude/Codex install smoke. Flags: `[<plugin>] [--static-only] [--no-write]`. |
-| `/mol-plugin:release` | Unified version bump (patch/minor/major) — advances every Claude and Codex plugin manifest plus the Claude marketplace entries to one shared version, gates through `/mol-plugin:check` + commit chain, and publishes end-to-end. Does not write a CHANGELOG. |
+| `/mol-plugin:release` | Unified version bump (patch/minor/major) — advances every Claude and Codex plugin manifest plus the Claude marketplace entries to one shared version; `/mol-plugin:check` then commit → push(**origin**/fork) → PR(**upstream**) → green checks → merge → tag. Never direct-pushes branches to upstream (see `plugins/mol/rules/git-publish.md`). No CHANGELOG. |
 
 ## Deterministic validation
 
@@ -55,14 +55,19 @@ hook, so normal project users are unaffected.
 
 ## Workflow
 
+Harness publish uses the same PR-first chain as ecosystem packages
+(`plugins/mol/rules/git-publish.md`): push only to your **fork**
+(`origin`), open a PR to **upstream**, wait for green checks, merge,
+then tag. Never direct-push branches to the org default.
+
 ```
 /mol-plugin:new-skill mol:bench "Microbenchmark hot paths"
 # author the skill body
 /mol-plugin:check              # structure + content + smoke
 /mol-plugin:check --static-only  # faster: no Claude/Codex install
 # fix anything red
-/mol-plugin:release minor
-/mol:tag
+/mol-plugin:release minor      # commit → push(origin) → pr → green → merge → tag
+# /mol:tag is invoked by release after merge; re-run only if retag needed
 ```
 
 ## License

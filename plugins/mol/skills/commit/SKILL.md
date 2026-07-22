@@ -82,7 +82,7 @@ No "please push" prompt — callers chain `/mol:push` when needed.
 - **Do not** `git push` (use `/mol:push`).
 - **Do not** skip hooks (`--no-verify` is never used by this skill).
 - **Do not** wait for message or path approval.
-- **Do** keep pre-commit hooks CI-parity (same commands as the remote workflow).
+- **Do** keep pre-commit hooks CI-parity (same commands as the remote workflow; see `../../rules/git-publish.md`).
 - **Do not** commit secret paths (refuse list above).
 - **Do not** amend — always new commit (except callers that own an atomic amend protocol, e.g. `/mol:close`).
 

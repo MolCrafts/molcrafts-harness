@@ -9,4 +9,5 @@ Apply this file only when Codex loads a skill from this plugin. Claude Code foll
 - Resolve `plugins/mol-plugin/...` from this plugin root and `plugins/mol/...` from the installed `mol` plugin. If a required cross-plugin skill or file is unavailable, stop and name the missing `mol` dependency.
 - When a workflow invokes another skill, read that skill and its Codex adapter before executing it.
 - Keep `.claude-plugin/` as the authoritative Claude Code metadata. Treat `.agents/plugins/marketplace.json` and `.codex-plugin/plugin.json` as Codex metadata and validate both without deriving one format from the other.
-- Preserve all approval, clean-tree, commit, tag, and push gates from the canonical workflow.
+- Preserve all approval, clean-tree, commit, push, PR, merge, and tag gates from the canonical workflow.
+- Honor `plugins/mol/rules/git-publish.md` when a workflow touches remotes: **origin = fork** (branch push only), **upstream = canonical** (PR-first; never branch-push), pre-commit ≡ CI before push, green PR checks before merge.

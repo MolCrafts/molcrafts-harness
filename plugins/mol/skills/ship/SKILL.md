@@ -17,7 +17,7 @@ Read CLAUDE.md → parse `mol_project:` (`$META`).
 First positional arg selects the gate. Cumulative — `merge` ⊇ `push` ⊇ `commit`.
 
 - `commit` — format + lint + **project pre-commit hooks** (must mirror CI). Before every `git commit`. Fast (~60s).
-- `push` — full pre-commit `--all-files` + full test suite. Before every `git push`. Medium (5–10 min). **Iron law on `/mol:push`:** hooks installed, CI-parity, green — or user-explicit `--no-verify` only.
+- `push` — full pre-commit `--all-files` + full test suite. Before every `/mol:push` (origin/fork only — see `../../rules/git-publish.md`). Medium (5–10 min). **Iron law:** hooks installed, pre-commit ≡ CI, green — or user-explicit `--no-verify` only.
 - `merge` — mirrors remote CI locally. Before merge to `main`/`master`. Heavy (full CI wall-clock).
 
 `$ARGUMENTS` empty → default to `commit` and state the assumption.

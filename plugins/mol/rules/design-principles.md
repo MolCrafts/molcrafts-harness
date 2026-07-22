@@ -248,14 +248,17 @@ bootstrap repairs that are mechanical. Closing a spec is **never** the
 human's job — `/mol:close` auto-runs evaluators and agent-auto-attests
 remaining criteria.
 
-Two publish chains (never mix them):
+Two publish chains (never mix them). Both follow
+`plugins/mol/rules/git-publish.md` (pre-commit ≡ CI; **origin = fork**
+branch push only; **upstream = canonical** via PR → green checks →
+merge; never direct-push branches to upstream):
 
-- **Harness marketplace:** `/mol-plugin:release` → commit → push → pr →
-  merge → tag (plugins under `molcrafts-harness` only).
+- **Harness marketplace:** `/mol-plugin:release` → commit → push(origin)
+  → pr → green checks → merge → tag (`molcrafts-harness` only).
 - **Ecosystem libraries:** `/mol:release` → dep/docs/harness gates →
-  version bump → commit → push → pr → merge → tag. Dependencies on
-  the official registry **before** dependents; tag-triggered CI
-  publishes to crates.io / PyPI / npm when configured.
+  version bump → commit → push(origin) → pr → green checks → merge →
+  tag. Dependencies on the official registry **before** dependents;
+  tag-triggered CI publishes to crates.io / PyPI / npm when configured.
 
 ## 3. Why This Split
 
