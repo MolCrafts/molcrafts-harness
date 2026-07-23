@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "molq",
   "displayName": "Molq",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "molq job lifecycle via molmcp \u2014 list/status/logs, opt-in submit and cancel for local/SLURM/PBS/LSF.",
   "author": {
     "name": "MolCrafts"

@@ -1,6 +1,6 @@
 {
   "name": "molexp",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "molexp data-workspace tooling: adopt legacy experiment directories into Workspace \u2192 Project \u2192 Experiment \u2192 Run.",
   "author": {
     "name": "MolCrafts"

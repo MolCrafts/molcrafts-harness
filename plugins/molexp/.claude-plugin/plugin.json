@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "molexp",
   "displayName": "MolExp",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "molexp data-workspace tooling \u2014 adopt legacy experiment directories into Workspace \u2192 Project \u2192 Experiment \u2192 Run.",
   "author": {
     "name": "MolCrafts"
