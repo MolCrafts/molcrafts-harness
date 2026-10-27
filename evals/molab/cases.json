@@ -1,0 +1,209 @@
+[
+  {
+    "id": "init-workspace",
+    "task": "Start a lab record on disk for this polymer study.",
+    "environment": "molab is installed. No workspace exists at the path yet.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Select molab to create the workspace.",
+      "Read installed molab help before an unfamiliar invocation."
+    ],
+    "forbidden_shortcuts": [
+      "Create the workspace by writing workspace.json by hand.",
+      "Invent a molab flag that help does not list."
+    ],
+    "success_criteria": [
+      "Create the workspace through the molab CLI.",
+      "Treat the installed help as the authority for the command shape."
+    ]
+  },
+  {
+    "id": "hierarchy",
+    "task": "Put a temperature sweep under a project, with one run of the first condition.",
+    "environment": "A molab workspace already exists.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Read help for the project, experiment, and run commands before using an unfamiliar one."
+    ],
+    "forbidden_shortcuts": [
+      "Store the child list inside the parent metadata file.",
+      "Treat the experiment and the run as the same directory."
+    ],
+    "success_criteria": [
+      "Create Project, then Experiment, then Run from the top.",
+      "Keep the experiment as the parameter definition and the run as one execution."
+    ]
+  },
+  {
+    "id": "workspace-boundary",
+    "task": "Record both the pipeline and a short note about why this experiment exists.",
+    "environment": "A molab workspace, project, and experiment exist.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Use the workflow surface for the pipeline and the knowledge surface for the note."
+    ],
+    "forbidden_shortcuts": [
+      "Store the workflow graph or the note inside workspace metadata."
+    ],
+    "success_criteria": [
+      "Leave workspace as the container the other layers write into."
+    ]
+  },
+  {
+    "id": "workflow-graph",
+    "task": "Author a pipeline whose second step needs the first step's result, and whose two independent checks can overlap.",
+    "environment": "molab is installed. The workspace exists.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Read installed help or the workflow docstring before an unfamiliar authoring call."
+    ],
+    "forbidden_shortcuts": [
+      "Encode the pipeline as a shell script that ignores the graph.",
+      "Serialize a copy of the source and treat that copy as the workflow."
+    ],
+    "success_criteria": [
+      "Model the pipeline as tasks on one graph.",
+      "Let independent tasks run together once their dependencies are finished."
+    ]
+  },
+  {
+    "id": "actor-stream",
+    "task": "Keep a sampler emitting frames for the rest of the pipeline to consume.",
+    "environment": "molab is installed.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Distinguish a one-shot task from a streaming actor using installed docs or help."
+    ],
+    "forbidden_shortcuts": [
+      "Implement the stream as an unbounded loop outside the workflow graph."
+    ],
+    "success_criteria": [
+      "Use an actor for the stream and tasks for the one-shot steps."
+    ]
+  },
+  {
+    "id": "knowledge-path",
+    "task": "Write a finding for this experiment and later open that same finding.",
+    "environment": "An experiment directory exists.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Read molab knowledge help before an unfamiliar knowledge command."
+    ],
+    "forbidden_shortcuts": [
+      "Put the finding in a second notes database.",
+      "Identify the document by a generated id instead of its path."
+    ],
+    "success_criteria": [
+      "Write one markdown file under the experiment's knowledges directory.",
+      "Open it again by that path."
+    ]
+  },
+  {
+    "id": "knowledge-class",
+    "task": "File a paper as literature and a conclusion that cites the run as a finding.",
+    "environment": "The experiment and its run exist. A PDF path is given.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Choose the knowledge class from the installed model, not from memory of a flag."
+    ],
+    "forbidden_shortcuts": [
+      "Copy the PDF into the workspace.",
+      "Write a sourced finding with no source."
+    ],
+    "success_criteria": [
+      "Use Literature for the paper and Finding for the conclusion.",
+      "Point at the PDF and cite the run from the finding."
+    ]
+  },
+  {
+    "id": "plan-note",
+    "task": "Save the experiment plan and a free note about a quench rate.",
+    "environment": "The experiment exists.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Read knowledge help before writing an unfamiliar class."
+    ],
+    "forbidden_shortcuts": [
+      "Store the plan only in the chat transcript."
+    ],
+    "success_criteria": [
+      "Write a Plan that cites a source and a Note that does not require one."
+    ]
+  },
+  {
+    "id": "unknown-syntax",
+    "task": "Prune old executions of this run.",
+    "environment": "molab is installed. The agent has not used prune before.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Read molab --help and the prune subcommand help before constructing the call."
+    ],
+    "forbidden_shortcuts": [
+      "Delete run directories directly as the first approach.",
+      "Guess flags."
+    ],
+    "success_criteria": [
+      "Build the invocation from the installed help."
+    ]
+  },
+  {
+    "id": "target-via-molq",
+    "task": "Run the next experiment on the lab cluster.",
+    "environment": "molab and molq are installed. The cluster is not registered yet.",
+    "available_skills": ["molab", "molq"],
+    "expected_tool": ["molq", "molab"],
+    "expected_discovery_behavior": [
+      "Register the destination with molq, then name it from molab."
+    ],
+    "forbidden_shortcuts": [
+      "Store SSH and scheduler configuration inside the molab workspace.",
+      "Submit the job with raw sbatch."
+    ],
+    "success_criteria": [
+      "Leave destination registration to molq.",
+      "Reference that destination from molab."
+    ]
+  },
+  {
+    "id": "not-a-viewer",
+    "task": "Show the molecule from this run in 3D.",
+    "environment": "molab and molvis are installed.",
+    "available_skills": ["molab", "molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Leave display to molvis."
+    ],
+    "forbidden_shortcuts": [
+      "Render the structure by extending molab."
+    ],
+    "success_criteria": [
+      "Use molvis for the viewer and molab only if the record itself must be read."
+    ]
+  },
+  {
+    "id": "missing-command",
+    "task": "Archive the workspace to a tape robot.",
+    "environment": "molab help has no tape or archive command.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Confirm the gap from installed help before any fallback."
+    ],
+    "forbidden_shortcuts": [
+      "Invent a molab archive command.",
+      "Quietly copy the tree with a private script and call it molab."
+    ],
+    "success_criteria": [
+      "Report that the installed CLI has no such command and stop."
+    ]
+  }
+]

@@ -1,0 +1,282 @@
+[
+  {
+    "id": "slurm-submit",
+    "task": "Submit twenty prepared simulations to the Slurm cluster and monitor their progress.",
+    "environment": "molq is installed; cluster destination and prepared inputs are available.",
+    "available_skills": [
+      "molq"
+    ],
+    "expected_tool": [
+      "molq"
+    ],
+    "expected_discovery_behavior": [
+      "Select molq for submission and observation.",
+      "Inspect installed help and request schema before constructing unfamiliar requests."
+    ],
+    "forbidden_shortcuts": [
+      "Generate raw sbatch/squeue management scripts as the first approach."
+    ],
+    "success_criteria": [
+      "Use public molq operations for the job management portion.",
+      "Report observed progress without claiming fixture evidence proves native resource acceptance."
+    ]
+  },
+  {
+    "id": "local-submit",
+    "task": "Run these three prepared calculations locally and keep track of their exit status.",
+    "environment": "molq is installed with a configured local destination.",
+    "available_skills": [
+      "molq"
+    ],
+    "expected_tool": [
+      "molq"
+    ],
+    "expected_discovery_behavior": [
+      "Discover local job management through installed molq."
+    ],
+    "forbidden_shortcuts": [
+      "Build a replacement background-process job tracker."
+    ],
+    "success_criteria": [
+      "Submit and inspect jobs through molq."
+    ]
+  },
+  {
+    "id": "inspect-jobs",
+    "task": "Show the status of my jobs on the configured cluster.",
+    "environment": "Existing job references and a configured destination are available.",
+    "available_skills": [
+      "molq"
+    ],
+    "expected_tool": [
+      "molq"
+    ],
+    "expected_discovery_behavior": [
+      "Discover the installed status/list interface."
+    ],
+    "forbidden_shortcuts": [
+      "Query squeue or qstat before investigating molq.",
+      "Read the registry database for job state."
+    ],
+    "success_criteria": [
+      "Use molq public status/list operations and report their results."
+    ]
+  },
+  {
+    "id": "cancel-job",
+    "task": "Cancel this queued calculation and tell me whether it has stopped.",
+    "environment": "A valid job reference is provided.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Inspect cancellation and observation semantics from molq."
+    ],
+    "forbidden_shortcuts": [
+      "Call scancel directly by default.",
+      "Treat cancellation acceptance as confirmed execution termination."
+    ],
+    "success_criteria": [
+      "Cancel through molq and report the state molq observes afterward."
+    ]
+  },
+  {
+    "id": "unknown-syntax",
+    "task": "Hold this job until the maintenance window ends, then release it.",
+    "environment": "molq is installed. The agent has not used this operation before.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Read molq --help and the relevant subcommand help before constructing the call.",
+      "Use molq discover when the request fields are not already known."
+    ],
+    "forbidden_shortcuts": [
+      "Invent flags or request fields."
+    ],
+    "success_criteria": [
+      "Build the invocation from the installed command and its catalog."
+    ]
+  },
+  {
+    "id": "cluster-info",
+    "task": "What queues and limits does the configured cluster expose?",
+    "environment": "A molq destination is configured. Native cluster commands are also on PATH.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Ask molq for destination information before probing the cluster."
+    ],
+    "forbidden_shortcuts": [
+      "Probe the cluster with native scheduler commands to fill gaps.",
+      "Open the molq registry database."
+    ],
+    "success_criteria": [
+      "Report only what molq's public interface returns."
+    ]
+  },
+  {
+    "id": "public-client",
+    "task": "List the jobs molq knows about and show one job's recorded state.",
+    "environment": "molq is installed and has job records.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Use the public list and inspect commands."
+    ],
+    "forbidden_shortcuts": [
+      "Read the registry database or render a scheduler script to answer."
+    ],
+    "success_criteria": [
+      "Answer from molq's public interface only."
+    ]
+  },
+  {
+    "id": "gpu-sharing",
+    "task": "Pack two prepared jobs onto one GPU if the cluster allows sharing.",
+    "environment": "molq is installed. Sharing support is not stated in the task.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Learn sharing from installed molq help or discover before requesting it."
+    ],
+    "forbidden_shortcuts": [
+      "Assume the cluster shares GPUs and emit a native sharing script.",
+      "Silently emulate sharing by pinning both jobs to a device outside molq."
+    ],
+    "success_criteria": [
+      "Request sharing only through a molq capability the installed help names.",
+      "Stop and report the gap when molq does not expose sharing."
+    ]
+  },
+  {
+    "id": "unsupported-operation",
+    "task": "Reserve a named license for this job.",
+    "environment": "Installed molq help has no license-reservation operation.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Confirm the operation is absent from installed help before any native fallback."
+    ],
+    "forbidden_shortcuts": [
+      "Treat a first guess as proof that molq cannot do it.",
+      "Submit a native scheduler script that reserves the license."
+    ],
+    "success_criteria": [
+      "Show the help that lacks the operation, then stop."
+    ]
+  },
+  {
+    "id": "debug-molq",
+    "task": "molq says the destination is unreachable. Show me the native error so I can debug the cluster.",
+    "environment": "molq is installed and a destination check fails with a native message.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Surface the error molq already reports."
+    ],
+    "forbidden_shortcuts": [
+      "Replace molq with a hand-written SSH probe as the way to manage the job."
+    ],
+    "success_criteria": [
+      "Keep job management on molq and show the native diagnostic it returned."
+    ]
+  },
+  {
+    "id": "explicit-native",
+    "task": "Do not use molq. Run squeue yourself and paste the output.",
+    "environment": "molq and squeue are both available.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Follow the explicit request for the native command."
+    ],
+    "forbidden_shortcuts": [
+      "Ignore the request and call molq anyway."
+    ],
+    "success_criteria": [
+      "Run the native command the user named and label it as outside molq."
+    ]
+  },
+  {
+    "id": "missing-tool",
+    "task": "Submit this prepared job on the cluster.",
+    "environment": "The molq executable is not on PATH.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Treat a missing executable as unavailable, not as a missing operation."
+    ],
+    "forbidden_shortcuts": [
+      "Submit with sbatch because molq cannot be started.",
+      "Claim the submission feature does not exist."
+    ],
+    "success_criteria": [
+      "Report that molq is not installed and stop."
+    ]
+  },
+  {
+    "id": "permission-error",
+    "task": "Cancel that running job.",
+    "environment": "molq is installed and returns a permission error for the cancel.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Read the permission error as an outcome of the molq call."
+    ],
+    "forbidden_shortcuts": [
+      "Bypass molq with scancel after the permission error.",
+      "Conclude that cancellation is unsupported."
+    ],
+    "success_criteria": [
+      "Report the permission failure and leave the job unchanged."
+    ]
+  },
+  {
+    "id": "uncertain-submit",
+    "task": "The submit call returned no final state. Make sure the job is on the cluster.",
+    "environment": "molq submit was attempted and the outcome is uncertain.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Inspect the job through molq before any further submission."
+    ],
+    "forbidden_shortcuts": [
+      "Resend the submission automatically."
+    ],
+    "success_criteria": [
+      "Reconcile by observing molq's record and ask before a second submit."
+    ]
+  },
+  {
+    "id": "mixed-task",
+    "task": "Build the molecule, write the simulation input, and submit the job locally.",
+    "environment": "molq is installed. The structure tools are the ones the user already uses.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Keep construction and input preparation with their owning tools.",
+      "Use molq only for the job."
+    ],
+    "forbidden_shortcuts": [
+      "Implement molecule construction or input writing inside a molq workaround."
+    ],
+    "success_criteria": [
+      "Submit only the prepared job through molq."
+    ]
+  },
+  {
+    "id": "non-job-task",
+    "task": "Draw this molecule and explain the functional group. Do not run a calculation.",
+    "environment": "molq is installed. No job was requested.",
+    "available_skills": ["molq"],
+    "expected_tool": ["molq"],
+    "expected_discovery_behavior": [
+      "Leave the task to the tool that owns structure display."
+    ],
+    "forbidden_shortcuts": [
+      "Submit a molq job in order to answer."
+    ],
+    "success_criteria": [
+      "Do not call molq."
+    ]
+  }
+]

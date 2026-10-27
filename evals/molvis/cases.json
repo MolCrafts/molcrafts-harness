@@ -1,0 +1,280 @@
+[
+  {
+    "id": "draw-molecule",
+    "task": "Show me caffeine as a 3D structure I can look at.",
+    "environment": "molvis is installed. No viewer is running yet.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Select molvis to display the structure.",
+      "Read installed molvis help before an unfamiliar invocation."
+    ],
+    "forbidden_shortcuts": [
+      "Render the molecule with matplotlib or a hand-written HTML page.",
+      "Start molmcp and call molvis_open or molvis_exec."
+    ],
+    "success_criteria": [
+      "Drive the live viewer through the molvis CLI.",
+      "Obtain the structure from molpy inside a cell rather than from a molecule name built into molvis."
+    ]
+  },
+  {
+    "id": "serve-then-exec",
+    "task": "Build a molecule, show it, then change the representation after I have looked.",
+    "environment": "molvis is installed. No kernel is running.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Start one kernel with molvis serve, then send cells with molvis exec."
+    ],
+    "forbidden_shortcuts": [
+      "Open a new browser process for every change.",
+      "Start molmcp to keep the viewer alive."
+    ],
+    "success_criteria": [
+      "Keep one kernel process across the steps.",
+      "Send each change as a cell to that kernel."
+    ]
+  },
+  {
+    "id": "no-kernel",
+    "task": "Highlight the ring of the molecule that is already on screen.",
+    "environment": "molvis is installed. No molvis serve process is running, and no notebook kernel is running.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Notice that exec has no kernel and start molvis serve before drawing."
+    ],
+    "forbidden_shortcuts": [
+      "Launch a separate viewer from each exec after the command reports that no kernel is listening."
+    ],
+    "success_criteria": [
+      "Run molvis serve, then exec the highlight cell against that kernel."
+    ]
+  },
+  {
+    "id": "namespace-persists",
+    "task": "You already drew the ligand in this kernel. Now hide its hydrogens without rebuilding the molecule from scratch.",
+    "environment": "molvis serve is running. A previous cell bound the ligand as mol and the viewer as stage via mv.Stage(name='ligand').",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Send another exec to the same kernel instead of opening a new one."
+    ],
+    "forbidden_shortcuts": [
+      "Start a second kernel and reparse the ligand.",
+      "Construct a different session object than mv.Stage."
+    ],
+    "success_criteria": [
+      "Reuse the name mol from the kernel namespace.",
+      "Call mv.Stage(name='ligand') and get the viewer that is already registered."
+    ]
+  },
+  {
+    "id": "highlight-group",
+    "task": "Show aspirin and highlight the carboxylic acid.",
+    "environment": "molvis serve is running and a browser is connected.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Read the Stage selection method's docstring before calling it.",
+      "Ask molpy which atom indices belong to the group."
+    ],
+    "forbidden_shortcuts": [
+      "Count atom indices by reading the SMILES string by hand.",
+      "Invent a molvis highlight flag."
+    ],
+    "success_criteria": [
+      "Select the group with the Stage selection method the docstring names.",
+      "Take the indices from molpy in the same cell."
+    ]
+  },
+  {
+    "id": "replace-frame",
+    "task": "Replace the molecule on screen with ethanol. I should see ethanol, not both molecules.",
+    "environment": "A molecule is already drawn on the Stage in the running kernel.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Read the draw_frame docstring before replacing the scene."
+    ],
+    "forbidden_shortcuts": [
+      "Call draw_frame a second time without following what its docstring says about the previous contents."
+    ],
+    "success_criteria": [
+      "Clear the scene the way the draw_frame docstring requires, then draw ethanol."
+    ]
+  },
+  {
+    "id": "selection-events",
+    "task": "I clicked some atoms. Tell me which ones, using what the viewer reports.",
+    "environment": "molvis serve is running, a browser is connected, and the user has clicked atoms.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Read the Stage event attributes in a cell."
+    ],
+    "forbidden_shortcuts": [
+      "Add a separate event-polling command or journal.",
+      "Guess the click from screen coordinates."
+    ],
+    "success_criteria": [
+      "Read stage.selection or stage.wait_for in the kernel."
+    ]
+  },
+  {
+    "id": "not-connected",
+    "task": "Draw benzene and confirm it is on screen.",
+    "environment": "molvis serve is running. No browser has opened the page URL.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Treat a not-connected error from the cell as a missing browser."
+    ],
+    "forbidden_shortcuts": [
+      "Tell the user the molecule is visible before a browser is connected."
+    ],
+    "success_criteria": [
+      "Give the user the error and the page address, and wait."
+    ]
+  },
+  {
+    "id": "snapshot-before-claim",
+    "task": "Show me the highlighted hydroxyl and tell me whether the highlight landed.",
+    "environment": "molvis serve is running and a browser is connected.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Capture the canvas after the selection call returns."
+    ],
+    "forbidden_shortcuts": [
+      "Describe the highlight without a snapshot from the viewer."
+    ],
+    "success_criteria": [
+      "Write the snapshot bytes to a file and look at that image before answering."
+    ]
+  },
+  {
+    "id": "discover-help",
+    "task": "Switch the running viewer to the skeletal representation. You have not used that method in this session.",
+    "environment": "molvis serve is running. The Stage object is bound as stage.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Read molvis --help or the Stage method docstring before calling an unfamiliar method."
+    ],
+    "forbidden_shortcuts": [
+      "Invent a flag or method name that help did not show."
+    ],
+    "success_criteria": [
+      "Call the style method the installed Stage documents."
+    ]
+  },
+  {
+    "id": "dopamine-joke",
+    "task": "把这段话在 molvis 里逐步演出来：多巴胺让人快乐，但它是水溶性的，口服或注射都很难过血脑屏障。去掉羟基会让它变得亲脂、能穿过屏障，但很快被分解。加上一个甲基，代谢变慢。再加一个甲基，代谢就非常慢。每一步都让人看见分子，并高亮这一步改动的基团。",
+    "environment": "molvis serve can be started. A browser can open the page. molpy 0.17 is installed.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Send one cell per structure to the same kernel.",
+      "Choose each SMILES and the changed atoms with molpy."
+    ],
+    "forbidden_shortcuts": [
+      "Answer with text and no viewer.",
+      "Draw only dopamine.",
+      "Call a molvis joke command.",
+      "Count atom indices by hand from the SMILES text."
+    ],
+    "success_criteria": [
+      "Show dopamine and methamphetamine on the live viewer.",
+      "Highlight the group that changes at each step with the Stage selection method.",
+      "Write a snapshot after each highlight."
+    ]
+  },
+  {
+    "id": "bad-smiles",
+    "task": "Draw this SMILES: C(C(C. It might be invalid.",
+    "environment": "molvis serve is running.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Run the parser and read the exception the cell returns."
+    ],
+    "forbidden_shortcuts": [
+      "Draw a similar-looking molecule after the parser rejects the string."
+    ],
+    "success_criteria": [
+      "Report the parser error and leave the previous scene unchanged."
+    ]
+  },
+  {
+    "id": "open-pdb",
+    "task": "Open protein.pdb in the viewer and leave it up. Do not change it.",
+    "environment": "protein.pdb is on disk. molvis is installed. The user asked only to open the file.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Use molvis open for a one-shot file display."
+    ],
+    "forbidden_shortcuts": [
+      "Convert the PDB into a SMILES string before displaying it."
+    ],
+    "success_criteria": [
+      "Display the file with molvis open."
+    ]
+  },
+  {
+    "id": "draw-then-submit",
+    "task": "Show me the ligand, then submit the prepared calculation for it to the cluster.",
+    "environment": "molvis and molq are installed. A prepared job input and a cluster destination exist.",
+    "available_skills": ["molvis", "molq"],
+    "expected_tool": ["molvis", "molq"],
+    "expected_discovery_behavior": [
+      "Use molvis for the picture and molq for the job."
+    ],
+    "forbidden_shortcuts": [
+      "Submit the job by drawing it in molvis.",
+      "Render the ligand with molq."
+    ],
+    "success_criteria": [
+      "Display the ligand through molvis.",
+      "Submit the calculation through molq."
+    ]
+  },
+  {
+    "id": "explicit-notebook",
+    "task": "I want this in a Jupyter notebook, not the terminal. Draw ethanol in the notebook viewer.",
+    "environment": "A Jupyter kernel is available with molvis imported. The user explicitly asked for a notebook.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Use the Stage API directly because the user asked for a notebook."
+    ],
+    "forbidden_shortcuts": [
+      "Invent a notebook-only session type that is not mv.Stage."
+    ],
+    "success_criteria": [
+      "Construct mv.Stage and draw ethanol in the notebook kernel.",
+      "Say why the call is in the notebook rather than molvis exec."
+    ]
+  },
+  {
+    "id": "no-mcp",
+    "task": "Keep a viewer open while we edit the structure over several turns.",
+    "environment": "molvis is installed. molmcp may also be installed.",
+    "available_skills": ["molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Hold the viewer with molvis serve."
+    ],
+    "forbidden_shortcuts": [
+      "Start molmcp so its molvis_exec can hold the viewer.",
+      "Build a private session registry beside mv.Stage."
+    ],
+    "success_criteria": [
+      "Use one molvis serve kernel for every edit.",
+      "Address the viewer with mv.Stage(name=...)."
+    ]
+  }
+]
