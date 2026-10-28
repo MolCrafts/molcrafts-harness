@@ -10,7 +10,7 @@
       "Read installed molab help before an unfamiliar invocation."
     ],
     "forbidden_shortcuts": [
-      "Create the workspace by writing workspace.json by hand.",
+      "Create the workspace by writing its record files by hand.",
       "Invent a molab flag that help does not list."
     ],
     "success_criteria": [
@@ -28,7 +28,7 @@
       "Read help for the project, experiment, and run commands before using an unfamiliar one."
     ],
     "forbidden_shortcuts": [
-      "Store the child list inside the parent metadata file.",
+      "Write the child list into the parent's record by hand.",
       "Treat the experiment and the run as the same directory."
     ],
     "success_criteria": [
@@ -204,6 +204,108 @@
     ],
     "success_criteria": [
       "Report that the installed CLI has no such command and stop."
+    ]
+  },
+  {
+    "id": "navigate-by-index",
+    "task": "Tell me which experiments in this workspace study glass transition and where their results are.",
+    "environment": "A molab workspace with several projects, experiments and finished runs. Each level has an index.md.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Start from the root index.md and follow the index children paths down."
+    ],
+    "forbidden_shortcuts": [
+      "Run a recursive search over every file in the workspace as the first step.",
+      "Open every execution record to reconstruct the tree."
+    ],
+    "success_criteria": [
+      "Name the experiments and the run or execution paths that hold their results."
+    ]
+  },
+  {
+    "id": "scratch-not-run",
+    "task": "Try whether this LAMMPS input runs for 100 steps, then launch the 5 ns production run.",
+    "environment": "The experiment exists. A LAMMPS input is given. The production run takes hours on a scheduler.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Read help for running or adopting runs before launching the production job."
+    ],
+    "forbidden_shortcuts": [
+      "Write the test or production files next to the experiment record.",
+      "Leave the production trajectory in scratch/."
+    ],
+    "success_criteria": [
+      "Do the short test in the experiment's scratch/.",
+      "Make the production job a molab run."
+    ]
+  },
+  {
+    "id": "adopt-external-job",
+    "task": "This simulation already finished on the cluster under ~/jobs/peo-melt; record it in the experiment.",
+    "environment": "The experiment exists. The job directory has outputs, a scheduler log and the submit script.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Read molab runs adopt help before recording the job."
+    ],
+    "forbidden_shortcuts": [
+      "Copy the job directory into runs/ by hand.",
+      "Write a run or execution record by hand."
+    ],
+    "success_criteria": [
+      "Record the finished job as an attempt of a run, with its outputs, log and script moved in by molab."
+    ]
+  },
+  {
+    "id": "no-hand-frontmatter",
+    "task": "Rename the project's description and add a short paragraph on why it exists.",
+    "environment": "A project exists with an index.md that has molab frontmatter and a body.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Find the molab command that changes the project description."
+    ],
+    "forbidden_shortcuts": [
+      "Edit the frontmatter of index.md directly."
+    ],
+    "success_criteria": [
+      "Change the description through molab.",
+      "Put the paragraph in the index.md body."
+    ]
+  },
+  {
+    "id": "find-experiment-code",
+    "task": "Show me the code that produced the second run of this experiment.",
+    "environment": "The experiment has a workflow and several runs with executions.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Read the experiment and run index.md entries for the entrypoint and execution paths."
+    ],
+    "forbidden_shortcuts": [
+      "Guess from loose scripts in the project directory."
+    ],
+    "success_criteria": [
+      "Point at the experiment entrypoint or that execution's captured source."
+    ]
+  },
+  {
+    "id": "validate-before-finish",
+    "task": "Add three runs for the remaining seeds and tidy up.",
+    "environment": "An experiment exists with one run. The workspace has older layout problems the task did not create.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Run molab validate before reporting completion."
+    ],
+    "forbidden_shortcuts": [
+      "Report completion without checking the workspace.",
+      "Rewrite unrelated older parts of the workspace."
+    ],
+    "success_criteria": [
+      "Leave no new validation error from this work."
     ]
   }
 ]

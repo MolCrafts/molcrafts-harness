@@ -7,10 +7,11 @@ tool's own CLI, and avoid a second viewer or an MCP session. **molab** helps
 agents keep a workspace, a workflow, and knowledge through that tool's own
 CLI. The skill states the frame; the installed help owns the verbs.
 
-Harness does not execute or proxy MolCrafts tools. Agents call them directly.
+Harness does not proxy MolCrafts tools. Agents call them directly.
 Tool help, schemas, and documentation own operational facts. Skills contain
 short decision guidance, with one standard `SKILL.md` per tool and only latest.
 There is no installer, registry, runtime, gateway, or version resolver here.
+The one addition is a set of Claude Code hooks for molab workspaces (below).
 
 ## Install
 
@@ -24,11 +25,37 @@ npx skills add /path/to/molcrafts-harness --skill molab
 ```
 
 Choose supported agents interactively, or use its documented `--agent` option.
+
 To inspect discovery without installing:
 
 ```sh
 npx skills add /path/to/molcrafts-harness --list
 ```
+
+### Claude Code plugin
+
+The repository is also a Claude Code plugin with the same skills plus
+hooks for molab workspaces. Inside Claude Code:
+
+```text
+/plugin marketplace add MolCrafts/molcrafts-harness
+/plugin install molcrafts@molcrafts
+```
+
+For a local checkout, start `claude --plugin-dir /path/to/molcrafts-harness`.
+
+- **Before Write / Edit:** `hooks/molab_guard.py` sends the path and the
+  content the file would have to `molab check path`. If molab refuses (a
+  record's frontmatter, an attempt's record, a file in the wrong place), the
+  edit is denied with molab's reason and the command to use instead.
+- **On SessionStart / Stop:** molab snapshots the workspace's validation
+  issues when the session starts (`molab check tree --snapshot`). At stop,
+  errors added since then (`--since`) block the stop once, with the list.
+  Older problems are not counted.
+
+The hook script holds no rule; molab decides. Without `molab` on `PATH`, or
+outside a molab workspace, both hooks allow everything. Other agents get the
+same rules from the workspace's `AGENTS.md`, which molab writes.
 
 ## Evaluate
 
@@ -42,6 +69,7 @@ agent you already use.
 
 ```sh
 python3 -m unittest discover -s tests/skill-quality -v
+python3 -m unittest discover -s tests/hooks -v
 ```
 
 These checks validate collection quality, not agent performance. Behavioral

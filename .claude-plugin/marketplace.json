@@ -1,0 +1,11 @@
+{
+  "name": "molcrafts",
+  "owner": {"name": "MolCrafts"},
+  "plugins": [
+    {
+      "name": "molcrafts",
+      "source": "./",
+      "description": "CLI-first skills for molq, molvis, and molab, plus molab workspace hooks."
+    }
+  ]
+}

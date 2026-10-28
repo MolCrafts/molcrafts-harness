@@ -42,9 +42,18 @@ invalid calls, and completion rates.
 | Use molab for the research record | init-workspace, hierarchy |
 | Read installed help before unfamiliar commands | unknown-syntax, missing-command, init-workspace |
 | Workspace, project, experiment, run | hierarchy, workspace-boundary |
+| Navigate down from the root index.md | navigate-by-index, find-experiment-code |
+| molab writes the frontmatter; edit only the body | no-hand-frontmatter |
+| Quick tests in scratch/, real work as runs | scratch-not-run |
+| Record a finished job with `molab runs adopt` | adopt-external-job |
+| Run `molab validate` before finishing | validate-before-finish |
 | Workflow is a graph of tasks and actors | workflow-graph, actor-stream |
 | Knowledge is markdown addressed by path | knowledge-path, knowledge-class, plan-note |
 | Destinations and jobs stay with molq | target-via-molq |
 | Display stays with molvis | not-a-viewer |
+
+The six cases from navigate-by-index on come from a real workspace that agents
+wrote by hand. They put test and production files beside the experiment record,
+wrote records by hand, and left finished cluster jobs unrecorded.
 
 No behavioral runs are bundled yet.

@@ -6,21 +6,24 @@ description: Use molab to create and operate a research workspace, the workflow 
 # molab
 
 Use the installed `molab` command for the research record. Do not build that
-record as hand-written directories and JSON, and do not reimplement it in
-another tool.
-
-Before an unfamiliar subcommand, read `molab --help` and that subcommand's
-help. The installed command is the authority for verbs and flags. Do not
-invent them.
+record as hand-written directories, JSON, or frontmatter, and do not
+reimplement it in another tool. Read `molab --help` and the subcommand's help
+before an unfamiliar call; the installed command owns verbs and flags.
 
 ## Workspace
 
-Workspace, then Project, then Experiment, then Run. A workspace does not know
-workflows or knowledge; those layers write into it. An experiment is the
-parameter definition. A run is one execution of that definition. Parents find
-children by scanning the filesystem, not by a list stored in the parent.
-Create from the top. A compute destination is registered in molq first, then
-named from molab.
+Workspace, then Project, then Experiment, then Run. Start at the workspace
+root `AGENTS.md` and `index.md`. Each level's `index.md` frontmatter is that
+level's record, and its `index:` key lists the children; follow those paths
+down instead of searching the tree. molab writes the frontmatter. You may edit
+only the body. Create from the top. Register a compute destination in molq
+first, then name it from molab.
+
+An experiment is the parameter definition. A run is one execution of it.
+Quick tests go in the experiment's `scratch/`, which is disposable. A long job,
+a trajectory, or anything you will cite becomes a run: run it through molab,
+or record a job that already finished with `molab runs adopt`. Before you
+finish, run `molab validate` and fix what your work added.
 
 ## Workflow
 
@@ -31,10 +34,9 @@ Scheduler submission stays with molq.
 
 ## Knowledge
 
-Knowledge is markdown under `knowledges/`. The path is the identity. There is
-no second database. The class is YAML frontmatter: Note, Literature, Report,
-Finding, Plan, Observation. Report, Finding, Plan, and Observation cite a
-source. Note and Literature do not. Point at PDFs; do not copy them in.
-Read and write through `molab knowledge`.
+Knowledge is markdown under `knowledges/`. The path is the identity. The
+class is YAML frontmatter: Note, Literature, Report, Finding, Plan,
+Observation. Report, Finding, Plan, and Observation cite a source. Point at
+PDFs; do not copy them in. Read and write through `molab knowledge`.
 
 Leave molecule display to molvis and the job queue to molq.
