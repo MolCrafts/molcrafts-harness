@@ -47,6 +47,7 @@ invalid calls, and completion rates.
 | Quick tests in scratch/, real work as runs | scratch-not-run |
 | Record a finished job with `molab runs adopt` | adopt-external-job |
 | Run `molab validate` before finishing | validate-before-finish |
+| Record stdout, metrics and key files through molab | record-training-output |
 | Workflow is a graph of tasks and actors | workflow-graph, actor-stream |
 | Knowledge is markdown addressed by path | knowledge-path, knowledge-class, plan-note |
 | Destinations and jobs stay with molq | target-via-molq |

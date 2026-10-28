@@ -307,5 +307,22 @@
     "success_criteria": [
       "Leave no new validation error from this work."
     ]
+  },
+  {
+    "id": "record-training-output",
+    "task": "Train the model in this run and keep its loss curve, printed progress, and final weights.",
+    "environment": "A run exists. The training script prints progress and writes a weights file.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Use molab's print, ctx.metrics, and ctx.emit_artifact inside the run."
+    ],
+    "forbidden_shortcuts": [
+      "Write the loss to a private CSV beside the run record.",
+      "Copy the weights into the run directory by hand."
+    ],
+    "success_criteria": [
+      "The execution holds the stdout, the metric records, and the weights as an artifact."
+    ]
   }
 ]
