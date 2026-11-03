@@ -5,7 +5,7 @@
     {
       "name": "molcrafts",
       "source": "./",
-      "description": "CLI-first skills for molq, molvis, and molab, plus molab workspace hooks."
+      "description": "CLI-first skills for molq, molvis, and molab, a Python skill for molplot, plus molab workspace hooks."
     }
   ]
 }

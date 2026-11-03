@@ -32,7 +32,7 @@ class CollectionTests(unittest.TestCase):
 
     def _assert_case_file(self, path, names):
         cases = json.loads(path.read_text())
-        self.assertTrue(10 <= len(cases) <= 20)
+        self.assertTrue(10 <= len(cases) <= 21)
         self.assertEqual(len({case["id"] for case in cases}), len(cases))
         self.assertEqual(len({case["task"] for case in cases}), len(cases))
         for case in cases:

@@ -1,6 +1,6 @@
 {
   "name": "molcrafts",
-  "description": "CLI-first skills for molq, molvis, and molab, plus hooks that hand molab workspace writes to molab's own checks.",
+  "description": "CLI-first skills for molq, molvis, and molab, a Python skill for molplot, plus hooks that hand molab workspace writes to molab's own checks.",
   "version": "0.2.0",
   "author": {
     "name": "MolCrafts"

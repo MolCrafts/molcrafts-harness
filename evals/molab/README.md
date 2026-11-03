@@ -40,11 +40,12 @@ invalid calls, and completion rates.
 | Skill decision | Cases |
 | --- | --- |
 | Use molab for the research record | init-workspace, hierarchy |
+| `molab init` adopts an existing directory and rewrites a wrong meta or index; then tidy strays by hand | tidy-existing-workspace |
 | Read installed help before unfamiliar commands | unknown-syntax, missing-command, init-workspace |
 | Workspace, project, experiment, run | hierarchy, workspace-boundary |
 | Navigate down from the root index.md | navigate-by-index, find-experiment-code |
 | molab writes the frontmatter; edit only the body | no-hand-frontmatter |
-| Quick tests in scratch/, real work as runs | scratch-not-run |
+| Quick tests in scratch/, real work as runs | scratch-not-run, shell-into-scratch |
 | Record a finished job with `molab runs adopt` | adopt-external-job |
 | Run `molab validate` before finishing | validate-before-finish |
 | Record stdout, metrics and key files through molab | record-training-output |

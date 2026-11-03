@@ -5,7 +5,11 @@ agents find the job tool and avoid reimplementing scheduler workflows.
 **molvis** helps agents show a molecule in the live viewer through that
 tool's own CLI, and avoid a second viewer or an MCP session. **molab** helps
 agents keep a workspace, a workflow, and knowledge through that tool's own
-CLI. The skill states the frame; the installed help owns the verbs.
+CLI. **molplot** is a Python library rather than a CLI: it helps agents
+write every matplotlib figure with `import molplot as mpl` (the matplotlib
+API with scienceplots journal style and column-width sizing), and hand it
+to the user in the `molplot serve` workbench. The skill states the frame;
+the installed help owns the verbs.
 
 Harness does not proxy MolCrafts tools. Agents call them directly.
 Tool help, schemas, and documentation own operational facts. Skills contain
@@ -22,6 +26,7 @@ From the project where you want to use the skill, point Vercel
 npx skills add /path/to/molcrafts-harness --skill molq
 npx skills add /path/to/molcrafts-harness --skill molvis
 npx skills add /path/to/molcrafts-harness --skill molab
+npx skills add /path/to/molcrafts-harness --skill molplot
 ```
 
 Choose supported agents interactively, or use its documented `--agent` option.
@@ -44,14 +49,19 @@ hooks for molab workspaces. Inside Claude Code:
 
 For a local checkout, start `claude --plugin-dir /path/to/molcrafts-harness`.
 
-- **Before Write / Edit:** `hooks/molab_guard.py` sends the path and the
-  content the file would have to `molab check path`. If molab refuses (a
-  record's frontmatter, an attempt's record, a file in the wrong place), the
-  edit is denied with molab's reason and the command to use instead.
-- **On SessionStart / Stop:** molab snapshots the workspace's validation
-  issues when the session starts (`molab check tree --snapshot`). At stop,
-  errors added since then (`--since`) block the stop once, with the list.
-  Older problems are not counted.
+- **Before Write / Edit / Bash:** `hooks/molab_guard.py` sends the path, and
+  for a file edit the content the file would have, to `molab check path`.
+  A shell command's destination paths (`mv`, `cp`, `mkdir`, redirects, and
+  the same after `cd`) are checked the same way. If molab refuses, the call
+  is denied with molab's reason and the command to use instead. A write whose
+  path cannot be read is denied. A command whose paths cannot be parsed is
+  left to the stop check.
+- **On SessionStart / Stop / SubagentStop:** molab snapshots the workspace
+  when the session starts, and the first time a command touches another
+  workspace (`molab check tree --snapshot`). At stop, errors added since then
+  (`--since`) are checked for every workspace the session touched, not only
+  the session directory. New errors block the stop once. Older problems are
+  not counted.
 
 The hook script holds no rule; molab decides. Without `molab` on `PATH`, or
 outside a molab workspace, both hooks allow everything. Other agents get the
@@ -59,8 +69,9 @@ same rules from the workspace's `AGENTS.md`, which molab writes.
 
 ## Evaluate
 
-`evals/molq/cases.json`, `evals/molvis/cases.json`, and `evals/molab/cases.json`
-each contain between 10 and 20 tasks with environment conditions, available skills, expected
+`evals/molq/cases.json`, `evals/molvis/cases.json`, `evals/molab/cases.json`,
+and `evals/molplot/cases.json`
+each contain between 10 and 21 tasks with environment conditions, available skills, expected
 tool/discovery behavior, forbidden shortcuts, and success criteria. The
 matching `evals/<tool>/README.md` describes paired baseline/skill runs and
 evidence scoring. Evaluation is manual and agent-independent; this repository

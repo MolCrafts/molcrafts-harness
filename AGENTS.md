@@ -11,8 +11,11 @@ Hooks are the one exception, and they were added after such a failure. Agents
 wrote a molab workspace by hand: files beside experiment records, hand-made
 records, finished jobs never recorded. A hook only forwards an event to the
 tool's own check command (`molab check`) and passes the tool's verdict back.
-It holds no rule. A missing tool means allow. A new rule goes into the tool,
-not into `hooks/`.
+It holds no rule. Shell destinations are forwarded the same way. A command
+whose paths cannot be parsed is left to the stop check, which covers every
+workspace the session touched. A write whose path cannot be read is denied.
+A missing tool means allow when the path can be read. A new rule goes into
+the tool, not into `hooks/`.
 
 Every behavior rule should map to an evaluation case. Evaluate decisions and
 observable evidence, not exact command strings. Preserve explicit user choices.

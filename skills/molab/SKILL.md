@@ -17,10 +17,13 @@ and its `index:` key lists the children; follow those paths down instead of
 searching. molab writes the frontmatter; edit only the body. Register a compute
 destination in molq first, then name it from molab.
 
+`molab init` adopts an existing directory, rewrites a wrong meta or index, and
+deletes the old file. Tidy strays by hand into `scratch/`.
+
 An experiment is the parameter definition; a run is one execution of it. Quick
-tests go in the experiment's disposable `scratch/`. A long job or anything you
-will cite becomes a run: run it through molab, or record a finished job with
-`molab runs adopt`. Before you finish, run `molab validate` and fix what you added.
+tests go in `scratch/`. A long job or anything you will cite becomes a run;
+record a finished one with `molab runs adopt`. Before you finish, run `molab
+validate` and fix what you added.
 
 ## Recording
 

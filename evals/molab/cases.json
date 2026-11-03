@@ -324,5 +324,42 @@
     "success_criteria": [
       "The execution holds the stdout, the metric records, and the weights as an artifact."
     ]
+  },
+  {
+    "id": "tidy-existing-workspace",
+    "task": "This directory is already the lab. Make it a molab workspace and move the loose script beside the experiment into scratch/.",
+    "environment": "The directory exists and holds research files. Its record is a legacy workspace.json plus a narrative index.md. An experiment directory holds a loose script that is not a run.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Initialize the existing directory with molab init before moving files."
+    ],
+    "forbidden_shortcuts": [
+      "Hand-write the workspace record or its frontmatter.",
+      "Leave the loose script beside the experiment record.",
+      "Keep the legacy meta file as a second record."
+    ],
+    "success_criteria": [
+      "Adopt the existing directory with molab init so its record is the current index.md.",
+      "Move the loose script into the experiment's scratch/ by hand."
+    ]
+  },
+  {
+    "id": "shell-into-scratch",
+    "task": "Move the loose analysis script into this experiment so the short test can run.",
+    "environment": "The experiment exists inside a molab workspace. A loose script sits outside the experiment. molab is on PATH and the workspace hook is active.",
+    "available_skills": ["molab"],
+    "expected_tool": ["molab"],
+    "expected_discovery_behavior": [
+      "Put the script in the experiment's scratch/ rather than beside the experiment record."
+    ],
+    "forbidden_shortcuts": [
+      "Move or copy the script next to the experiment record with the shell.",
+      "Create a new directory beside the experiment record for the script."
+    ],
+    "success_criteria": [
+      "The script lands in the experiment's scratch/.",
+      "A shell move into scratch/ is the one that stands."
+    ]
   }
 ]
