@@ -1,0 +1,170 @@
+[
+  {
+    "id": "line-png",
+    "task": "Plot the density of these three NPT runs against time from their LAMMPS logs.",
+    "environment": "molplot is installed; three LAMMPS log files with thermo output are available.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Select molplot for the data plot.",
+      "Apply a molplot preset before drawing."
+    ],
+    "forbidden_shortcuts": [
+      "Write an SVG or PDF copy of the figure."
+    ],
+    "success_criteria": [
+      "Deliver the figure as a PNG file only.",
+      "Inspect the PNG before describing it."
+    ]
+  },
+  {
+    "id": "paper-figure-asks-vector",
+    "task": "Make a publication-quality bar chart of the free fractional volume of six polymer models.",
+    "environment": "molplot is installed; a table of six FFV values with standard deviations is provided.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Use the molplot preset and palette for the bars."
+    ],
+    "forbidden_shortcuts": [
+      "Export SVG or PDF on the grounds that papers want vector graphics."
+    ],
+    "success_criteria": [
+      "Save a 300 dpi PNG and no other figure format.",
+      "Draw the error bars on the rendered axes when the spec lacks them."
+    ]
+  },
+  {
+    "id": "error-bars-gap",
+    "task": "Show mean pore diameters with error bars for dry and hydrated states.",
+    "environment": "molplot is installed; its bar spec has no error-bar option.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Check the installed bar_spec signature for an error option before drawing."
+    ],
+    "forbidden_shortcuts": [
+      "Drop the preset and build the whole chart in plain matplotlib defaults."
+    ],
+    "success_criteria": [
+      "Add error bars on the same axes after render, keeping the preset.",
+      "Report the missing error-bar spec as a molplot gap."
+    ]
+  },
+  {
+    "id": "existing-svg-script",
+    "task": "Update this plotting script so it also includes the hydrated data and rerun it.",
+    "environment": "molplot is installed; the existing script saves each figure as PNG and SVG.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Notice the script writes SVG files."
+    ],
+    "forbidden_shortcuts": [
+      "Keep the SVG export because the original script had it."
+    ],
+    "success_criteria": [
+      "Remove the SVG export so only PNG files are written.",
+      "Remove the stale SVG files the old script produced, or say they remain."
+    ]
+  },
+  {
+    "id": "molecule-picture",
+    "task": "Show me the equilibrated simulation box with water and polymer.",
+    "environment": "molplot and molvis are installed; a LAMMPS data file is available.",
+    "available_skills": ["molplot", "molvis"],
+    "expected_tool": ["molvis"],
+    "expected_discovery_behavior": [
+      "Recognize that a molecular picture belongs to molvis, not molplot."
+    ],
+    "forbidden_shortcuts": [
+      "Scatter atom coordinates with matplotlib to imitate a structure view."
+    ],
+    "success_criteria": [
+      "Use molvis for the structure view."
+    ]
+  },
+  {
+    "id": "palette-consistency",
+    "task": "Plot six models in one chart and keep each model the same colour in every later figure.",
+    "environment": "molplot is installed; six series are provided.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Read colours from molplot.palette for the chosen preset."
+    ],
+    "forbidden_shortcuts": [
+      "Hard-code an ad-hoc colour list."
+    ],
+    "success_criteria": [
+      "Map each model to one palette colour reused across figures.",
+      "Save PNG only."
+    ]
+  },
+  {
+    "id": "distribution-curves",
+    "task": "Compare the pore size distributions of the dry and hydrated cells for each model.",
+    "environment": "molplot is installed; Zeo++ histogram files per frame are available.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Use line specs rendered onto axes for the distribution curves."
+    ],
+    "forbidden_shortcuts": [
+      "Write a PDF of the panel grid."
+    ],
+    "success_criteria": [
+      "Deliver one PNG per figure.",
+      "State the normalization of the plotted distribution."
+    ]
+  },
+  {
+    "id": "overlap-check",
+    "task": "Make a three-panel density figure and send it to me.",
+    "environment": "molplot is installed; the first render has a legend covering data and overlapping axis labels.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Look at the rendered PNG before handing it over."
+    ],
+    "forbidden_shortcuts": [
+      "Describe the figure without viewing the image."
+    ],
+    "success_criteria": [
+      "Fix the overlapping labels and the legend position before delivery."
+    ]
+  },
+  {
+    "id": "unknown-argument",
+    "task": "Plot this series on a log y axis with a fixed x range.",
+    "environment": "molplot is installed; the agent has not used line_spec before.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Read the installed line_spec docstring or source for the axis arguments."
+    ],
+    "forbidden_shortcuts": [
+      "Guess argument names that the installed function does not take."
+    ],
+    "success_criteria": [
+      "Use the installed y_log and x_domain arguments.",
+      "Save PNG only."
+    ]
+  },
+  {
+    "id": "web-parity-export",
+    "task": "Export this chart exactly as the web dashboard renders it.",
+    "environment": "molplot is installed with the optional vl-convert dependency.",
+    "available_skills": ["molplot"],
+    "expected_tool": ["molplot"],
+    "expected_discovery_behavior": [
+      "Find molplot.to_png for web-parity export."
+    ],
+    "forbidden_shortcuts": [
+      "Use molplot.to_svg for the export."
+    ],
+    "success_criteria": [
+      "Export with molplot.to_png to a PNG file."
+    ]
+  }
+]
