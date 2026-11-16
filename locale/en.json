@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "MolCrafts Harness",
+    "description": "Checks molab workspace writes before they run, including on Claude Code and Codex. Scientific work goes through the MolCrafts tool that owns it; the agent's other tools stay available."
+  }
+}

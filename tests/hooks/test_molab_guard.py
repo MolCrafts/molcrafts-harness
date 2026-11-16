@@ -2,6 +2,7 @@
 
 import json
 import os
+import shlex
 from pathlib import Path
 import stat
 import subprocess
@@ -59,6 +60,60 @@ class GuardTests(unittest.TestCase):
                 found.append(args[2])
         return found
 
+    def test_codex_patch_checks_every_file_it_names(self):
+        patch = "\n".join([
+            "*** Begin Patch",
+            "*** Add File: notes/new.md",
+            "+# New",
+            "*** Update File: wf/workflow.py",
+            "@@",
+            "-a",
+            "+b",
+            "*** End Patch",
+        ])
+        event = {"tool_name": "apply_patch", "cwd": str(self.dir), "tool_input": {"command": patch}}
+        self.assertIsNone(self.run_guard("pre", event))
+        calls = [call for call in self.calls() if call["args"][1:2] == ["path"]]
+        self.assertEqual([call["args"][2] for call in calls], [str(self.dir / "notes/new.md"), str(self.dir / "wf/workflow.py")])
+        self.assertEqual([call["args"][4] for call in calls], ["write", "edit"])
+        self.assertEqual(calls[0]["content"], "# New\n")
+
+    def test_codex_update_sends_the_content_after_the_patch(self):
+        (self.dir / "index.md").write_text("---\nname: A\n---\n\nbody\n")
+        patch = "*** Begin Patch\n*** Update File: index.md\n@@\n-body\n+body, edited\n*** End Patch"
+        self.assertIsNone(self.run_guard("pre", {"tool_name": "apply_patch", "cwd": str(self.dir), "tool_input": {"command": patch}}))
+        call = [call for call in self.calls() if call["args"][1:2] == ["path"]][0]
+        self.assertEqual(call["args"][4], "edit")
+        self.assertEqual(call["content"], "---\nname: A\n---\n\nbody, edited\n")
+
+    def test_codex_patch_refusal_is_a_deny(self):
+        self.verdict.write_text(json.dumps({"allowed": False, "reason": "records are molab's"}))
+        patch = "*** Begin Patch\n*** Update File: index.md\n@@\n-a\n+b\n*** End Patch"
+        answer = self.run_guard("pre", {"tool_name": "apply_patch", "cwd": str(self.dir), "tool_input": {"command": patch}})
+        self.assertEqual(answer["hookSpecificOutput"]["permissionDecision"], "deny")
+        self.assertIn("records are molab's", answer["hookSpecificOutput"]["permissionDecisionReason"])
+
+    def test_a_patch_without_a_body_is_denied(self):
+        answer = self.run_guard("pre", {"tool_name": "apply_patch", "cwd": str(self.dir), "tool_input": {"command": "echo"}})
+        self.assertEqual(answer["hookSpecificOutput"]["permissionDecision"], "deny")
+
+    def test_an_argv_shell_command_is_forwarded_as_one_string(self):
+        target = self.dir / "out.txt"
+        argv = ["mv", "a.txt", str(target)]
+        event = {"tool_name": "shell", "cwd": str(self.dir), "tool_input": {"command": argv}}
+        self.assertIsNone(self.run_guard("pre", event))
+        sent = self.calls()[-1]["args"]
+        self.assertEqual(sent[1], "command")
+        self.assertEqual(sent[sent.index("--cwd") + 1], str(self.dir))
+        self.assertEqual(sent[sent.index("--command") + 1], shlex.join(argv))
+        self.assertIn("--json", sent)
+        self.assertEqual(self.paths(), [])
+
+    def test_trace_records_the_raw_event(self):
+        trace = self.dir / "trace.jsonl"
+        self.run_guard("pre", {"tool_name": "Read", "tool_input": {}}, env={**self.env, "MOLAB_GUARD_TRACE": str(trace)})
+        self.assertEqual(json.loads(trace.read_text())["event"]["tool_name"], "Read")
+
     def test_write_sends_the_full_content_and_allows(self):
         event = {"tool_name": "Write", "tool_input": {"file_path": "/ws/a.md", "content": "hi"}}
         self.assertIsNone(self.run_guard("pre", event))
@@ -115,7 +170,11 @@ class GuardTests(unittest.TestCase):
         out = self.run_guard("pre", event)["hookSpecificOutput"]
         self.assertEqual(out["permissionDecision"], "deny")
         self.assertIn("molab runs adopt", out["permissionDecisionReason"])
-        self.assertIn("/ws/projects/p/experiments/e/plot.py", self.paths())
+        sent = [call["args"] for call in self.calls() if call["args"][1:2] == ["command"]][0]
+        self.assertEqual(sent[sent.index("--cwd") + 1], "/ws")
+        self.assertEqual(
+            sent[sent.index("--command") + 1], "mv /tmp/a.py projects/p/experiments/e/plot.py"
+        )
 
     def test_shell_move_into_scratch_is_allowed(self):
         self.verdict.write_text(json.dumps({"allowed": True, "in_workspace": True, "root": "/ws"}))
@@ -124,34 +183,30 @@ class GuardTests(unittest.TestCase):
             "tool_input": {"command": "mv /tmp/a.py projects/p/experiments/e/scratch/plot.py"},
         }
         self.assertIsNone(self.run_guard("pre", event))
-        self.assertIn("/ws/projects/p/experiments/e/scratch/plot.py", self.paths())
+        sent = [call["args"] for call in self.calls() if call["args"][1:2] == ["command"]][0]
+        self.assertIn("scratch/plot.py", sent[sent.index("--command") + 1])
 
-    def test_cd_then_move_uses_the_new_directory(self):
-        self.verdict.write_text(json.dumps({"allowed": True, "in_workspace": True, "root": "/ws"}))
+    def test_a_shell_command_is_forwarded_whole(self):
+        command = "cd projects/p/experiments/e && mv /tmp/a.py plot.py"
         event = {
             "tool_name": "Bash", "cwd": "/ws", "session_id": "s1",
-            "tool_input": {"command": "cd projects/p/experiments/e && mv /tmp/a.py plot.py"},
-        }
-        self.run_guard("pre", event)
-        self.assertIn("/ws/projects/p/experiments/e/plot.py", self.paths())
-
-    def test_redirect_to_a_file_is_checked_and_a_dup_is_not(self):
-        self.verdict.write_text(json.dumps({"allowed": True}))
-        event = {
-            "tool_name": "Bash", "cwd": "/ws", "session_id": "s1",
-            "tool_input": {"command": "echo hi > projects/p/experiments/e/out.py 2>&1"},
-        }
-        self.run_guard("pre", event)
-        self.assertIn("/ws/projects/p/experiments/e/out.py", self.paths())
-        self.assertNotIn("/ws/1", self.paths())
-
-    def test_an_unparsed_command_is_allowed(self):
-        event = {
-            "tool_name": "Bash", "cwd": "/ws", "session_id": "s1",
-            "tool_input": {"command": "mv 'unterminated"},
+            "tool_input": {"command": command},
         }
         self.assertIsNone(self.run_guard("pre", event))
-        self.assertNotIn("/ws/unterminated", self.paths())
+        sent = self.calls()[0]["args"]
+        self.assertEqual(sent[1:3], ["command", "--cwd"])
+        self.assertEqual(sent[sent.index("--command") + 1], command)
+        self.assertEqual(self.paths(), [])
+
+    def test_an_unparsed_command_is_still_forwarded(self):
+        command = "mv 'unterminated"
+        event = {
+            "tool_name": "Bash", "cwd": "/ws", "session_id": "s1",
+            "tool_input": {"command": command},
+        }
+        self.assertIsNone(self.run_guard("pre", event))
+        sent = self.calls()[0]["args"]
+        self.assertEqual(sent[sent.index("--command") + 1], command)
 
     def test_a_workspace_is_snapshotted_once(self):
         self.verdict.write_text(json.dumps({"allowed": True, "in_workspace": True, "root": "/ws"}))
@@ -164,8 +219,8 @@ class GuardTests(unittest.TestCase):
         snaps = [call for call in self.calls() if "--snapshot" in call["args"]]
         self.assertEqual(len(snaps), 1)
         self.assertIn("/ws", snaps[0]["args"])
-        self.assertIn("/ws/scratch/a", self.paths())
-        self.assertIn("/ws/scratch/b", self.paths())
+        commands = [call for call in self.calls() if call["args"][1:2] == ["command"]]
+        self.assertEqual(len(commands), 2)
 
     def test_start_records_the_root_so_a_later_command_does_not_snapshot_again(self):
         self.verdict.write_text(json.dumps({"allowed": True, "in_workspace": True, "root": "/ws"}))
@@ -217,63 +272,17 @@ class GuardTests(unittest.TestCase):
         }, env=env))
         self.assertIsNone(self.run_guard("stop", {"cwd": "/ws"}, env=env))
 
-    def test_git_mv_in_another_directory_uses_that_directory(self):
+    def test_a_known_workspace_is_not_snapshotted_again(self):
         self.verdict.write_text(json.dumps({"allowed": True, "in_workspace": True, "root": "/ws"}))
         event = {
             "tool_name": "Bash", "cwd": "/ws", "session_id": "s1",
-            "tool_input": {"command": "git -C projects/p/experiments/e mv a.py plot.py"},
+            "tool_input": {"command": "mkdir scratch/a"},
         }
         self.run_guard("pre", event)
-        self.assertIn("/ws/projects/p/experiments/e/plot.py", self.paths())
-
-    def shell(self, command, session="s1"):
-        self.verdict.write_text(json.dumps({"allowed": True, "in_workspace": True, "root": "/ws"}))
-        self.run_guard("pre", {
-            "tool_name": "Bash", "cwd": "/ws", "session_id": session, "tool_input": {"command": command}})
-        return self.paths()
-
-    def test_a_redirect_without_spaces_is_checked(self):
-        self.assertIn("/ws/projects/p/index.md", self.shell("echo hi>projects/p/index.md"))
-
-    def test_touch_t_is_a_time_stamp_not_a_destination(self):
-        found = self.shell("touch -t 202601011200 projects/p/index.md")
-        self.assertIn("/ws/projects/p/index.md", found)
-        self.assertNotIn("/ws/202601011200", found)
-
-    def test_sed_in_place_edits_are_checked(self):
-        self.assertIn("/ws/projects/p/index.md", self.shell("sed -i 's/a/b/' projects/p/index.md"))
-        self.assertIn("/ws/b.md", self.shell("sed -i.bak -e 's/a/b/' -e 's/c/d/' b.md"))
-        self.assertNotIn("/ws/c.md", self.shell("sed 's/a/b/' c.md"))
-        self.assertIn("/ws/d.md", self.shell("perl -pi -e 's/a/b/' d.md"))
-
-    def test_wrappers_and_assignments_are_seen_through(self):
-        self.assertIn("/ws/x/a.py", self.shell("FOO=1 env -u BAR sudo -u me cp /tmp/a.py x/a.py"))
-
-    def test_a_subshell_cd_does_not_leak(self):
-        found = self.shell("(cd projects/p && touch a.txt) && touch b.txt")
-        self.assertIn("/ws/projects/p/a.txt", found)
-        self.assertIn("/ws/b.txt", found)
-
-    def test_variables_are_expanded_or_the_path_is_left_to_stop(self):
-        found = self.shell("S=/tmp/x; mkdir -p $S/deck && touch ${HOME}/a && cp a $UNSET_GUARD_VAR/b")
-        self.assertIn("/tmp/x/deck", found)
-        self.assertIn(os.path.join(os.environ["HOME"], "a"), found)
-        self.assertFalse(any("$" in path for path in found))
-        self.assertIn("/ws/d/e.txt", self.shell("D=d; cd $D && touch e.txt"))
-
-    def test_a_heredoc_body_is_data_not_commands(self):
-        found = self.shell("cat > /tmp/x.js <<'EOF'\n// a -> deck/index.html\necho hi > body.txt\nEOF\ntouch after.txt")
-        self.assertIn("/tmp/x.js", found)
-        self.assertIn("/ws/after.txt", found)
-        self.assertNotIn("/ws/deck/index.html", found)
-        self.assertNotIn("/ws/body.txt", found)
-        self.assertIn("/ws/t.txt", self.shell("cat <<-END > t.txt\n\tline > no.txt\n\tEND"))
-
-    def test_a_known_workspace_cwd_is_not_checked_again(self):
-        self.shell("mkdir scratch/a")
         self.log.write_text("")
-        self.shell("mkdir scratch/b")
-        self.assertNotIn("/ws", self.paths())
+        event["tool_input"] = {"command": "mkdir scratch/b"}
+        self.run_guard("pre", event)
+        self.assertEqual([call["args"][1] for call in self.calls()], ["command"])
 
     def test_a_timeout_is_reported_and_the_change_goes_ahead(self):
         slow = self.dir / "slowbin" / "molab"

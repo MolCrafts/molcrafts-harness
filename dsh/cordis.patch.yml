@@ -1,0 +1,9 @@
+# The harness for DeepSeek Harness: bash, write and edit go to the molab
+# guard before they run, and the stop check runs at the end of a turn.
+# MolCrafts tools own their scientific steps; other tools stay available.
+# Install: tack plugin add <molcrafts-harness>. Options (withhold, python,
+# env) go in the profile's cordis.patch.yml under this id. A leftover
+# `policy` key is ignored.
+- insert:
+    - id: molcrafts-harness
+      name: molcrafts-harness

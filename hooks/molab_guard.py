@@ -1,9 +1,16 @@
-"""Forward Claude Code and Grok writes, shell moves, and session stop to molab.
+"""Forward agent writes, shell commands, and session stop to molab.
+
+The same events arrive from Claude Code, Grok, Codex (its hooks speak the
+same protocol; a file edit is an ``apply_patch`` patch), and DeepSeek Harness
+(the harness's DSH plugin in ``dsh/`` translates its tool calls into these
+events).
 
 This file holds no layout rule. It turns a hook event into `molab check`
-calls and turns molab's verdict back into the hook's answer. Without molab
-installed, a path it can see is allowed. A write whose path cannot be read
-is denied, because there is nothing to forward.
+calls and turns molab's verdict back into the hook's answer. A file write
+goes to `molab check path`. A shell command goes whole to `molab check
+command`; molab reads the destinations. Without molab installed, a path it
+can see is allowed. A write whose path cannot be read is denied, because
+there is nothing to forward.
 
 When molab is installed but gives no verdict (a timeout, a crash, output that
 is not JSON) the change still goes ahead, since a broken checker must not
@@ -34,18 +41,18 @@ _UNCHECKED = {
     "stop": "The workspace was not checked before stopping; run `molab validate --new-only`.",
 }
 
-WRITE_TOOLS = {
-    "Write",
-    "write",
-    "Edit",
-    "MultiEdit",
-    "NotebookEdit",
-    "search_replace",
-    "hashline_edit",
-    "StrReplace",
-    "EditNotebook",
-}
-SHELL_TOOLS = {"Bash", "run_terminal_command", "Shell"}
+def _tool_inventory():
+    """Host tool names. ``hooks/tools.json`` is the one list; this file only reads it."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools.json")
+    with open(path, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+_INVENTORY = _tool_inventory()
+WRITE_TOOLS = set(_INVENTORY["write"])
+SHELL_TOOLS = set(_INVENTORY["shell"])
+#: Codex edits files with one patch naming every file it adds, updates, deletes or moves.
+PATCH_TOOLS = set(_INVENTORY["patch"])
 PATH_KEYS = (
     "file_path",
     "filePath",
@@ -57,38 +64,6 @@ PATH_KEYS = (
 )
 CONTENT_KEYS = ("content", "contents")
 EDIT_TOOLS = {"Edit", "MultiEdit", "search_replace", "hashline_edit", "StrReplace"}
-# Options that take the next token. -t / --target-directory is the destination.
-_ARG_FLAGS = {
-    "mv": {"-t", "--target-directory", "-S", "--suffix"},
-    "cp": {"-t", "--target-directory", "-S", "--suffix"},
-    "ln": {"-t", "--target-directory", "-S", "--suffix"},
-    "install": {
-        "-t",
-        "--target-directory",
-        "-m",
-        "--mode",
-        "-o",
-        "--owner",
-        "-g",
-        "--group",
-        "-S",
-        "--suffix",
-    },
-    "mkdir": {"-m", "--mode", "-Z", "--context"},
-    "touch": {"-d", "--date", "-r", "--reference", "-t"},
-    "tee": set(),
-    "rsync": {"-e", "--rsh"},
-}
-_TARGET_FLAGS = {"-t", "--target-directory"}
-# Only these read -t as the destination; touch -t is a time stamp.
-_TARGET_COMMANDS = {"mv", "cp", "ln", "install"}
-_LAST_DEST = {"mv", "cp", "ln", "install", "rsync"}
-# Words that run the command after them.
-_WRAPPERS = {"env", "command", "nohup", "time", "exec", "sudo", "builtin"}
-_WRAPPER_ARGS = {"sudo": {"-u", "-g", "-C", "-h", "-p"}, "env": {"-u", "-C", "-S"}}
-_ALL_DEST = {"mkdir", "touch", "tee"}
-_NOT_A_FILE = {"/dev/null", "/dev/stdout", "/dev/stderr", "/dev/fd/1", "/dev/fd/2"}
-_REDIRECT = re.compile(r"\d*&>>|\d*&>|\d*>>|\d*>\||\d*>")
 
 
 def molab(*args):
@@ -180,11 +155,6 @@ def _save_roots(session, roots):
     os.replace(tmp, path)
 
 
-def _under(path, roots):
-    real = os.path.realpath(path)
-    return any(real == root or real.startswith(root.rstrip("/") + "/") for root in roots)
-
-
 def _note(session, verdict):
     """Snapshot a workspace the first time this session sees it."""
     if not verdict or not verdict.get("in_workspace"):
@@ -199,6 +169,103 @@ def _note(session, verdict):
         return
     roots.append(root)
     _save_roots(session, roots)
+
+
+_PATCH_FILE = re.compile(r"^\*\*\* (Add|Update|Delete) File: (.+)$")
+_PATCH_MOVE = re.compile(r"^\*\*\* Move to: (.+)$")
+
+
+def _patch_text(data):
+    """The patch body of an apply_patch call, wherever the agent put it."""
+    for value in data.values():
+        if isinstance(value, str) and "*** Begin Patch" in value:
+            return value
+    return None
+
+
+def _apply_hunks(text, hunk_lines):
+    """*text* after an Update File section's hunks, or None when a hunk does not match exactly once."""
+    lines = text.split("\n")
+    cursor = 0
+    hunks, current = [], None
+    for line in hunk_lines:
+        if line.startswith("@@"):
+            current = []
+            hunks.append(current)
+        elif line == "*** End of File":
+            continue
+        else:
+            if current is None:
+                current = []
+                hunks.append(current)
+            current.append(line)
+    for hunk in hunks:
+        old = [line[1:] for line in hunk if line[:1] in (" ", "-")]
+        new = [line[1:] for line in hunk if line[:1] in (" ", "+")]
+        if any(line[:1] not in (" ", "-", "+") for line in hunk if line):
+            return None
+        if not old:
+            lines[len(lines):] = new
+            continue
+        found = [i for i in range(cursor, len(lines) - len(old) + 1) if lines[i : i + len(old)] == old]
+        if len(found) != 1:
+            return None
+        start = found[0]
+        lines[start : start + len(old)] = new
+        cursor = start + len(new)
+    return "\n".join(lines)
+
+
+def patch_changes(patch, base=None):
+    """(path, op, content) for every file a patch touches.
+
+    An added file's content is its ``+`` lines. An updated file's content is
+    its current text with the hunks applied, when *base* (the directory the
+    patch's paths are relative to) is given and every hunk matches exactly
+    once; otherwise it is None and molab judges the path alone. A deleted
+    file, and a move's destination, carry no content.
+    """
+    changes = []
+    current = None
+    for line in patch.splitlines():
+        found = _PATCH_FILE.match(line)
+        moved = _PATCH_MOVE.match(line)
+        if found:
+            kind, path = found.group(1), found.group(2).strip()
+            current = {"path": path, "kind": kind, "lines": []}
+            changes.append(current)
+        elif moved:
+            current = {"path": moved.group(1).strip(), "kind": "Move", "lines": None}
+            changes.append(current)
+        elif line.startswith("*** ") and line != "*** End of File":
+            current = None
+        elif current is not None and current["lines"] is not None:
+            current["lines"].append(line)
+    result = []
+    for item in changes:
+        content = None
+        if item["kind"] == "Add":
+            content = "\n".join(line[1:] for line in item["lines"] if line.startswith("+")) + "\n"
+        elif item["kind"] == "Update" and base is not None:
+            try:
+                with open(_absolute(item["path"], base), encoding="utf-8") as handle:
+                    content = _apply_hunks(handle.read(), item["lines"])
+            except OSError:
+                content = None
+        result.append((item["path"], "write" if item["kind"] in ("Add", "Move") else "edit", content))
+    return result
+
+
+def _trace(mode, event):
+    """Append the raw event to $MOLAB_GUARD_TRACE, when set (debugging a new agent's events)."""
+    target = os.environ.get("MOLAB_GUARD_TRACE")
+    if not target:
+        return
+    try:
+        with open(target, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"mode": mode, "event": event}) + "\n")
+    except OSError:
+        pass
 
 
 def _file_path(data):
@@ -250,424 +317,6 @@ def _command_cwd(event, data):
     raw = data.get("cwd") if isinstance(data.get("cwd"), str) else None
     raw = raw or _event_value(event, "cwd", "cwd") or os.getcwd()
     return _absolute(str(raw), _event_value(event, "cwd", "cwd") or os.getcwd())
-
-
-_HEREDOC = re.compile(r"<<(-?)\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\2")
-
-
-def _skip_heredocs(command, i, pending):
-    """Index after the bodies of *pending* here-documents, which start at *i* (after a newline)."""
-    n = len(command)
-    for strip_tabs, word in pending:
-        while i < n:
-            end = command.find("\n", i)
-            end = n if end < 0 else end
-            line = command[i:end]
-            i = end + 1
-            if (line.lstrip("\t") if strip_tabs else line) == word:
-                break
-    return i
-
-
-def _split_segments(command):
-    parts = []
-    buf = []
-    i = 0
-    n = len(command)
-    quote = None
-    pending = []  # here-documents whose bodies start after the next newline
-    while i < n:
-        char = command[i]
-        if not quote and command.startswith("<<", i) and not command.startswith("<<<", i):
-            heredoc = _HEREDOC.match(command, i)
-            if heredoc:
-                pending.append((heredoc.group(1) == "-", heredoc.group(3)))
-                buf.append(command[i : heredoc.end()])
-                i = heredoc.end()
-                continue
-        if not quote and char == "\n" and pending:
-            # the body is data for the command, not commands: skip it
-            parts.append("".join(buf))
-            buf = []
-            i = _skip_heredocs(command, i + 1, pending)
-            pending = []
-            continue
-        if quote:
-            buf.append(char)
-            if char == "\\" and quote == '"' and i + 1 < n:
-                buf.append(command[i + 1])
-                i += 2
-                continue
-            if char == quote:
-                quote = None
-            i += 1
-            continue
-        if char in "'\"":
-            quote = char
-            buf.append(char)
-            i += 1
-            continue
-        if char == "\\" and i + 1 < n:
-            buf.append(char)
-            buf.append(command[i + 1])
-            i += 2
-            continue
-        if command.startswith("&&", i) or command.startswith("||", i):
-            parts.append("".join(buf))
-            buf = []
-            i += 2
-            continue
-        if char in ";\n|&":
-            parts.append("".join(buf))
-            buf = []
-            i += 1
-            continue
-        buf.append(char)
-        i += 1
-    if quote:
-        return None
-    parts.append("".join(buf))
-    return parts
-
-
-def _read_word(text, i):
-    n = len(text)
-    while i < n and text[i].isspace():
-        i += 1
-    if i >= n:
-        return "", i
-    buf = []
-    quote = None
-    while i < n:
-        char = text[i]
-        if quote:
-            if char == quote:
-                quote = None
-                i += 1
-                continue
-            if char == "\\" and quote == '"' and i + 1 < n:
-                buf.append(text[i + 1])
-                i += 2
-                continue
-            buf.append(char)
-            i += 1
-            continue
-        if char.isspace() or char in ";&|<>()":
-            break
-        if char in "'\"":
-            quote = char
-            i += 1
-            continue
-        if char == "\\" and i + 1 < n:
-            buf.append(text[i + 1])
-            i += 2
-            continue
-        buf.append(char)
-        i += 1
-    if quote:
-        return None
-    return "".join(buf), i
-
-
-def _peel_redirects(segment):
-    cleaned = []
-    targets = []
-    i = 0
-    n = len(segment)
-    quote = None
-    while i < n:
-        char = segment[i]
-        if quote:
-            cleaned.append(char)
-            if char == "\\" and quote == '"' and i + 1 < n:
-                cleaned.append(segment[i + 1])
-                i += 2
-                continue
-            if char == quote:
-                quote = None
-            i += 1
-            continue
-        if char in "'\"":
-            quote = char
-            cleaned.append(char)
-            i += 1
-            continue
-        if char == "\\" and i + 1 < n:
-            cleaned.append(char)
-            cleaned.append(segment[i + 1])
-            i += 2
-            continue
-        matched = _REDIRECT.match(segment, i)
-        boundary = i == 0 or segment[i - 1].isspace() or segment[i - 1] in ";&|(){}"
-        # `echo hi>f` redirects too; only digits inside a word (`a2>f`) are no fd.
-        if matched and (boundary or not char.isdigit()):
-            j = matched.end()
-            if j < n and segment[j] == "&":
-                i = j + 1
-                while i < n and not segment[i].isspace():
-                    i += 1
-                continue
-            word = _read_word(segment, j)
-            if word is None:
-                return None
-            target, i = word
-            if target and target not in _NOT_A_FILE:
-                targets.append(target)
-            cleaned.append(" ")
-            continue
-        cleaned.append(char)
-        i += 1
-    if quote:
-        return None
-    return "".join(cleaned), targets
-
-
-def _split_args(args, takes_arg, target_flags=frozenset()):
-    positional = []
-    targeted = []
-    i = 0
-    while i < len(args):
-        arg = args[i]
-        if arg == "--":
-            positional.extend(args[i + 1 :])
-            break
-        if arg.startswith("--"):
-            name, eq, value = arg.partition("=")
-            if name in takes_arg:
-                got = value if eq else (args[i + 1] if not eq and i + 1 < len(args) else None)
-                if name in target_flags and got:
-                    targeted.append(got)
-                i += 1 if eq or got is None else 2
-                continue
-            i += 1
-            continue
-        if arg.startswith("-") and arg != "-":
-            letters = arg[1:]
-            consume = False
-            for index, letter in enumerate(letters):
-                flag = "-" + letter
-                if flag not in takes_arg:
-                    continue
-                rest = letters[index + 1 :]
-                if flag in target_flags:
-                    if rest:
-                        targeted.append(rest)
-                    elif i + 1 < len(args):
-                        targeted.append(args[i + 1])
-                        consume = True
-                elif not rest:
-                    consume = True
-                break
-            i += 2 if consume else 1
-            continue
-        positional.append(arg)
-        i += 1
-    return positional, targeted
-
-
-def _inplace_files(args, script_letters, arg_letters, long_script, long_arg):
-    """Files a ``sed -i`` / ``perl -i`` edits in place; [] without ``-i``.
-
-    Without an ``-e``/``-f`` style script the first operand is the script.
-    """
-    files = []
-    in_place = False
-    script_given = False
-    i = 0
-    while i < len(args):
-        arg = args[i]
-        if arg == "--":
-            files.extend(args[i + 1 :])
-            break
-        if arg.startswith("--"):
-            name, eq, _value = arg.partition("=")
-            if name == "--in-place":
-                in_place = True
-            elif name in long_script:
-                script_given = True
-                i += 0 if eq else 1
-            elif name in long_arg and not eq:
-                i += 1
-        elif arg.startswith("-") and arg != "-":
-            for index, letter in enumerate(arg[1:]):
-                last = index == len(arg) - 2
-                if letter == "i":  # the rest is a backup suffix
-                    in_place = True
-                    break
-                if letter in script_letters:
-                    script_given = True
-                    i += 1 if last else 0
-                    break
-                if letter in arg_letters:
-                    i += 1 if last else 0
-                    break
-        else:
-            files.append(arg)
-        i += 1
-    if not in_place:
-        return []
-    return files if script_given else files[1:]
-
-
-_VAR = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")
-
-
-def _expand(path, variables):
-    """*path* with ``$NAME`` / ``${NAME}`` filled in, or None when something stays unknown.
-
-    Names come from assignments earlier in the same command, then the hook's
-    environment. A path still holding ``$`` or a backtick cannot be checked
-    before the command runs; the stop check sees what it made.
-    """
-
-    def fill(match):
-        name = match.group(1) or match.group(2)
-        value = variables.get(name, os.environ.get(name))
-        return match.group(0) if value is None else value
-
-    expanded = _VAR.sub(fill, path)
-    return None if "$" in expanded or "`" in expanded else expanded
-
-
-def _unwrap(argv):
-    """*argv* without leading ``VAR=value`` words and wrappers (``env``, ``sudo``, ``nohup`` …)."""
-    argv = list(argv)
-    while argv:
-        word = argv[0]
-        if "=" in word and not word.startswith(("-", "=")) and word.split("=", 1)[0].isidentifier():
-            argv.pop(0)
-            continue
-        base = os.path.basename(word)
-        if base not in _WRAPPERS:
-            break
-        argv.pop(0)
-        takes = _WRAPPER_ARGS.get(base, set())
-        while argv and argv[0].startswith("-") and argv[0] != "-":
-            flag = argv.pop(0)
-            if flag in takes and argv:
-                argv.pop(0)
-    return argv
-
-
-def _command_dests(argv):
-    argv = _unwrap(argv)
-    if not argv:
-        return []
-    base = os.path.basename(argv[0])
-    args = argv[1:]
-    if base == "sed":
-        return _inplace_files(args, "ef", "l", {"--expression", "--file"}, {"--line-length"})
-    if base == "perl":
-        return _inplace_files(args, "eE", "", set(), set())
-    if base not in _ARG_FLAGS:
-        return []
-    targets = _TARGET_FLAGS if base in _TARGET_COMMANDS else frozenset()
-    positional, targeted = _split_args(args, _ARG_FLAGS[base], targets)
-    if targeted:
-        return targeted
-    if base in _ALL_DEST:
-        return positional
-    if base in _LAST_DEST and len(positional) >= 2:
-        return [positional[-1]]
-    return []
-
-
-def _next_cwd(argv, cwd):
-    positional, _targeted = _split_args(argv[1:], set())
-    chosen = [item for item in positional if item != "-"]
-    if len(chosen) != 1:
-        return cwd
-    return _absolute(chosen[0], cwd)
-
-
-def destinations(command, cwd):
-    """Destination paths of a shell command, or None when the command cannot be parsed.
-
-    Only paths that receive a file are returned. ``cd`` changes the base for
-    the following segment. A command with no such path returns an empty list.
-    """
-    segments = _split_segments(command)
-    if segments is None:
-        return None
-    found = []
-    here = cwd
-    outer = []  # cwd to restore when a `( … )` subshell closes
-    variables = {}  # NAME=value set earlier in this command
-    for segment in segments:
-        peeled = _peel_redirects(segment)
-        if peeled is None:
-            return None
-        cleaned, targets = peeled
-        try:
-            argv = shlex.split(cleaned, posix=True)
-        except ValueError:
-            return None
-        for target in targets:
-            found.append((target, here))
-        while argv and argv[0].startswith(("(", "{")):
-            if argv[0].startswith("("):
-                outer.append(here)
-            argv[0] = argv[0][1:]
-            if not argv[0]:
-                argv.pop(0)
-        closing = 0
-        while argv and argv[-1].endswith((")", "}")):
-            closing += argv[-1].endswith(")")
-            argv[-1] = argv[-1][:-1]
-            if not argv[-1]:
-                argv.pop()
-        assigned = 0
-        for word in argv:
-            name, eq, value = word.partition("=")
-            if not eq or not name.isidentifier():
-                break
-            variables[name] = _expand(value, variables) or value
-            assigned += 1
-        if argv[assigned:] and os.path.basename(argv[assigned]) == "export":
-            for word in argv[assigned + 1 :]:
-                name, eq, value = word.partition("=")
-                if eq and name.isidentifier():
-                    variables[name] = _expand(value, variables) or value
-        argv = _unwrap(argv)
-        if not argv:
-            for _ in range(closing):
-                here = outer.pop() if outer else here
-            continue
-        if os.path.basename(argv[0]) in ("cd", "pushd"):
-            moved = [_expand(word, variables) for word in argv]
-            here = _next_cwd(moved, here) if None not in moved else here
-            for _ in range(closing):
-                here = outer.pop() if outer else here
-            continue
-        if os.path.basename(argv[0]) == "git":
-            base = here
-            args = argv[1:]
-            index = 0
-            while index < len(args) and args[index] != "mv":
-                if args[index] == "-C" and index + 1 < len(args):
-                    base = _absolute(args[index + 1], here)
-                    index += 2
-                    continue
-                index += 1
-            if index < len(args) and args[index] == "mv":
-                for target in _command_dests(["mv", *args[index + 1 :]]):
-                    found.append((target, base))
-            continue
-        for target in _command_dests(argv):
-            found.append((target, here))
-        for _ in range(closing):
-            here = outer.pop() if outer else here
-    seen = set()
-    unique = []
-    for target, base in found:
-        expanded = _expand(target, variables)
-        if expanded is None:
-            continue
-        path = _absolute(expanded, base)
-        if path not in seen:
-            seen.add(path)
-            unique.append(path)
-    return unique
 
 
 def _check_path(path, op, content):
@@ -728,24 +377,36 @@ def pre_write(event, data):
 
 def pre_shell(event, data):
     command = data.get("command")
+    if isinstance(command, list) and all(isinstance(part, str) for part in command):
+        command = shlex.join(command)
     if not isinstance(command, str) or not command.strip():
         return None
     if _truncated(event):
         return deny("This command was truncated, so molab cannot check its paths.")
-    session = _session(event)
     cwd = _command_cwd(event, data)
-    if not _under(cwd, _load_roots(session)):  # one molab call fewer per command
-        _note(session, _check_path(cwd, "write", None))
-    found = destinations(command, cwd)
-    if found is None:
-        return None
-    refused = None
-    for path in found:
-        verdict = _check_path(path, "write", None)
+    verdict = molab("command", "--cwd", cwd, "--command", command)
+    _note(_session(event), verdict)
+    return _refusal(verdict)
+
+
+def pre_patch(event, data):
+    if _truncated(event):
+        return deny("This patch was truncated, so molab cannot check it.")
+    patch = _patch_text(data)
+    if patch is None:
+        return deny("This patch has no body molab can check.")
+    base = _event_value(event, "cwd", "cwd") or os.getcwd()
+    changes = patch_changes(patch, base)
+    if not changes:
+        return deny("This patch names no file molab can check.")
+    session = _session(event)
+    for path, op, content in changes:
+        verdict = _check_path(_absolute(path, base), op, content)
         _note(session, verdict)
-        if refused is None and verdict and not verdict.get("allowed", True):
-            refused = verdict
-    return _refusal(refused)
+        refusal = _refusal(verdict)
+        if refusal is not None:
+            return refusal
+    return None
 
 
 def pre(event):
@@ -753,6 +414,8 @@ def pre(event):
     data = _input(event)
     if tool in SHELL_TOOLS:
         return pre_shell(event, data)
+    if tool in PATCH_TOOLS:
+        return pre_patch(event, data)
     if tool in WRITE_TOOLS:
         return pre_write(event, data)
     return None
@@ -794,6 +457,7 @@ def stop(event):
 def main():
     event = json.load(sys.stdin)
     mode = sys.argv[1]
+    _trace(mode, event)
     answer = {"pre": pre, "start": start, "stop": stop}[mode](event)
     if _PROBLEMS:
         note = "molab guard: " + "; ".join(dict.fromkeys(_PROBLEMS)) + ". " + _UNCHECKED[mode]

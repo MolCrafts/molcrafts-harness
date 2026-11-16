@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "MolCrafts Harness",
+    "description": "在执行前检查 molab 工作区写入，Claude Code 和 Codex 同样生效。科学计算交给对应的 MolCrafts 工具完成，agent 的其他工具保持可用。"
+  }
+}

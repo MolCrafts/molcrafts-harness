@@ -13,12 +13,12 @@ and the subcommand's help before an unfamiliar call.
 
 Workspace, then Project, then Experiment, then Run. Start at the root
 `AGENTS.md` and `index.md`. Each level's `index.md` frontmatter is its record,
-and its `index:` key lists the children; follow those paths down instead of
-searching. molab writes the frontmatter; edit only the body. Register a compute
+and its `index:` key lists the children; follow those paths down.
+molab writes the frontmatter; edit only the body. Register a compute
 destination in molq first, then name it from molab.
 
-`molab init` adopts an existing directory, rewrites a wrong meta or index, and
-deletes the old file. Tidy strays by hand into `scratch/`.
+`molab init` adopts an existing directory and rewrites a wrong meta or index.
+Tidy strays by hand into `scratch/`.
 
 An experiment is the parameter definition; a run is one execution of it. Quick
 tests go in `scratch/`. A long job or anything you will cite becomes a run;
@@ -27,10 +27,10 @@ validate` and fix what you added.
 
 ## Recording
 
-Inside a run, use `from molab import print` so output lands in that execution's
-stdout. Record training data with `ctx.metrics.scalar`, `histogram`, `text`,
-`json` or `image`, and key files with `ctx.emit_artifact`. A plain script calls
-`molab.track()`; outside molab it writes a directory for `molab runs adopt --from`.
+Inside a run, use `from molab import print` for its stdout. Record training
+data with `ctx.metrics` (`scalar`, `histogram`, `text`, `json`, `image`) and
+key files with `ctx.emit_artifact`. A plain script calls `molab.track()`;
+outside molab it writes a directory for `molab runs adopt --from`.
 
 ## Workflow
 

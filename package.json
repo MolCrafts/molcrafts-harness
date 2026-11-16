@@ -1,0 +1,31 @@
+{
+  "name": "molcrafts-harness",
+  "version": "0.3.0",
+  "private": true,
+  "description": "MolCrafts skills (installed with Vercel skills) and the molab workspace guard for Claude Code, Codex and DeepSeek Harness",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./dsh/index.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "dsh",
+    "hooks",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "keywords": [
+    "tack-plugin"
+  ],
+  "tack": {
+    "compat": ">=0.2.0 <1.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./dsh/cordis.patch.yml"
+    }
+  }
+}

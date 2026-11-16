@@ -1,0 +1,54 @@
+{
+  "description": "Codex hooks: molab_guard.py forwards workspace layout to molab. Codex runs a hook only after it is trusted; run hooks/codex_trust.py --yes once.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/molab_guard.py\" start",
+            "timeout": 120,
+            "statusMessage": "molab snapshot"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|shell|exec_command|local_shell|unified_exec",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/molab_guard.py\" pre",
+            "timeout": 120,
+            "statusMessage": "molab check"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/molab_guard.py\" stop",
+            "timeout": 120,
+            "statusMessage": "molab check"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/molab_guard.py\" stop",
+            "timeout": 120,
+            "statusMessage": "molab check"
+          }
+        ]
+      }
+    ]
+  }
+}
