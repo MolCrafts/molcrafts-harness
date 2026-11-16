@@ -1,0 +1,71 @@
+name: test
+
+'on':
+  push:
+    branches:
+    - '**'
+  pull_request:
+    branches:
+    - dev
+    - master
+  workflow_dispatch: null
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ !contains(fromJSON('["refs/heads/dev","refs/heads/master"]'), github.ref) && !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  context:
+    permissions:
+      contents: read
+    name: test
+    uses: MolCrafts/molcrafts-ci/.github/workflows/context.yml@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
+
+  # The skill collection and the molab guard; molab itself is a fake in the tests.
+  python:
+    name: test / skills and hooks
+    needs: context
+    if: needs.context.outputs.skip-pr != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: MolCrafts/molcrafts-ci/actions/setup-python@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
+      - run: python3 -m unittest discover -s tests/skill-quality -v
+      - run: python3 -m unittest discover -s tests/hooks -v
+
+  # The DeepSeek Harness plugin in dsh/.
+  dsh:
+    name: test / dsh plugin
+    needs: context
+    if: needs.context.outputs.skip-pr != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: MolCrafts/molcrafts-ci/actions/setup-python@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
+      - uses: MolCrafts/molcrafts-ci/actions/setup-node@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
+        with:
+          install: "false"
+      - run: node --test tests/dsh
+
+  workflow-policy:
+    name: test / workflows
+    needs: context
+    if: needs.context.outputs.skip-pr != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: MolCrafts/molcrafts-ci/actions/check-workflows@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
+
+  result:
+    name: test / result
+    needs: [context, python, dsh, workflow-policy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job succeeded or was skipped
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: echo "$RESULTS" | jq -e 'all(.[]; . == "success" or . == "skipped")'
