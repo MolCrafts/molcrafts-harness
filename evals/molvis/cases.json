@@ -11,7 +11,7 @@
     ],
     "forbidden_shortcuts": [
       "Render the molecule with matplotlib or a hand-written HTML page.",
-      "Start molmcp and call molvis_open or molvis_exec."
+      "Call molvis_open or molvis_exec."
     ],
     "success_criteria": [
       "Drive the live viewer through the molvis CLI.",
@@ -29,7 +29,7 @@
     ],
     "forbidden_shortcuts": [
       "Open a new browser process for every change.",
-      "Start molmcp to keep the viewer alive."
+      "Keep the viewer alive with molvis_exec."
     ],
     "success_criteria": [
       "Keep one kernel process across the steps.",
@@ -262,14 +262,14 @@
   {
     "id": "no-mcp",
     "task": "Keep a viewer open while we edit the structure over several turns.",
-    "environment": "molvis is installed. molmcp may also be installed.",
+    "environment": "molvis is installed.",
     "available_skills": ["molvis"],
     "expected_tool": ["molvis"],
     "expected_discovery_behavior": [
       "Hold the viewer with molvis serve."
     ],
     "forbidden_shortcuts": [
-      "Start molmcp so its molvis_exec can hold the viewer.",
+      "Hold the viewer with molvis_exec.",
       "Build a private session registry beside mv.Stage."
     ],
     "success_criteria": [

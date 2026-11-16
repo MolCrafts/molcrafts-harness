@@ -76,4 +76,4 @@ location, and explanation. Do not commit fabricated results.
 | One-shot files use `molvis open` | open-pdb |
 | Jobs stay with molq | draw-then-submit |
 | A requested notebook uses `Stage` directly | explicit-notebook |
-| Do not go through molmcp | draw-molecule, serve-then-exec, no-mcp |
+| Stay on the molvis CLI | draw-molecule, serve-then-exec, no-mcp |

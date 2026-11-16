@@ -10,8 +10,7 @@ group on it, or a change from one structure to the next.
 
 For more than one step, run `molvis serve`, then `molvis exec`. The code you
 send is a notebook cell. `mv.Stage(name=...)` with the same name is the same
-viewer, and names you bind stay in that shell for the next `exec`. Do not
-start molmcp, and do not call `molvis_open` or `molvis_exec`.
+viewer, and names you bind stay in that shell for the next `exec`.
 
 Do not draw the molecule yourself with matplotlib, a bespoke viewer, or an
 HTML page.
