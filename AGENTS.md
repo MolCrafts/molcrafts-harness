@@ -34,5 +34,5 @@ conventions (`tools/pre-execute`, `agent/turn-stopping`, a Standard Schema
 events. Keep agent-specific code to that translation.
 
 Run `python3 -m unittest discover -s tests/skill-quality -v`,
-`python3 -m unittest discover -s tests/hooks -v` and `node --test tests/dsh`
+`python3 -m unittest discover -s tests/hooks -v` and `node --test tests/dsh/*.test.mjs`
 after changes.

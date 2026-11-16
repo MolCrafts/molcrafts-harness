@@ -48,7 +48,7 @@ jobs:
       - uses: MolCrafts/molcrafts-ci/actions/setup-node@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
         with:
           install: "false"
-      - run: node --test tests/dsh
+      - run: node --test tests/dsh/*.test.mjs
 
   workflow-policy:
     name: test / workflows
